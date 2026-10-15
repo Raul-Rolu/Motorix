@@ -1,0 +1,29 @@
+# Archivos de entorno con credenciales (secretos NUNCA en el repositorio)
+.env
+.env.*
+!.env.example
+
+# Node.js
+node_modules/
+coverage/
+*.log
+
+# Flutter / Dart
+client/.dart_tool/
+client/build/
+client/.flutter-plugins
+client/.flutter-plugins-dependencies
+client/.packages
+*.g.dart
+
+# IDE y sistema
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+
+# Base de datos local: los archivos físicos de MySQL NO se versionan (Principio III)
+database/data/

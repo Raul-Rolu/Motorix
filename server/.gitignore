@@ -1,0 +1,13 @@
+# Seguridad: las variables de entorno con credenciales NUNCA se versionan
+.env
+.env.local
+
+# Dependencias y artefactos de build
+node_modules/
+coverage/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*

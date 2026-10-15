@@ -1,0 +1,26 @@
+{
+  "name": "motorix-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Backend de Motorix - Sistema de Gestión para Taller Mecánico",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand",
+    "test:unit": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --testPathPattern=tests/unit",
+    "test:integration": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --testPathPattern=tests/integration",
+    "test:contract": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --testPathPattern=tests/contract"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
+}
