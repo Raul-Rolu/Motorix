@@ -17,22 +17,37 @@ class TicketPartida {
       );
 }
 
-/// Una refacción usada en la orden (sin precio en el inventario actual).
+/// Una refacción usada en la orden, con su precio congelado (005, CA-13).
+///
+/// En una orden ya liquidada con usos heredados sin precio, `unitPrice` y
+/// `amount` llegan nulos con `sinPrecio: true` (FR-016, CA-21).
 class TicketRefaccion {
   final String nombre;
   final String codigo;
   final int cantidad;
 
+  /// Precio unitario congelado al uso; null = sin precio de venta.
+  final double? unitPrice;
+
+  /// Importe de la línea (`unitPrice × cantidad`); null sin precio.
+  final double? amount;
+
   const TicketRefaccion({
     required this.nombre,
     required this.codigo,
     required this.cantidad,
+    this.unitPrice,
+    this.amount,
   });
+
+  bool get sinPrecio => unitPrice == null;
 
   factory TicketRefaccion.desdeJson(Map<String, dynamic> json) => TicketRefaccion(
         nombre: json['nombre'] as String? ?? '',
         codigo: json['codigo'] as String? ?? '',
         cantidad: json['cantidad'] as int? ?? 0,
+        unitPrice: (json['unitPrice'] as num?)?.toDouble(),
+        amount: (json['amount'] as num?)?.toDouble(),
       );
 }
 
@@ -92,6 +107,10 @@ class TicketServicio {
   final String estadoPago;
   final double saldoPendiente;
 
+  /// false = falta el precio de venta de alguna refacción usada (005, FR-013);
+  /// solo puede ocurrir en órdenes ya liquidadas (FR-016).
+  final bool totalCompleto;
+
   const TicketServicio({
     required this.folio,
     required this.fecha,
@@ -110,6 +129,7 @@ class TicketServicio {
     required this.metodosDePago,
     required this.estadoPago,
     required this.saldoPendiente,
+    this.totalCompleto = true,
   });
 
   factory TicketServicio.desdeJson(Map<String, dynamic> json) {
@@ -151,6 +171,7 @@ class TicketServicio {
           .toList(),
       estadoPago: json['estadoPago'] as String? ?? 'PENDIENTE',
       saldoPendiente: (json['saldoPendiente'] as num? ?? 0).toDouble(),
+      totalCompleto: json['totalCompleto'] as bool? ?? true,
     );
   }
 

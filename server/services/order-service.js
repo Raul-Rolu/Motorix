@@ -325,12 +325,19 @@ export async function obtenerPorId(id, usuario) {
 /**
  * Total a cobrar de la orden (Sprint 4, T009, FR-003): reutiliza el cálculo
  * existente de servicios + mano de obra sin duplicar importes (research D2).
- * Las refacciones del inventario no tienen precio unitario (Sprint 3), por lo
- * que no suman al total y se listan por cantidad en el ticket (CA-4).
+ * Desde 005 el total también suma las refacciones usadas (005, FR-007).
  */
 export async function obtenerTotalOrden(orderId) {
   const totales = await orderModel.findTotals(orderId);
   return totales.grand;
+}
+
+/**
+ * Bloque de totales completo de la orden (005, FR-008/FR-012): importes con
+ * refacciones, `totalCompleto` y `refaccionesSinPrecio`.
+ */
+export async function obtenerTotalesOrden(orderId) {
+  return orderModel.findTotals(orderId);
 }
 
 /**

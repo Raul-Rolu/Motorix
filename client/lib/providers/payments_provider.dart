@@ -38,6 +38,9 @@ class PaymentsProvider extends ChangeNotifier {
   }
 
   /// Registra un pago manual (nace COMPLETED en el servidor, FR-001).
+  /// Con total incompleto el servidor responde `TOTAL_INCOMPLETO` (005,
+  /// FR-009) y el mensaje queda en `error` con su código en `codigoError`;
+  /// el formulario además bloquea el envío con su aviso ámbar.
   /// Devuelve el pago creado o null con el mensaje en `error`.
   Future<Pago?> registrar(
     int orderId, {

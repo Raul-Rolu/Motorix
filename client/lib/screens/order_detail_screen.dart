@@ -659,8 +659,13 @@ class _SeccionCobros extends StatelessWidget {
     final saldo = pagos?.saldoPendiente ?? 0;
     final registrado = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) =>
-            PaymentFormScreen(orderId: ordenId, saldoPendiente: saldo),
+        builder: (_) => PaymentFormScreen(
+          orderId: ordenId,
+          saldoPendiente: saldo,
+          // 005: el total incompleto bloquea el cobro con aviso (FR-010).
+          totalCompleto: pagos?.totalCompleto ?? true,
+          refaccionesSinPrecio: pagos?.refaccionesSinPrecio ?? 0,
+        ),
       ),
     );
     if (registrado == true && context.mounted) {

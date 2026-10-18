@@ -65,19 +65,48 @@ export async function obtenerOrdenParaCobro(orderId) {
   return orden;
 }
 
-/** Pagos de la orden con total, cobrado, saldo y estado derivados (FR-003/FR-004). */
+/**
+ * Exige el total completo antes de registrar un cobro (005, FR-009, CA-10):
+ * si la orden NO liquidada tiene usos de refacciones sin precio responde
+ * `TOTAL_INCOMPLETO` (409) con la lista en `details.refaccionesSinPrecio`,
+ * ANTES que `PAYMENT_EXCEEDS_BALANCE`. Las órdenes ya liquidadas conservan
+ * su total histórico y nunca se bloquean (FR-016, CA-21). Devuelve el bloque
+ * de totales para reutilizar el cálculo del saldo.
+ */
+async function exigirTotalCompleto(orderId) {
+  const [totales, cobrado] = await Promise.all([
+    orderService.obtenerTotalesOrden(orderId),
+    paymentModel.sumCompletedByOrder(orderId),
+  ]);
+  const liquidada = estadoCobroDe(totales.grand, cobrado) === 'LIQUIDADA';
+  if (!totales.totalCompleto && !liquidada) {
+    const faltantes = await orderModel.findOrderPartsSinPrecio(orderId);
+    throw errores.totalIncompleto(faltantes);
+  }
+  return totales;
+}
+
+/**
+ * Pagos de la orden con total, cobrado, saldo y estado derivados (FR-003/FR-004).
+ * El total incluye las refacciones y el bloque agrega `totalCompleto` y
+ * `refaccionesSinPrecio`; con total incompleto el resumen sigue siendo
+ * informativo, solo se bloquean las operaciones de cobro (005, CA-12).
+ */
 export async function listar(orderId) {
   await obtenerOrdenParaCobro(orderId);
   // Expiración perezosa: los cobros digitales viejos pasan a EXPIRED (FR-009).
   await paymentModel.expireStaleDigital(orderId);
-  const [pagos, total, cobrado] = await Promise.all([
+  const [pagos, totales, cobrado] = await Promise.all([
     paymentModel.findByOrder(orderId),
-    orderService.obtenerTotalOrden(orderId),
+    orderService.obtenerTotalesOrden(orderId),
     paymentModel.sumCompletedByOrder(orderId),
   ]);
+  const total = totales.grand;
   const saldoPendiente = redondear(Math.max(total - cobrado, 0));
   return {
     total: redondear(total),
+    totalCompleto: totales.totalCompleto,
+    refaccionesSinPrecio: totales.refaccionesSinPrecio,
     cobrado: redondear(cobrado),
     saldoPendiente,
     estadoCobro: estadoCobroDe(total, cobrado),
@@ -85,12 +114,16 @@ export async function listar(orderId) {
   };
 }
 
-/** Registra un pago manual: nace COMPLETED y no excede el saldo (FR-001, D1). */
+/**
+ * Registra un pago manual: nace COMPLETED y no excede el saldo (FR-001, D1).
+ * Con total incompleto en una orden no liquidada se rechaza con
+ * `TOTAL_INCOMPLETO` antes de validar el saldo (005, FR-009, CA-10).
+ */
 export async function registrar(orderId, datos, usuario) {
   await obtenerOrdenParaCobro(orderId);
-  const total = await orderService.obtenerTotalOrden(orderId);
+  const totales = await exigirTotalCompleto(orderId);
   const cobrado = await paymentModel.sumCompletedByOrder(orderId);
-  const saldoPendiente = redondear(total - cobrado);
+  const saldoPendiente = redondear(totales.grand - cobrado);
   const monto = redondear(Number(datos.monto));
   if (monto > saldoPendiente) {
     throw errores.pagoExcedeSaldo(Math.max(saldoPendiente, 0));
@@ -128,9 +161,11 @@ export async function crearCobroDigital(orderId, datos, usuario) {
     throw errores.cobroDigitalDuplicado();
   }
 
-  const total = await orderService.obtenerTotalOrden(orderId);
+  // Total incompleto en orden no liquidada ⇒ TOTAL_INCOMPLETO (409) sin
+  // crear la preferencia ante el proveedor (005, FR-009, CA-10).
+  const totales = await exigirTotalCompleto(orderId);
   const cobrado = await paymentModel.sumCompletedByOrder(orderId);
-  const saldoPendiente = redondear(total - cobrado);
+  const saldoPendiente = redondear(totales.grand - cobrado);
   const monto = redondear(Number(datos.monto));
   if (monto > saldoPendiente) {
     throw errores.pagoExcedeSaldo(Math.max(saldoPendiente, 0));

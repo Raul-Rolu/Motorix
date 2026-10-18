@@ -200,7 +200,20 @@ class _TicketScreenState extends State<TicketScreen> {
                             size: 18, color: MotorixColores.textoSecundario),
                         title: Text(
                             '${refaccion.nombre} (${refaccion.codigo})'),
-                        trailing: Text('x${refaccion.cantidad}'),
+                        // 005-precio-venta-refacciones: precio e importe por
+                        // línea, o "Sin precio" en usos heredados (CA-13,
+                        // FR-016).
+                        subtitle: Text(refaccion.sinPrecio
+                            ? 'x${refaccion.cantidad} · sin precio'
+                            : 'x${refaccion.cantidad} · '
+                                '${formatearMoneda(refaccion.unitPrice!)} c/u'),
+                        trailing: refaccion.sinPrecio
+                            ? const Text(
+                                'Sin precio',
+                                style: TextStyle(
+                                    color: MotorixColores.advertencia),
+                              )
+                            : Text(formatearMoneda(refaccion.amount!)),
                       ),
                   ],
                 ),
@@ -218,6 +231,31 @@ class _TicketScreenState extends State<TicketScreen> {
                   _fila('Subtotal', formatearMoneda(ticket.subtotal)),
                   _fila('Total', formatearMoneda(ticket.total),
                       enfatizado: true),
+                  // 005: en órdenes liquidadas con usos sin precio el total
+                  // es histórico y puede no ser definitivo (FR-016, CA-21).
+                  if (!ticket.totalCompleto)
+                    Padding(
+                      key: const Key('avisoTotalIncompletoTicket'),
+                      padding:
+                          const EdgeInsets.only(top: MotorixEspaciados.s),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning_amber_rounded,
+                              color: MotorixColores.advertencia, size: 18),
+                          const SizedBox(width: MotorixEspaciados.xs),
+                          Expanded(
+                            child: Text(
+                              'Total histórico: falta el precio de venta de '
+                              '${ticket.refacciones.where((r) => r.sinPrecio).length} '
+                              'refacciones; este total puede no ser definitivo.',
+                              style: const TextStyle(
+                                  color: MotorixColores.advertencia,
+                                  fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   const Divider(),
                   Text(
                     'Pago — ${ticket.nombreEstadoPago}',

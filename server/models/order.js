@@ -376,6 +376,23 @@ export async function findOrderParts(orderId) {
 }
 
 /**
+ * Usos de refacción SIN precio de la orden, en la forma del `details` del
+ * error `TOTAL_INCOMPLETO` (005, contracts/api-rest.md: lista de
+ * `{ orderPartId, partId, nombre }`).
+ */
+export async function findOrderPartsSinPrecio(orderId) {
+  const [filas] = await getPool().query(
+    `SELECT op.id AS orderPartId, op.part_id AS partId, p.name AS nombre
+     FROM order_parts op
+     JOIN parts p ON p.id = op.part_id
+     WHERE op.order_id = ? AND op.unit_price IS NULL
+     ORDER BY op.id ASC`,
+    [orderId]
+  );
+  return filas;
+}
+
+/**
  * Línea de refacción concreta de la orden (T046, US7).
  * Acepta la conexión de la transacción del servicio (US7 atómico).
  */
