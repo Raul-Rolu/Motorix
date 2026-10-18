@@ -260,20 +260,33 @@ class PartidaOrden {
 }
 
 /// Totales informativos de la orden (sin módulo de pagos).
+///
+/// Incluyen las refacciones usadas (005, FR-007): `parts` suma
+/// `unitPrice × quantity`; `totalCompleto` es falso cuando la orden tiene
+/// usos sin precio (FR-008), contados en `refaccionesSinPrecio`.
 class TotalesOrden {
   final double services;
   final double labor;
+  final double parts;
   final double grand;
+  final bool totalCompleto;
+  final int refaccionesSinPrecio;
 
   const TotalesOrden({
     required this.services,
     required this.labor,
     required this.grand,
+    this.parts = 0,
+    this.totalCompleto = true,
+    this.refaccionesSinPrecio = 0,
   });
 
   factory TotalesOrden.desdeJson(Map<String, dynamic> json) => TotalesOrden(
         services: (json['services'] as num?)?.toDouble() ?? 0,
         labor: (json['labor'] as num?)?.toDouble() ?? 0,
+        parts: (json['parts'] as num?)?.toDouble() ?? 0,
         grand: (json['grand'] as num?)?.toDouble() ?? 0,
+        totalCompleto: json['totalCompleto'] as bool? ?? true,
+        refaccionesSinPrecio: json['refaccionesSinPrecio'] as int? ?? 0,
       );
 }

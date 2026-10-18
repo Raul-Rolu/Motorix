@@ -69,7 +69,16 @@ test('el detalle de la orden cumple la forma del contrato', async () => {
     entries: [],
     services: [],
     labor: [],
+    refacciones: [],
     totals: { services: 0, labor: 0, grand: 0 },
   });
+  // 005-precio-venta-refacciones (T017): el bloque totals incluye las
+  // refacciones y la marca de total completo (FR-007, FR-008, CA-6).
+  expect(detalle.body.totals).toMatchObject({
+    parts: 0,
+    totalCompleto: true,
+    refaccionesSinPrecio: 0,
+  });
+  expect(Array.isArray(detalle.body.refacciones)).toBe(true);
   expect(JSON.stringify(detalle.body)).not.toContain('$2b$');
 });

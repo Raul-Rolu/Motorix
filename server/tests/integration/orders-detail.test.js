@@ -91,7 +91,15 @@ test('el detalle muestra cliente, vehículo, kilometraje y estado (FR-015)', asy
   expect(detalle.body.entries).toEqual([]);
   expect(detalle.body.services).toEqual([]);
   expect(detalle.body.labor).toEqual([]);
-  expect(detalle.body.totals).toEqual({ services: 0, labor: 0, grand: 0 });
+  // Forma ampliada por 005 (T020): el bloque totals incluye las refacciones.
+  expect(detalle.body.totals).toEqual({
+    services: 0,
+    labor: 0,
+    parts: 0,
+    grand: 0,
+    totalCompleto: true,
+    refaccionesSinPrecio: 0,
+  });
 });
 
 test('las partidas y entradas del detalle cuadran con los totales', async () => {
@@ -125,7 +133,14 @@ test('las partidas y entradas del detalle cuadran con los totales', async () => 
   expect(detalle.body.labor).toHaveLength(1);
   expect(detalle.body.entries).toHaveLength(1);
   expect(detalle.body.entries[0].entryType).toBe('DIAGNOSTIC');
-  expect(detalle.body.totals).toEqual({ services: 450, labor: 300, grand: 750 });
+  expect(detalle.body.totals).toEqual({
+    services: 450,
+    labor: 300,
+    parts: 0,
+    grand: 750,
+    totalCompleto: true,
+    refaccionesSinPrecio: 0,
+  });
 });
 
 test('una orden inexistente responde 404 ORDEN_NO_ENCONTRADA', async () => {

@@ -357,9 +357,19 @@ export async function historialVehiculo(vehicleId, { order = 'desc' } = {}) {
       .map((refaccion) => ({
         nombre: refaccion.part_name,
         cantidad: refaccion.quantity,
+        unitPrice:
+          refaccion.unit_price === null || refaccion.unit_price === undefined
+            ? null
+            : Number(refaccion.unit_price),
+        amount:
+          refaccion.unit_price === null || refaccion.unit_price === undefined
+            ? null
+            : Number(refaccion.unit_price) * refaccion.quantity,
       }));
     const manoDeObra = Number(fila.labor_total);
     const servicios = Number(fila.services_total);
+    // El total del historial también suma las refacciones con precio (005, CA-6).
+    const refacciones = Number(fila.parts_total ?? 0);
     return {
       orderId: fila.id,
       fecha: fila.created_at,
@@ -375,7 +385,7 @@ export async function historialVehiculo(vehicleId, { order = 'desc' } = {}) {
         servicios: fila.services_count,
         manoObra: fila.labor_count,
         refacciones: fila.parts_count,
-        total: servicios + manoDeObra,
+        total: servicios + manoDeObra + refacciones,
       },
       refacciones: refaccionesDeLaOrden,
     };
@@ -417,11 +427,13 @@ async function obtenerOrdenParaRefacciones(orderId, usuario) {
 }
 
 /**
- * Agrega una refacción a la orden (FR-011, RN-6/RN-7/RN-8): valida refacción
- * activa y stock suficiente; la salida (OUT con `order_id`) y la línea de la
- * orden se registran en la MISMA transacción con bloqueo de la fila (research
- * D4/D5). Si falta stock no se modifica nada (PART_SIN_STOCK 409 con
- * `details.stockDisponible`).
+ * Agrega una refacción a la orden (FR-011, RN-6/RN-7/RN-8 + 005 FR-004/FR-005):
+ * valida refacción activa y con precio de venta (si no, PART_SIN_PRECIO 409
+ * sin tocar nada, CA-8) y stock suficiente; la salida (OUT con `order_id`) y
+ * la línea de la orden con el precio congelado (`unit_price` = `sale_price`
+ * vigente, CA-3) se registran en la MISMA transacción con bloqueo de la fila
+ * (research D4/D5). Si falta stock no se modifica nada (PART_SIN_STOCK 409
+ * con `details.stockDisponible`).
  */
 export async function agregarRefaccionOrden(orderId, datos, usuario) {
   const orden = await obtenerOrdenParaRefacciones(orderId, usuario);
@@ -439,6 +451,9 @@ export async function agregarRefaccionOrden(orderId, datos, usuario) {
     if (!parte.isActive) {
       throw errores.parteInactiva();
     }
+    if (parte.salePrice === null) {
+      throw errores.parteSinPrecio(parte.name);
+    }
     const { stockResult } = await inventoryModel.aplicarMovimiento(conexion, {
       partId,
       movementType: 'OUT',
@@ -448,7 +463,13 @@ export async function agregarRefaccionOrden(orderId, datos, usuario) {
       createdBy: usuario.id,
     });
     const linea = await orderModel.createOrderPart(
-      { orderId: orden.id, partId, quantity: cantidad, createdBy: usuario.id },
+      {
+        orderId: orden.id,
+        partId,
+        quantity: cantidad,
+        unitPrice: parte.salePrice,
+        createdBy: usuario.id,
+      },
       conexion
     );
     return { ...linea, stockResult };

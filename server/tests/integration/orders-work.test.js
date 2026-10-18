@@ -143,7 +143,14 @@ test('el mecánico dueño agrega diagnósticos y partidas con sus totales (FR-01
   expect(detalle.body.entries).toHaveLength(1);
   expect(detalle.body.services).toHaveLength(1);
   expect(detalle.body.labor).toHaveLength(1);
-  expect(detalle.body.totals).toEqual({ services: 650, labor: 400, grand: 1050 });
+  expect(detalle.body.totals).toEqual({
+    services: 650,
+    labor: 400,
+    parts: 0,
+    grand: 1050,
+    totalCompleto: true,
+    refaccionesSinPrecio: 0,
+  });
 });
 
 test('no se agregan partidas antes de avanzar a diagnóstico (FR-011)', async () => {

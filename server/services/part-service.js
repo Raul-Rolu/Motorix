@@ -88,7 +88,7 @@ export async function editar(id, datos) {
     }
   }
 
-  return partModel.update({
+  const resultado = await partModel.update({
     id: parte.id,
     name: datos.name !== undefined ? String(datos.name).trim() : null,
     code: datos.code !== undefined ? String(datos.code).trim() : null,
@@ -106,6 +106,14 @@ export async function editar(id, datos) {
           ? null
           : Number(datos.salePrice),
   });
+
+  // Adopción (005, FR-011, CA-11/CA-19): al asignar o cambiar el precio se
+  // copia a los usos sin precio de las órdenes abiertas no liquidadas. Al
+  // dejarlo pendiente (null) no hay precio que adoptar.
+  if (resultado.salePrice !== null && resultado.salePrice !== undefined) {
+    await partModel.adoptarPrecios(parte.id, resultado.salePrice);
+  }
+  return resultado;
 }
 
 /**

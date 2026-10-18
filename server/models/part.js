@@ -112,3 +112,38 @@ export async function update({ id, name, code, minStock, isActive, salePrice }) 
   }
   return findById(id);
 }
+
+/**
+ * Adopción dirigida de precio (005, FR-011, research D4 + AMB-01): copia el
+ * precio nuevo a los usos SIN precio (`unit_price IS NULL`) solo de órdenes
+ * abiertas NO liquidadas, evaluando la liquidación contra el total PREVIO a
+ * la adopción (servicios + mano de obra + usos ya con precio), de modo que
+ * una orden ya pagada nunca adopta y no hay circularidad. Los pagos
+ * registrados se conservan y el saldo se recalcula al vuelo; la adopción
+ * nunca deja liquidada a una orden porque el precio no reduce el total. El
+ * GROUP BY fuerza la materialización de la subconsulta (evita el error
+ * 1093 de MySQL al leer `order_parts` mientras se actualiza).
+ */
+export async function adoptarPrecios(partId, precio) {
+  await getPool().query(
+    `UPDATE order_parts op
+     JOIN service_orders so ON so.id = op.order_id
+     JOIN (
+       SELECT o.id AS orden_id,
+              COALESCE((SELECT SUM(s.amount) FROM order_services s WHERE s.order_id = o.id), 0)
+            + COALESCE((SELECT SUM(l.amount) FROM order_labor l WHERE l.order_id = o.id), 0)
+            + COALESCE((SELECT SUM(x.unit_price * x.quantity) FROM order_parts x
+                         WHERE x.order_id = o.id AND x.unit_price IS NOT NULL), 0) AS total_previo,
+              COALESCE((SELECT SUM(p.amount) FROM payments p
+                         WHERE p.order_id = o.id AND p.status = 'COMPLETED'), 0) AS cobrado
+       FROM service_orders o
+       GROUP BY o.id
+     ) t ON t.orden_id = op.order_id
+     SET op.unit_price = ?
+     WHERE op.part_id = ?
+       AND op.unit_price IS NULL
+       AND so.status NOT IN ('ENTREGADO', 'CANCELADA')
+       AND t.cobrado < t.total_previo`,
+    [precio ?? null, partId]
+  );
+}

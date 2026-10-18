@@ -477,12 +477,37 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             etiqueta: 'Servicios',
                             valor: totales.services),
                         _Total(etiqueta: 'Mano de obra', valor: totales.labor),
+                        _Total(
+                            etiqueta: 'Refacciones', valor: totales.parts),
                         const Divider(),
                         _Total(
                           etiqueta: 'Total',
                           valor: totales.grand,
                           enfatizado: true,
                         ),
+                        // Total incompleto: faltan precios de venta (005, FR-008).
+                        if (!totales.totalCompleto)
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(top: MotorixEspaciados.s),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.warning_amber_rounded,
+                                    color: MotorixColores.advertencia,
+                                    size: 18),
+                                const SizedBox(width: MotorixEspaciados.xs),
+                                Expanded(
+                                  child: Text(
+                                    'Total incompleto: falta el precio de venta '
+                                    'de ${totales.refaccionesSinPrecio} '
+                                    '${totales.refaccionesSinPrecio == 1 ? 'refacción usada' : 'refacciones usadas'}.',
+                                    style: const TextStyle(
+                                        color: MotorixColores.advertencia),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -518,7 +543,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                             color: MotorixColores.acento),
                         title: Text(
                             '${refaccion.nombre} (${refaccion.code})'),
-                        subtitle: Text('Cantidad: ${refaccion.quantity}'),
+                        subtitle: Text(refaccion.sinPrecio
+                            ? 'Cantidad: ${refaccion.quantity} · Sin precio de venta'
+                            : 'Cantidad: ${refaccion.quantity} · '
+                                '\$${refaccion.unitPrice!.toStringAsFixed(2)} c/u · '
+                                'Importe: \$${refaccion.amount!.toStringAsFixed(2)}'),
                         // Retirar solo con la orden abierta (RN-9).
                         trailing: orden.esFinal
                             ? null
