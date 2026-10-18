@@ -31,10 +31,10 @@ description: "Lista de tareas para la feature 005-precio-venta-refacciones"
 
 **Propósito**: esquema, datos de ejemplo y ajuste de la preparación de las pruebas existentes; todo lo demás depende de esta fase.
 
-- [ ] T001 Crear la migración `database/migrations/016_add_part_prices.sql` que agrega `parts.sale_price DECIMAL(10,2) NULL` con `CHECK (sale_price >= 0)` y `order_parts.unit_price DECIMAL(10,2) NULL` con `CHECK (unit_price >= 0)`, sin editar las migraciones 001–015 [FR-001][FR-004]
-- [ ] T002 Crear el seed idempotente `database/seeds/008_demo_part_prices.sql` (IDs fijos + `ON DUPLICATE KEY UPDATE`): precios de venta para las refacciones 1–6, una refacción nueva activa SIN precio para el filtro de pendientes, y usos con `unit_price` congelado en la orden 2 con sus movimientos `OUT` y **stock fijado en valores absolutos** que satisfagan `stock = IN + OUT + ajustes` (≥ 0, sin depender del stock previo, para que el seed sea reejecutable), sin editar los seeds 001–007 [FR-015][FR-003][CA-20]
-- [ ] T003 Adaptar la PREPARACIÓN de las pruebas existentes que agregan refacciones a órdenes — registrar primero un precio de venta en la preparación de cada caso, SIN cambiar ninguna aserción — en `server/tests/integration/order-parts.test.js`, `server/tests/contract/order-parts.contract.test.js` y el barrido de `server/tests/integration/inventory.test.js` y `server/tests/integration/parts*.test.js` [FR-005][CA-8]
-- [ ] T004 Agregar los códigos de error nuevos al catálogo en `server/utils/errors.js`: `PART_SIN_PRECIO` (409) y `TOTAL_INCOMPLETO` (409, con `details.refaccionesSinPrecio`) [FR-005][FR-008]
+- [X] T001 Crear la migración `database/migrations/016_add_part_prices.sql` que agrega `parts.sale_price DECIMAL(10,2) NULL` con `CHECK (sale_price >= 0)` y `order_parts.unit_price DECIMAL(10,2) NULL` con `CHECK (unit_price >= 0)`, sin editar las migraciones 001–015 [FR-001][FR-004]
+- [X] T002 Crear el seed idempotente `database/seeds/008_demo_part_prices.sql` (IDs fijos + `ON DUPLICATE KEY UPDATE`): precios de venta para las refacciones 1–6, una refacción nueva activa SIN precio para el filtro de pendientes, y usos con `unit_price` congelado en la orden 2 con sus movimientos `OUT` y **stock fijado en valores absolutos** que satisfagan `stock = IN + OUT + ajustes` (≥ 0, sin depender del stock previo, para que el seed sea reejecutable), sin editar los seeds 001–007 [FR-015][FR-003][CA-20]
+- [X] T003 Adaptar la PREPARACIÓN de las pruebas existentes que agregan refacciones a órdenes — registrar primero un precio de venta en la preparación de cada caso, SIN cambiar ninguna aserción — en `server/tests/integration/order-parts.test.js`, `server/tests/contract/order-parts.contract.test.js` y el barrido de `server/tests/integration/inventory.test.js` y `server/tests/integration/parts*.test.js` [FR-005][CA-8]
+- [X] T004 Agregar los códigos de error nuevos al catálogo en `server/utils/errors.js`: `PART_SIN_PRECIO` (409) y `TOTAL_INCOMPLETO` (409, con `details.refaccionesSinPrecio`) [FR-005][FR-008]
 
 **Punto de control**: esquema 016 aplicable, seed 008 cargable sin romper la consistencia de stock y las suites existentes pasan con la sola adaptación de preparación.
 
@@ -44,7 +44,7 @@ description: "Lista de tareas para la feature 005-precio-venta-refacciones"
 
 **Propósito**: componentes compartidos sin los cuales ninguna historia puede completarse.
 
-- [ ] T005 Verificar que `server/tests/helpers/db-test.js` reconstruye el esquema de prueba con la migración 016 incluida (la base `motorix_test` debe tener `sale_price` y `unit_price` disponibles para todas las suites) [FR-001][FR-004]
+- [X] T005 Verificar que `server/tests/helpers/db-test.js` reconstruye el esquema de prueba con la migración 016 incluida (la base `motorix_test` debe tener `sale_price` y `unit_price` disponibles para todas las suites) [FR-001][FR-004]
 
 **Punto de control**: la base de pruebas soporta los campos nuevos; las historias pueden avanzar en paralelo.
 

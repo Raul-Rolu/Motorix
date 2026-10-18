@@ -62,6 +62,12 @@ async function prepararEntorno() {
     .post('/api/parts')
     .set('Authorization', `Bearer ${tokens.admin}`)
     .send({ name: 'Contrato parte', code: 'CTP-001', stock: 20, minStock: 2 });
+  // Preparación (005-precio-venta-refacciones): registrar un precio de
+  // venta antes de usar la refacción en una orden; ninguna aserción cambia.
+  await getPool().query('UPDATE parts SET sale_price = ? WHERE id = ?', [
+    250.0,
+    parte.body.id,
+  ]);
 
   return {
     tokens,

@@ -132,4 +132,20 @@ export const errores = {
       'MP_PROVIDER_ERROR',
       'No se pudo consultar el proveedor de pago; intente de nuevo. No se registró ningún cambio.'
     ),
+  // --- 005-precio-venta-refacciones (contracts/api-rest.md) ---
+  parteSinPrecio: (nombre = null) =>
+    new AppError(
+      409,
+      'PART_SIN_PRECIO',
+      nombre
+        ? `La refacción "${nombre}" no tiene precio de venta asignado; pida a administración que registre el precio antes de usarla en una orden.`
+        : 'La refacción no tiene precio de venta asignado; pida a administración que registre el precio antes de usarla en una orden.'
+    ),
+  totalIncompleto: (refaccionesSinPrecio = []) =>
+    new AppError(
+      409,
+      'TOTAL_INCOMPLETO',
+      'El total de la orden está incompleto porque falta el precio de venta de una refacción usada; asigne el precio para poder continuar.',
+      { refaccionesSinPrecio }
+    ),
 };
