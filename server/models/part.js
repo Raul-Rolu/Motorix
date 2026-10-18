@@ -17,6 +17,10 @@ export function aObjeto(fila) {
     code: fila.code,
     stock,
     minStock,
+    // Precio de venta (005, FR-001): null = pendiente de precio (D1).
+    salePrice: fila.sale_price === null || fila.sale_price === undefined
+      ? null
+      : Number(fila.sale_price),
     isActive: Boolean(fila.is_active),
     // Alerta de stock bajo (FR-015, US8): cantidad <= mínimo.
     lowStock: stock <= minStock,
@@ -25,10 +29,15 @@ export function aObjeto(fila) {
 }
 
 /**
- * Listado con búsqueda opcional `q` por nombre o código (FR-009, US6) y
- * filtro de activas (el rol que no es ADMIN no ve inactivas).
+ * Listado con búsqueda opcional `q` por nombre o código (FR-009, US6),
+ * filtro de activas (el rol que no es ADMIN no ve inactivas) y filtro de
+ * pendientes de precio (005, FR-003): solo activas con `sale_price` nulo.
  */
-export async function findAll({ q = null, soloActivas = false } = {}) {
+export async function findAll({
+  q = null,
+  soloActivas = false,
+  pendientesPrecio = false,
+} = {}) {
   const condiciones = [];
   const parametros = [];
 
@@ -38,6 +47,11 @@ export async function findAll({ q = null, soloActivas = false } = {}) {
     parametros.push(busqueda, busqueda);
   }
   if (soloActivas) {
+    condiciones.push('is_active = 1');
+  }
+  if (pendientesPrecio) {
+    // El filtro de pendientes siempre es sobre activas (D7, CA-17).
+    condiciones.push('sale_price IS NULL');
     condiciones.push('is_active = 1');
   }
 
@@ -62,20 +76,25 @@ export async function findByCode(code) {
 
 /**
  * Alta con stock inicial 0: el stock lo aporta el movimiento IN inicial.
+ * `salePrice` null = pendiente de precio (005, FR-001).
  * Acepta la conexión de la transacción para que la lectura posterior (del
  * servicio) vea el stock actualizado antes del commit (T064).
  */
-export async function create({ name, code, minStock }, conexion = null) {
+export async function create({ name, code, minStock, salePrice = null }, conexion = null) {
   const db = conexion ?? getPool();
   const [resultado] = await db.query(
-    'INSERT INTO parts (name, code, stock, min_stock, is_active) VALUES (?, ?, 0, ?, 1)',
-    [name, code, minStock ?? 0]
+    'INSERT INTO parts (name, code, stock, min_stock, is_active, sale_price) VALUES (?, ?, 0, ?, 1, ?)',
+    [name, code, minStock ?? 0, salePrice ?? null]
   );
   return { id: resultado.insertId };
 }
 
-/** Edición de metadatos: el stock NO es editable (FR-013). */
-export async function update({ id, name, code, minStock, isActive }) {
+/**
+ * Edición de metadatos: el stock NO es editable (FR-013). `salePrice`
+ * distinto de `undefined` se persiste aunque sea `null` (volver a dejar la
+ * refacción pendiente de precio, 005 FR-001); `undefined` lo conserva.
+ */
+export async function update({ id, name, code, minStock, isActive, salePrice }) {
   await getPool().query(
     `UPDATE parts
      SET name = COALESCE(?, name),
@@ -85,5 +104,11 @@ export async function update({ id, name, code, minStock, isActive }) {
      WHERE id = ?`,
     [name ?? null, code ?? null, minStock ?? null, isActive ?? null, id]
   );
+  if (salePrice !== undefined) {
+    await getPool().query('UPDATE parts SET sale_price = ? WHERE id = ?', [
+      salePrice ?? null,
+      id,
+    ]);
+  }
   return findById(id);
 }

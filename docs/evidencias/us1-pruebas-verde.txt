@@ -1,0 +1,58 @@
+﻿===== PRUEBAS EN VERDE — 005-precio-venta-refacciones, Fase 3 (US1) =====
+
+--- Backend (server, jest): T006-T009 ---
+
+node : (node:3292) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+En línea: 1 Carácter: 1
++ node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runI ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:3292) Exp...nge at any time:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/contract/parts.contract.test.js
+  ΓêÜ POST /api/parts sigue la forma del contrato (196 ms)
+  ΓêÜ PUT /api/parts/:id sigue la forma del contrato (165 ms)
+  ΓêÜ POST /api/parts/:id/movements devuelve stockResult y el error usa el formato centralizado (167 ms)
+  ΓêÜ el stock insuficiente responde PART_SIN_STOCK con details.stockDisponible (169 ms)
+  ΓêÜ la refacci├│n incluye salePrice en alta, consulta y edici├│n (FR-001) (168 ms)
+  ΓêÜ el alta y la edici├│n de precios son solo de administraci├│n (FR-002, CA-16) (390 ms)
+
+PASS tests/integration/parts-sale-price.test.js
+  ΓêÜ el alta con salePrice guarda el precio y lo devuelve en la consulta (CA-1) (327 ms)
+  ΓêÜ el alta sin salePrice deja la refacci├│n pendiente de precio (salePrice null) (261 ms)
+  ΓêÜ la edici├│n asigna, cambia y limpia el precio de venta (277 ms)
+  ΓêÜ un salePrice negativo se rechaza con DATOS_INVALIDOS sin crear la refacci├│n (CA-2) (252 ms)
+
+PASS tests/integration/parts-pending-price.test.js
+  ΓêÜ el filtro pending-price lista solo las refacciones activas sin precio (CA-17) (419 ms)
+  ΓêÜ el filtro devuelve lista vac├¡a cuando todas las activas tienen precio (401 ms)
+  ΓêÜ recepci├│n tambi├⌐n consulta el filtro de pendientes de precio (380 ms)
+
+PASS tests/contract/order-parts.contract.test.js
+  ΓêÜ POST /api/orders/:id/parts y DELETE siguen la forma del contrato (506 ms)
+  ΓêÜ los errores de refacciones en orden usan el formato centralizado (428 ms)
+
+PASS tests/unit/validators/part-validator-part-price.test.js
+  ΓêÜ un salePrice decimal no negativo no produce errores (3 ms)
+  ΓêÜ un salePrice igual a cero es v├ílido (obsequio) (1 ms)
+  ΓêÜ un salePrice nulo deja la refacci├│n pendiente de precio sin errores
+  ΓêÜ un salePrice ausente no produce errores
+  ΓêÜ un salePrice negativo se rechaza con mensaje claro (1 ms)
+  ΓêÜ un salePrice no num├⌐rico se rechaza con mensaje claro
+  ΓêÜ un salePrice con m├ís de dos decimales se rechaza (1 ms)
+
+Test Suites: 5 passed, 5 total
+Tests:       22 passed, 22 total
+Snapshots:   0 total
+Time:        7.631 s, estimated 8 s
+Ran all test suites matching /(part-validator-part-price|parts-sale-price|parts-pending-price|parts\.contract)/i.
+
+--- Frontend (client, flutter test): T010 ---
+
+00:00 +0: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/part_price_test.dart
+00:00 +0: desdeJson interpreta salePrice cuando la refacci├│n tiene precio
+00:00 +1: desdeJson deja salePrice nulo cuando la refacci├│n est├í pendiente de precio
+00:00 +2: desdeJson tolera la ausencia de salePrice (respaldo nulo)
+00:00 +3: aJson env├¡a salePrice al guardar (precio o null)
+00:00 +4: All tests passed!

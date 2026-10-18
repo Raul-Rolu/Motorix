@@ -10,6 +10,9 @@ class Part {
   final String code;
   final int stock;
   final int minStock;
+
+  /// Precio de venta (005, FR-001); null = pendiente de precio (D1).
+  final double? salePrice;
   final bool isActive;
   final bool lowStock;
 
@@ -19,6 +22,7 @@ class Part {
     required this.code,
     this.stock = 0,
     this.minStock = 0,
+    this.salePrice,
     this.isActive = true,
     this.lowStock = false,
   });
@@ -32,6 +36,7 @@ class Part {
       code: json['code'] as String? ?? '',
       stock: stock,
       minStock: minStock,
+      salePrice: (json['salePrice'] as num?)?.toDouble(),
       isActive: json['isActive'] as bool? ?? true,
       // Respaldo del cálculo del servidor por si la API no lo envía.
       lowStock: json['lowStock'] as bool? ?? (stock <= minStock),
@@ -42,6 +47,8 @@ class Part {
         'name': name,
         'code': code,
         if (minStock > 0) 'minStock': minStock,
+        // Siempre se envía: null deja la refacción pendiente de precio.
+        'salePrice': salePrice,
       };
 }
 

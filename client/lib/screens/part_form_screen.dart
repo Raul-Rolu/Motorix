@@ -29,6 +29,7 @@ class _PartFormScreenState extends State<PartFormScreen> {
   final _codigoController = TextEditingController();
   final _stockController = TextEditingController();
   final _minimoController = TextEditingController();
+  final _precioController = TextEditingController();
   final _entradaCantidadController = TextEditingController();
   final _entradaMotivoController = TextEditingController();
 
@@ -45,6 +46,9 @@ class _PartFormScreenState extends State<PartFormScreen> {
       _nombreController.text = parte.name;
       _codigoController.text = parte.code;
       _minimoController.text = '${parte.minStock}';
+      if (parte.salePrice != null) {
+        _precioController.text = parte.salePrice!.toStringAsFixed(2);
+      }
       _activo = parte.isActive;
     }
   }
@@ -55,6 +59,7 @@ class _PartFormScreenState extends State<PartFormScreen> {
     _codigoController.dispose();
     _stockController.dispose();
     _minimoController.dispose();
+    _precioController.dispose();
     _entradaCantidadController.dispose();
     _entradaMotivoController.dispose();
     super.dispose();
@@ -65,6 +70,8 @@ class _PartFormScreenState extends State<PartFormScreen> {
     setState(() => _guardando = true);
 
     final provider = context.read<PartsProvider>();
+    // Vacío = sin precio (pendiente, 005 FR-001).
+    final precioVenta = double.tryParse(_precioController.text.trim());
     final Part? guardada;
     if (_esAlta) {
       guardada = await provider.crear(
@@ -72,6 +79,7 @@ class _PartFormScreenState extends State<PartFormScreen> {
         code: _codigoController.text.trim(),
         stock: int.tryParse(_stockController.text.trim()) ?? 0,
         minStock: int.tryParse(_minimoController.text.trim()) ?? 0,
+        salePrice: precioVenta,
       );
     } else {
       guardada = await provider.editar(
@@ -79,6 +87,7 @@ class _PartFormScreenState extends State<PartFormScreen> {
         name: _nombreController.text.trim(),
         code: _codigoController.text.trim(),
         minStock: int.tryParse(_minimoController.text.trim()) ?? 0,
+        salePrice: precioVenta,
         isActive: _activo,
       );
     }
@@ -165,6 +174,33 @@ class _PartFormScreenState extends State<PartFormScreen> {
                     validator: (valor) => (valor == null || valor.trim().isEmpty)
                         ? 'El código es obligatorio.'
                         : null,
+                  ),
+                  const SizedBox(height: MotorixEspaciados.m),
+                  TextFormField(
+                    controller: _precioController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Precio de venta',
+                      hintText: 'Vacío = sin precio (pendiente)',
+                      prefixText: '\$ ',
+                    ),
+                    validator: (valor) {
+                      final texto = valor?.trim() ?? '';
+                      if (texto.isEmpty) return null;
+                      final numero = double.tryParse(texto);
+                      if (numero == null || numero < 0) {
+                        return 'Ingrese un precio mayor o igual a cero.';
+                      }
+                      final dosDecimales = (numero * 100)
+                              .roundToDouble()
+                              .compareTo(numero * 100) ==
+                          0;
+                      if (!dosDecimales) {
+                        return 'Máximo 2 decimales.';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: MotorixEspaciados.m),
                   if (_esAlta)

@@ -18,6 +18,7 @@ export async function listar(filtros = {}, usuario) {
   return partModel.findAll({
     q: filtros.q || null,
     soloActivas: usuario.role !== 'ADMIN',
+    pendientesPrecio: Boolean(filtros.pendientesPrecio),
   });
 }
 
@@ -50,6 +51,10 @@ export async function crear(datos, usuario) {
         name: datos.name.trim(),
         code: codigo,
         minStock,
+        // Precio de venta opcional (005, FR-001); null = pendiente.
+        salePrice: datos.salePrice !== undefined && datos.salePrice !== ''
+          ? Number(datos.salePrice)
+          : null,
       },
       conexion
     );
@@ -92,6 +97,14 @@ export async function editar(id, datos) {
         ? Number(datos.minStock)
         : null,
     isActive: datos.isActive !== undefined ? datos.isActive : null,
+    // `salePrice` explícito (número o null para volver a dejarlo pendiente);
+    // si no viene en el payload se conserva el precio actual (005, FR-001).
+    salePrice:
+      datos.salePrice === undefined
+        ? undefined
+        : datos.salePrice === null || datos.salePrice === ''
+          ? null
+          : Number(datos.salePrice),
   });
 }
 

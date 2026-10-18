@@ -6,7 +6,14 @@ import { validarParte, validarMovimiento } from '../validators/part-validator.js
 import * as partService from '../services/part-service.js';
 
 export const listar = asyncHandler(async (req, res) => {
-  const partes = await partService.listar({ q: req.query.q }, req.user);
+  const partes = await partService.listar(
+    {
+      q: req.query.q,
+      // Filtro de pendientes de precio (005, FR-003, CA-17).
+      pendientesPrecio: req.query['pending-price'] === 'true',
+    },
+    req.user
+  );
   return ok(res, { datos: partes });
 });
 

@@ -75,6 +75,28 @@ class _PartsScreenState extends State<PartsScreen> {
             },
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: MotorixEspaciados.m),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FilterChip(
+              label: const Text('Solo sin precio de venta'),
+              avatar: Icon(
+                Icons.sell_outlined,
+                size: 18,
+                color: provider.soloPendientesPrecio
+                    ? MotorixColores.superficie
+                    : MotorixColores.advertencia,
+              ),
+              selected: provider.soloPendientesPrecio,
+              selectedColor: MotorixColores.advertencia,
+              onSelected: (valor) {
+                provider.soloPendientesPrecio = valor;
+                provider.recargar();
+              },
+            ),
+          ),
+        ),
         const SizedBox(height: MotorixEspaciados.s),
         if (provider.error != null)
           Padding(
@@ -136,14 +158,33 @@ class _TarjetaParte extends StatelessWidget {
           color: colorStock,
         ),
         title: Text(parte.name),
-        subtitle: Text(
-          'Código: ${parte.code}'
-          '${parte.isActive ? '' : ' · Inactiva'}',
-          style: TextStyle(
-            color: parte.isActive
-                ? MotorixColores.textoSecundario
-                : MotorixColores.error,
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Código: ${parte.code}'
+              '${parte.isActive ? '' : ' · Inactiva'}',
+              style: TextStyle(
+                color: parte.isActive
+                    ? MotorixColores.textoSecundario
+                    : MotorixColores.error,
+              ),
+            ),
+            // Precio de venta (005, FR-001): sin precio se marca en ámbar.
+            Text(
+              parte.salePrice == null
+                  ? 'Sin precio de venta'
+                  : 'Precio: \$${parte.salePrice!.toStringAsFixed(2)}',
+              style: TextStyle(
+                color: parte.salePrice == null
+                    ? MotorixColores.advertencia
+                    : MotorixColores.textoSecundario,
+                fontWeight: parte.salePrice == null
+                    ? FontWeight.w700
+                    : FontWeight.w400,
+              ),
+            ),
+          ],
         ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,

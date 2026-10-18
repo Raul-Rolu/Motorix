@@ -22,14 +22,23 @@ class PartsProvider extends ChangeNotifier {
   /// Búsqueda activa por nombre o código (FR-009, US6).
   String textoFiltro = '';
 
+  /// Filtro de refacciones pendientes de precio (005, FR-003, CA-17).
+  bool soloPendientesPrecio = false;
+
   Future<void> recargar() async {
     cargando = true;
     error = null;
     notifyListeners();
     try {
-      final sufijo = textoFiltro.isEmpty
-          ? ''
-          : '?q=${Uri.encodeComponent(textoFiltro)}';
+      final parametros = <String>[];
+      if (textoFiltro.isNotEmpty) {
+        parametros.add('q=${Uri.encodeComponent(textoFiltro)}');
+      }
+      if (soloPendientesPrecio) {
+        parametros.add('pending-price=true');
+      }
+      final sufijo =
+          parametros.isEmpty ? '' : '?${parametros.join('&')}';
       final respuesta = await api.get('/parts$sufijo');
       final datos = respuesta['datos'] as List<dynamic>? ?? [];
       partes = datos
@@ -51,21 +60,25 @@ class PartsProvider extends ChangeNotifier {
     required String code,
     int stock = 0,
     int minStock = 0,
+    double? salePrice,
   }) async {
     return _guardar({
       'name': name,
       'code': code,
       if (stock > 0) 'stock': stock,
       if (minStock > 0) 'minStock': minStock,
+      if (salePrice != null) 'salePrice': salePrice,
     });
   }
 
-  /// Edición de metadatos (nunca el stock, FR-013).
+  /// Edición de metadatos (nunca el stock, FR-013). `salePrice` null deja
+  /// la refacción pendiente de precio de nuevo (005, FR-001).
   Future<Part?> editar({
     required int id,
     required String name,
     required String code,
     int minStock = 0,
+    double? salePrice,
     bool isActive = true,
   }) async {
     return _guardar(
@@ -73,6 +86,7 @@ class PartsProvider extends ChangeNotifier {
         'name': name,
         'code': code,
         'minStock': minStock,
+        'salePrice': salePrice,
         'isActive': isActive,
       },
       id: id,

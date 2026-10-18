@@ -41,6 +41,21 @@ export function validarParte(body, { esEdicion = false } = {}) {
   if (datos.isActive !== undefined && typeof datos.isActive !== 'boolean') {
     errores.push('El estado (isActive) debe ser verdadero o falso.');
   }
+  // Precio de venta (005, FR-001): opcional; null = pendiente de precio.
+  // Válido si es numérico, no negativo y con hasta 2 decimales (CA-2).
+  if (
+    datos.salePrice !== undefined &&
+    datos.salePrice !== null &&
+    datos.salePrice !== ''
+  ) {
+    const precio = Number(datos.salePrice);
+    const dosDecimales = Math.abs(precio * 100 - Math.round(precio * 100)) < 1e-6;
+    if (!Number.isFinite(precio) || precio < 0 || !dosDecimales) {
+      errores.push(
+        'El precio de venta debe ser un número mayor o igual a cero con hasta 2 decimales.'
+      );
+    }
+  }
 
   return errores;
 }

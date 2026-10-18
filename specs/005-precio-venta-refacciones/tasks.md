@@ -58,19 +58,19 @@ description: "Lista de tareas para la feature 005-precio-venta-refacciones"
 
 ### Pruebas para la Historia de usuario 1 (PRIMERO; deben fallar)
 
-- [ ] T006 [P] [US1] Prueba unitaria del validador con `salePrice` válido, `null`, negativo y no numérico en `server/tests/unit/validators/part-validator-part-price.test.js` [FR-001][CA-2]
-- [ ] T007 [P] [US1] Prueba de integración de `POST /api/parts` y `PUT /api/parts/:id` con `salePrice` (guardado, consulta, rechazo negativo) en `server/tests/integration/parts-sale-price.test.js` [FR-001][CA-1][CA-2]
-- [ ] T008 [P] [US1] Prueba de integración del filtro `GET /api/parts?pending-price=true` (lista pendientes, lista vacía cuando todas tienen precio, solo activas) en `server/tests/integration/parts-pending-price.test.js` [FR-003][CA-17]
-- [ ] T009 [P] [US1] Pruebas de contrato con `salePrice` y denegación por rol (mecánico/recepción) en `server/tests/contract/parts.contract.test.js` [FR-002][CA-16]
-- [ ] T010 [P] [US1] Prueba de Flutter del modelo `salePrice` (con precio, sin precio) en `client/test/part_price_test.dart` [FR-001]
+- [X] T006 [P] [US1] Prueba unitaria del validador con `salePrice` válido, `null`, negativo y no numérico en `server/tests/unit/validators/part-validator-part-price.test.js` [FR-001][CA-2]
+- [X] T007 [P] [US1] Prueba de integración de `POST /api/parts` y `PUT /api/parts/:id` con `salePrice` (guardado, consulta, rechazo negativo) en `server/tests/integration/parts-sale-price.test.js` [FR-001][CA-1][CA-2]
+- [X] T008 [P] [US1] Prueba de integración del filtro `GET /api/parts?pending-price=true` (lista pendientes, lista vacía cuando todas tienen precio, solo activas) en `server/tests/integration/parts-pending-price.test.js` [FR-003][CA-17]
+- [X] T009 [P] [US1] Pruebas de contrato con `salePrice` y denegación por rol (mecánico/recepción) en `server/tests/contract/parts.contract.test.js` [FR-002][CA-16]
+- [X] T010 [P] [US1] Prueba de Flutter del modelo `salePrice` (con precio, sin precio) en `client/test/part_price_test.dart` [FR-001]
 
 ### Implementación para la Historia de usuario 1
 
-- [ ] T011 [P] [US1] Agregar `salePrice` al mapeo y a la consulta del modelo en `server/models/part.js` (incluido el filtro `sale_price IS NULL AND is_active = 1` para pendientes) [FR-001][FR-003]
-- [ ] T012 [US1] Validar `salePrice` (decimal no negativo o ausente/`null`) en `server/validators/part-validator.js` [FR-001][CA-2]
-- [ ] T013 [US1] Aceptar y persistir `salePrice` en alta y edición en `server/services/part-service.js`, con la denegación a roles distintos de ADMIN verificada en el servidor en `server/routes/part-routes.js` y `server/controllers/part-controller.js` [FR-001][FR-002][CA-16]
-- [ ] T014 [US1] Exponer el query param `pending-price` en `server/controllers/part-controller.js` (delegando el filtro al modelo de T011) [FR-003][CA-17]
-- [ ] T015 [US1] Agregar `salePrice` a `client/lib/models/part.dart`, el filtro de pendientes a `client/lib/providers/parts_provider.dart`, el precio en `client/lib/screens/parts_screen.dart` (con indicador ámbar de pendiente) y el campo de precio en `client/lib/screens/part_form_screen.dart`, siguiendo `docs/design-system.md` [FR-001][FR-003][CA-1][CA-17]
+- [X] T011 [P] [US1] Agregar `salePrice` al mapeo y a la consulta del modelo en `server/models/part.js` (incluido el filtro `sale_price IS NULL AND is_active = 1` para pendientes) [FR-001][FR-003]
+- [X] T012 [US1] Validar `salePrice` (decimal no negativo o ausente/`null`) en `server/validators/part-validator.js` [FR-001][CA-2]
+- [X] T013 [US1] Aceptar y persistir `salePrice` en alta y edición en `server/services/part-service.js`, con la denegación a roles distintos de ADMIN verificada en el servidor en `server/routes/part-routes.js` y `server/controllers/part-controller.js` [FR-001][FR-002][CA-16]
+- [X] T014 [US1] Exponer el query param `pending-price` en `server/controllers/part-controller.js` (delegando el filtro al modelo de T011) [FR-003][CA-17]
+- [X] T015 [US1] Agregar `salePrice` a `client/lib/models/part.dart`, el filtro de pendientes a `client/lib/providers/parts_provider.dart`, el precio en `client/lib/screens/parts_screen.dart` (con indicador ámbar de pendiente) y el campo de precio en `client/lib/screens/part_form_screen.dart`, siguiendo `docs/design-system.md` [FR-001][FR-003][CA-1][CA-17]
 
 **Punto de control**: la US1 es funcional y verificable por sí sola — precio visible y editable en la ficha, pendientes listados, roles validados.
 
