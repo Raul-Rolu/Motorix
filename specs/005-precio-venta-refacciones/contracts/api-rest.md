@@ -9,7 +9,7 @@ Extiende el contrato base (ver `specs/003-historial-inventario/contracts/api-res
 - **`salePrice`** (`number | null`): precio de venta de una refacción; `null` = pendiente de precio (D1). No negativo, hasta 2 decimales.
 - **`unitPrice`** (`number | null`): precio congelado de un uso de refacción en una orden (D2); `null` solo en usos antiguos sin asignar.
 - **Totales con refacciones**: todo recurso que hoy devolvía el total de una orden (`GET /api/orders/:id`, `GET /api/orders/:id/payments`, ticket) ahora lo deriva como servicios + mano de obra + `unitPrice × quantity` (CA-6, CA-12, CA-14). El objeto de total incorpora `refacciones` (suma) y `totalCompleto` (booleano) + `refaccionesSinPrecio` (cantidad, D8).
-- **Nuevo código de error**: `TOTAL_INCOMPLETO` (**409**): la orden tiene usos de refacciones sin precio; `details` incluye `refaccionesSinPrecio` (lista de `{ orderPartId, partId, nombre }`) y el mensaje indica que falta asignar precio de venta (FR-008, CA-9, CA-10).
+- **Nuevo código de error**: `TOTAL_INCOMPLETO` (**409**): la orden **no liquidada** tiene usos de refacciones sin precio; `details` incluye `refaccionesSinPrecio` (lista de `{ orderPartId, partId, nombre }`) y el mensaje indica que falta asignar precio de venta (FR-008, CA-9, CA-10). No aplica a órdenes ya liquidadas, que conservan su total histórico (FR-016, CA-21).
 - **Nuevo código de error**: `PART_SIN_PRECIO` (**409**): se intentó agregar a una orden una refacción sin `salePrice` (FR-005, CA-8); no cambian la orden ni el inventario.
 
 ## Endpoints que cambian
@@ -17,7 +17,7 @@ Extiende el contrato base (ver `specs/003-historial-inventario/contracts/api-res
 ### `GET /api/parts` (FR-003, CA-17)
 
 - **Roles**: ADMIN, RECEPTIONIST, MECHANIC (sin cambio)
-- **Cambio de contrato**: cada refacción incluye `salePrice`; nuevo query param opcional `?pending-price=true` que filtra solo las refacciones activas con `salePrice` nulo (lista de pendientes de precio, D7). Con el filtro, la lista queda vacía cuando todas tienen precio.
+- **Cambio de contrato**: cada refacción incluye `salePrice`; nuevo query param opcional `?pending-price=true` que filtra solo las refacciones **activas** (`is_active = 1`) con `salePrice` nulo (lista de pendientes de precio, D7; FR-003/CA-17). Con el filtro, la lista queda vacía cuando todas las activas tienen precio.
 - **Respuesta 200** (fracción):
 
 ```json
@@ -70,7 +70,7 @@ Extiende el contrato base (ver `specs/003-historial-inventario/contracts/api-res
 ### `GET /api/orders/:id/payments` (FR-009, FR-012, CA-12, CA-19)
 
 - **Roles**: sin cambio
-- **Cambio de respuesta**: `total` ahora incluye las refacciones y el objeto agrega `totalCompleto`; con total incompleto, `saldoPendiente` sigue siendo informativo pero `estadoCobro` no permite liquidar (el cobro está bloqueado, D8).
+- **Cambio de respuesta**: `total` ahora incluye las refacciones y el objeto agrega `totalCompleto`; con total incompleto en una orden no liquidada, `saldoPendiente` sigue siendo informativo pero no puede registrarse ningún pago (`TOTAL_INCOMPLETO`, D8); una orden ya liquidada conserva `estadoCobro: "LIQUIDADA"` con su total histórico aunque tenga usos sin precio (FR-016).
 - **Ejemplo**: total $1,610, cobrado $800 → `saldoPendiente: 810.0`, `estadoCobro: "PARCIAL"`.
 
 ### `POST /api/orders/:id/payments` (FR-009, CA-10)
@@ -85,8 +85,8 @@ Extiende el contrato base (ver `specs/003-historial-inventario/contracts/api-res
 ### `GET /api/tickets/:orderId` (FR-010, FR-013, FR-014, CA-13, CA-14)
 
 - **Roles**: sin cambio (ADMIN, RECEPTIONIST)
-- **Regla nueva**: con total incompleto no se emite ni se consulta el ticket: `TOTAL_INCOMPLETO` (409) con `details.refaccionesSinPrecio` (CA-10); la emisión automática (`emitirSiFalta`) se omite en ese caso.
-- **Cambio de contenido**: `total` incluye las refacciones (idéntico al de la orden, CA-14) y cada línea de `refacciones` ahora es `{ nombre, codigo, cantidad, unitPrice, amount }` (CA-13); el bloque incluye `totalCompleto`.
+- **Regla nueva**: en una orden **no liquidada** con total incompleto no se emite ni se consulta el ticket: `TOTAL_INCOMPLETO` (409) con `details.refaccionesSinPrecio` (CA-10); la emisión automática (`emitirSiFalta`) se omite en ese caso. En una orden **ya liquidada** el ticket se emite sin bloqueo con su total histórico (FR-016, CA-21).
+- **Cambio de contenido**: `total` incluye las refacciones (idéntico al de la orden, CA-14) y cada línea de `refacciones` ahora es `{ nombre, codigo, cantidad, unitPrice, amount }` (CA-13); el bloque incluye `totalCompleto`; en una orden liquidada con usos sin precio esas líneas se envían con `unitPrice: null`, `amount: null` y `"sinPrecio": true` (FR-016).
 
 ```json
 {

@@ -28,7 +28,7 @@ Campos existentes sin cambio: `id`, `order_id`, `part_id`, `quantity`, `created_
 
 **Reglas asociadas**:
 - El importe de la línea se deriva: `unit_price × quantity` (**FR-007**); no se almacena importe derivado (evita duplicar verdad, CA "sin duplicar importes" del FR-003 del spec 004).
-- Una línea con `unit_price IS NULL` marca a su orden con total incompleto (**FR-008**); su adopción posterior solo ocurre en órdenes abiertas no liquidadas (**FR-011**).
+- Una línea con `unit_price IS NULL` marca a su orden con total incompleto (**FR-008**); el cobro y el ticket se bloquean solo en órdenes no liquidadas (**FR-009, FR-010**), y su adopción posterior solo ocurre en órdenes abiertas no liquidadas (**FR-011**). En órdenes ya liquidadas el total histórico no cambia y el ticket muestra las líneas sin precio marcadas como "sin precio" (**FR-016**).
 
 ### Tablas sin cambio de esquema
 
@@ -81,10 +81,11 @@ Al actualizar una refacción con precio nuevo, en la misma operación:
 UPDATE order_parts SET unit_price = :nuevoPrecio
  WHERE part_id = :id AND unit_price IS NULL
    AND order_id IN (órdenes con status NOT IN ('ENTREGADO','CANCELADA')
-                    y pagos COMPLETED < total recalculado de esa orden)
+                    y pagos COMPLETED < total previo a la adopción,
+                    calculado sin los usos que van a adoptarse)
 ```
 
-Los usos de órdenes pagadas (o entregadas/canceladas) conservan `NULL` y su total histórico no cambia (**FR-011** + Supuestos; fuera de alcance recalcularlas). El saldo pendiente de las órdenes adoptantes se recalcula al vuelo (CA-19).
+El total previo evita la circularidad de evaluar la liquidación con los usos que aún no tienen precio y evita que una orden ya pagada adopte (hallazgo AMB-01 del análisis; criterio fijado en Clarifications, "Sesión posterior al análisis"). Los usos de órdenes ya liquidadas (o entregadas/canceladas) conservan `NULL` y su total histórico no cambia (**FR-011** + Supuestos; fuera de alcance recalcularlas). La adopción solo ajusta el saldo pendiente y nunca deja liquidada a una orden (el precio adoptado no reduce el total). El saldo pendiente de las órdenes adoptantes se recalcula al vuelo (CA-19).
 
 ## Estados y transiciones (de uso de refacción)
 
@@ -94,8 +95,9 @@ Los usos de órdenes pagadas (o entregadas/canceladas) conservan `NULL` y su tot
 | Agregar refacción sin precio | Se rechaza: sin línea, sin movimiento, sin cambio de total | FR-005 |
 | Cambiar `sale_price` | No altera líneas existentes con precio; adopta en líneas `NULL` de órdenes abiertas no liquidadas | FR-006, FR-011 |
 | Retirar refacción de la orden | Se elimina la línea, `IN` de inventario; el total baja por su importe | FR-007 |
-| Registrar pago con total incompleto | Se rechaza (`409 TOTAL_INCOMPLETO`) | FR-009 |
-| Generar ticket con total incompleto | Se rechaza (`409 TOTAL_INCOMPLETO`) | FR-010 |
+| Registrar pago con total incompleto en orden no liquidada | Se rechaza (`409 TOTAL_INCOMPLETO`) | FR-009 |
+| Generar ticket con total incompleto en orden no liquidada | Se rechaza (`409 TOTAL_INCOMPLETO`) | FR-010 |
+| Generar ticket de orden ya liquidada con usos sin precio | Se emite con el total histórico; las líneas sin precio van marcadas "sin precio" (`unitPrice`/`amount` nulos, `sinPrecio: true`) | FR-016 |
 
 ## Datos de ejemplo (seed 008, FR-015)
 
@@ -103,7 +105,7 @@ Los usos de órdenes pagadas (o entregadas/canceladas) conservan `NULL` y su tot
 |----------|-----------|--------|
 | Precios de las 6 refacciones existentes | `sale_price` asignado a los IDs 1–6 | FR-015 |
 | Refacción nueva sin precio (activa) | Ejemplo de "pendiente de precio" visible en el inventario, sin uso en ninguna orden | FR-003 (demostración), FR-015 (no deja órdenes incompletas) |
-| Usos con precio congelado | Líneas en la orden 2 (EN_REPARACION, pagos parciales de la orden) con `unit_price` y sus `OUT` de inventario; `stock` ajustado para conservar `stock = IN + OUT + ajustes` | FR-004, FR-007, FR-012 (demostración) |
+| Usos con precio congelado | Líneas en la orden 2 (EN_REPARACION, pagos parciales de la orden) con `unit_price` y sus `OUT` de inventario; `stock` se fija en **valores absolutos** que satisfacen `stock = IN + OUT + ajustes` tras aplicar el seed (sin dependencia del stock previo, para que el seed 008 sea idempotente — hallazgo INC-03) | FR-004, FR-007, FR-012 (demostración) |
 | Órdenes 1, 3, 4, 5 | Sin usos nuevos: la 4 está ENTREGADO (cerrada) y ya liquidada; la 3 espera una refacción fuera del catálogo; la 1 y 5 no tienen trabajo registrado | Regla de orden cerrada + FR-015 |
 
 Ninguna orden de ejemplo queda con `partsIncomplete > 0` tras aplicar seeds (**CA-20**).

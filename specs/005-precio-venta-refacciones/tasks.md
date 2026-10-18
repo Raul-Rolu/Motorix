@@ -32,7 +32,7 @@ description: "Lista de tareas para la feature 005-precio-venta-refacciones"
 **Propósito**: esquema, datos de ejemplo y ajuste de la preparación de las pruebas existentes; todo lo demás depende de esta fase.
 
 - [ ] T001 Crear la migración `database/migrations/016_add_part_prices.sql` que agrega `parts.sale_price DECIMAL(10,2) NULL` con `CHECK (sale_price >= 0)` y `order_parts.unit_price DECIMAL(10,2) NULL` con `CHECK (unit_price >= 0)`, sin editar las migraciones 001–015 [FR-001][FR-004]
-- [ ] T002 Crear el seed idempotente `database/seeds/008_demo_part_prices.sql` (IDs fijos + `ON DUPLICATE KEY UPDATE`): precios de venta para las refacciones 1–6, una refacción nueva activa SIN precio para el filtro de pendientes, y usos con `unit_price` congelado en la orden 2 con sus movimientos `OUT` y ajuste de stock (stock = IN + OUT + ajustes, ≥ 0), sin editar los seeds 001–007 [FR-015][FR-003][CA-20]
+- [ ] T002 Crear el seed idempotente `database/seeds/008_demo_part_prices.sql` (IDs fijos + `ON DUPLICATE KEY UPDATE`): precios de venta para las refacciones 1–6, una refacción nueva activa SIN precio para el filtro de pendientes, y usos con `unit_price` congelado en la orden 2 con sus movimientos `OUT` y **stock fijado en valores absolutos** que satisfagan `stock = IN + OUT + ajustes` (≥ 0, sin depender del stock previo, para que el seed sea reejecutable), sin editar los seeds 001–007 [FR-015][FR-003][CA-20]
 - [ ] T003 Adaptar la PREPARACIÓN de las pruebas existentes que agregan refacciones a órdenes — registrar primero un precio de venta en la preparación de cada caso, SIN cambiar ninguna aserción — en `server/tests/integration/order-parts.test.js`, `server/tests/contract/order-parts.contract.test.js` y el barrido de `server/tests/integration/inventory.test.js` y `server/tests/integration/parts*.test.js` [FR-005][CA-8]
 - [ ] T004 Agregar los códigos de error nuevos al catálogo en `server/utils/errors.js`: `PART_SIN_PRECIO` (409) y `TOTAL_INCOMPLETO` (409, con `details.refaccionesSinPrecio`) [FR-005][FR-008]
 
@@ -85,7 +85,7 @@ description: "Lista de tareas para la feature 005-precio-venta-refacciones"
 ### Pruebas para la Historia de usuario 2 (PRIMERO; deben fallar)
 
 - [ ] T016 [P] [US2] Prueba unitaria del cálculo de totales con `unit_price × quantity` y bandera `partsIncomplete` (incluido el caso sin partes: total $0) en `server/tests/unit/order-totals-parts.test.js` [FR-007][FR-008][CA-7]
-- [ ] T017 [P] [US2] Prueba de integración de `POST /api/orders/:id/parts` con precio: uso guardado con `unitPrice` congelado, stock descontado y total reflejado; y con cambio de precio posterior sin alterar el total, en `server/tests/integration/order-totals-parts.test.js` [FR-004][FR-006][FR-007][CA-3][CA-4][CA-6]
+- [ ] T017 [P] [US2] Prueba de integración de `POST /api/orders/:id/parts` con precio: uso guardado con `unitPrice` congelado, stock descontado y total reflejado; cambio de precio posterior sin alterar el total pero elevando el importe al agregar la refacción a una orden nueva (CA-5); y actualización del contrato de detalle `server/tests/contract/orders-detail.contract.test.js` con `refacciones` y `totalCompleto` en la respuesta, en `server/tests/integration/order-totals-parts.test.js` [FR-004][FR-006][FR-007][CA-3][CA-4][CA-5][CA-6]
 - [ ] T018 [P] [US2] Prueba de integración del rechazo `PART_SIN_PRECIO` (sin cambio de total ni de stock) y del retiro que baja el total, en `server/tests/integration/order-parts-rejection.test.js` [FR-005][FR-007][CA-8][CA-15]
 - [ ] T019 [P] [US2] Prueba de integración de la adopción de precio al editar la refacción (orden abierta parcialmente pagada adopta y ajusta saldo; orden pagada y entregada/cancelada quedan intactas) en `server/tests/integration/part-price-adoption.test.js` [FR-011][CA-11][CA-19]
 
@@ -109,15 +109,15 @@ description: "Lista de tareas para la feature 005-precio-venta-refacciones"
 ### Pruebas para la Historia de usuario 3 (PRIMERO; deben fallar)
 
 - [ ] T024 [P] [US3] Prueba de integración de pagos con total que incluye refacciones (saldo = total − pagos; liquidación) y bloqueo `TOTAL_INCOMPLETO` en `POST /api/orders/:id/payments` y `/payments/digital`, en `server/tests/integration/payments-parts-total.test.js` [FR-009][FR-012][CA-10][CA-12]
-- [ ] T025 [P] [US3] Prueba de integración del ticket con desglose de refacciones (cantidad, precio, importe; total idéntico al de la orden) y bloqueo `TOTAL_INCOMPLETO` en emisión y consulta, en `server/tests/integration/tickets-parts.test.js` [FR-010][FR-013][FR-014][CA-13][CA-14]
+- [ ] T025 [P] [US3] Prueba de integración del ticket con desglose de refacciones (cantidad, precio, importe; total idéntico al de la orden) y bloqueo `TOTAL_INCOMPLETO` en emisión y consulta en una orden no liquidada; y del ticket de una orden **ya liquidada** con usos sin precio: se emite con el total histórico y las líneas marcadas `sinPrecio`, en `server/tests/integration/tickets-parts.test.js` [FR-010][FR-013][FR-014][FR-016][CA-13][CA-14][CA-21]
 - [ ] T026 [P] [US3] Pruebas de contrato actualizadas con el total con refacciones y los nuevos códigos en `server/tests/contract/payments.contract.test.js` y `server/tests/contract/tickets.contract.test.js` [FR-009][FR-010]
 - [ ] T027 [P] [US3] Extender la prueba de flujo de pago de Flutter con el aviso de total incompleto en `client/test/payment_flow_test.dart` y el desglose del ticket en `client/test/ticket_test.dart` [FR-009][FR-013]
 
 ### Implementación para la Historia de usuario 3
 
 - [ ] T028 [US3] Usar el total con refacciones y bloquear con `TOTAL_INCOMPLETO` (antes de `PAYMENT_EXCEEDS_BALANCE`) en `server/services/payment-service.js` (`listar`, `registrar`, `crearCobroDigital`) [FR-009][FR-012][CA-10][CA-12]
-- [ ] T029 [US3] Agregar el desglose `{ nombre, codigo, cantidad, unitPrice, amount }` y el bloqueo `TOTAL_INCOMPLETO` en emisión/consulta y en la emisión automática en `server/services/ticket-service.js` [FR-010][FR-013][FR-014][CA-13][CA-14]
-- [ ] T030 [US3] Mostrar el desglose con precios en `client/lib/screens/ticket_screen.dart` con `client/lib/providers/ticket_provider.dart`, y el aviso/bloqueo de total incompleto en `client/lib/screens/payment_form_screen.dart` con `client/lib/providers/payments_provider.dart` [FR-009][FR-010][CA-13]
+- [ ] T029 [US3] Agregar el desglose `{ nombre, codigo, cantidad, unitPrice, amount }` y el bloqueo `TOTAL_INCOMPLETO` (solo en órdenes no liquidadas) en emisión/consulta y en la emisión automática en `server/services/ticket-service.js`; en órdenes ya liquidadas emitir sin bloqueo, con `unitPrice`/`amount` nulos y `"sinPrecio": true` en las líneas sin precio [FR-010][FR-013][FR-014][FR-016][CA-13][CA-14][CA-21]
+- [ ] T030 [US3] Mostrar el desglose con precios en `client/lib/screens/ticket_screen.dart` con `client/lib/providers/ticket_provider.dart` (las líneas con `sinPrecio` se muestran como **"sin precio"** en lugar del importe), y el aviso/bloqueo de total incompleto en `client/lib/screens/payment_form_screen.dart` con `client/lib/providers/payments_provider.dart` [FR-009][FR-010][FR-016][CA-13][CA-21]
 
 **Punto de control**: las tres historias funcionan de forma independiente y el flujo completo orden → cobro → ticket refleja el total con refacciones.
 
@@ -207,6 +207,7 @@ Tarea: "Validar salePrice ... en server/validators/part-validator.js"           
 
 - `[P]` = archivos distintos, sin dependencias; `[US1/US2/US3]` = trazabilidad a la historia.
 - Cada tarea cita `[FR-xxx]` o `[CA-xx]` para trazabilidad por requisito.
+- Trazabilidad de numeración: `FR-016` y `CA-21` se agregaron después del análisis pre-implementación (remediación del hallazgo INC-01, registrada en Clarifications, "Sesión posterior al análisis"); no renumeran tareas ni FR/CA existentes.
 - Las pruebas se escriben primero y deben fallar antes de implementar.
 - No se ejecutan comandos de git ni se hacen commits en esta fase; tampoco se agregan dependencias.
 - Alcance mínimo del spec: sin precio de compra ni reportes de utilidad; no se modifican specs, migraciones ni seeds de los sprints 1–4.
