@@ -56,8 +56,18 @@ async function prepararEntorno() {
     'INSERT INTO order_services (order_id, description, amount) VALUES (?, ?, ?)',
     [creacion.body.id, 'Servicio de contrato', 300]
   );
+  // 005-precio-venta-refacciones (T026): uso con precio para validar el
+  // desglose de refacciones del contrato (CA-13).
+  const [parte] = await getPool().query(
+    'INSERT INTO parts (name, code, stock, sale_price) VALUES (?, ?, ?, ?)',
+    ['Refacción de contrato', 'CTK-001', 5, 100]
+  );
+  await getPool().query(
+    'INSERT INTO order_parts (order_id, part_id, quantity, unit_price) VALUES (?, ?, ?, ?)',
+    [creacion.body.id, parte.insertId, 1, 100]
+  );
 
-  return { token: login.body.token, orderId: creacion.body.id };
+  return { token: login.body.token, orderId: creacion.body.id, partId: parte.insertId };
 }
 
 test('GET /api/tickets/:orderId sigue la forma del contrato', async () => {
@@ -89,17 +99,31 @@ test('GET /api/tickets/:orderId sigue la forma del contrato', async () => {
       kilometraje: expect.any(Number),
     },
     servicios: expect.any(Array),
-    refacciones: expect.any(Array),
     manoObra: expect.any(Number),
     subtotal: expect.any(Number),
     total: expect.any(Number),
+    // 005-precio-venta-refacciones (T026): marca de total completo (FR-010).
+    totalCompleto: true,
     metodosDePago: expect.any(Array),
     estadoPago: expect.any(String),
     saldoPendiente: expect.any(Number),
   });
 
+  // 005-precio-venta-refacciones (T026): desglose de refacciones con precio
+  // e importe por línea (CA-13).
+  expect(ticket.body.refacciones).toHaveLength(1);
+  expect(ticket.body.refacciones[0]).toMatchObject({
+    nombre: expect.any(String),
+    codigo: 'CTK-001',
+    cantidad: 1,
+    unitPrice: 100,
+    amount: 100,
+    sinPrecio: false,
+  });
+
   expect(['PENDIENTE', 'PARCIAL', 'LIQUIDADA']).toContain(ticket.body.estadoPago);
-  expect(ticket.body.total).toBe(300);
+  // Total con la refacción incluida: 300 de servicio + 100 de refacción (CA-14).
+  expect(ticket.body.total).toBe(400);
 });
 
 test('los errores del ticket siguen el envoltorio centralizado', async () => {

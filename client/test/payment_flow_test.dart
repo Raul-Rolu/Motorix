@@ -43,12 +43,28 @@ const String _listadoLiquidado = '''
 }
 ''';
 
+// 005-precio-venta-refacciones, T027: orden con total incompleto (FR-009).
+const String _listadoIncompleto = '''
+{
+  "total": 1610.0,
+  "cobrado": 0.0,
+  "saldoPendiente": 1610.0,
+  "estadoCobro": "PENDIENTE",
+  "totalCompleto": false,
+  "refaccionesSinPrecio": 2,
+  "datos": []
+}
+''';
+
 /// Cliente HTTP falso: el GET devuelve el resumen y el POST confirma el cobro.
 class _ClienteFalso extends Fake implements http.Client {
   final bool liquidar;
+
+  /// Resumen alternativo a devolver en el GET (por defecto el parcial).
+  final String? listado;
   final List<http.BaseRequest> peticiones = [];
 
-  _ClienteFalso({this.liquidar = false});
+  _ClienteFalso({this.liquidar = false, this.listado});
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
@@ -69,7 +85,8 @@ class _ClienteFalso extends Fake implements http.Client {
         headers: {'content-type': 'application/json'},
       );
     }
-    final cuerpo = liquidar ? _listadoLiquidado : _listadoParcial;
+    final cuerpo = this.listado ??
+        (liquidar ? _listadoLiquidado : _listadoParcial);
     return http.StreamedResponse(
       Stream.fromIterable([utf8.encode(cuerpo)]),
       200,
@@ -175,5 +192,67 @@ void main() {
     expect(provider.pagos, isNotNull);
     expect(provider.pagos!.estadoCobro, 'LIQUIDADA');
     expect(provider.pagos!.saldoPendiente, 0.0);
+  });
+
+  // --- 005-precio-venta-refacciones, T027 (FR-009, FR-010, CA-10) ---
+
+  test('el modelo lee la marca de total incompleto y sus refacciones sin precio', () {
+    final pagos = PagosDeOrden.desdeJson(
+        jsonDecode(_listadoIncompleto) as Map<String, dynamic>);
+
+    expect(pagos.totalCompleto, isFalse);
+    expect(pagos.refaccionesSinPrecio, 2);
+
+    // Con la forma previa del contrato se asume total completo.
+    final completo = PagosDeOrden.desdeJson(
+        jsonDecode(_listadoParcial) as Map<String, dynamic>);
+    expect(completo.totalCompleto, isTrue);
+    expect(completo.refaccionesSinPrecio, 0);
+  });
+
+  testWidgets(
+      'con total incompleto el formulario avisa y bloquea el registro del cobro',
+      (tester) async {
+    final api = ApiClient(httpClient: _ClienteFalso(listado: _listadoIncompleto));
+    final provider = PaymentsProvider(api);
+
+    await tester.pumpWidget(_envolver(
+      provider,
+      const PaymentFormScreen(
+        orderId: 1,
+        saldoPendiente: 1610.0,
+        totalCompleto: false,
+        refaccionesSinPrecio: 2,
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    // Aviso ámbar de total incompleto (FR-010).
+    expect(find.byKey(const Key('avisoTotalIncompleto')), findsOneWidget);
+    expect(
+      find.textContaining('el total de la orden está incompleto'),
+      findsOneWidget,
+    );
+
+    // El registro queda bloqueado: el servidor respondería TOTAL_INCOMPLETO.
+    final boton =
+        tester.widget<ElevatedButton>(find.byKey(const Key('botonRegistrarCobro')));
+    expect(boton.onPressed, isNull);
+  });
+
+  testWidgets('con total completo el formulario sigue habilitado (regresión)',
+      (tester) async {
+    final api = ApiClient(httpClient: _ClienteFalso());
+    final provider = PaymentsProvider(api);
+
+    await tester.pumpWidget(_envolver(
+      provider,
+      const PaymentFormScreen(orderId: 1, saldoPendiente: 700.0),
+    ));
+
+    expect(find.byKey(const Key('avisoTotalIncompleto')), findsNothing);
+    final boton =
+        tester.widget<ElevatedButton>(find.byKey(const Key('botonRegistrarCobro')));
+    expect(boton.onPressed, isNotNull);
   });
 }

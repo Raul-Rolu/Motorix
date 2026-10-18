@@ -71,12 +71,21 @@ async function crearOrden(token, vehiculoId) {
   return respuesta.body;
 }
 
-/** Uso heredado sin precio + partidas de servicio (preparación directa). */
-async function prepararUsoSinPrecio(orderId, partId, { services = 1000, quantity = 1 } = {}) {
+/** Servicio base y uso heredado sin precio, por separado (preparación directa).
+ *
+ * 005 Fase 5 (FR-009): con el bloqueo TOTAL_INCOMPLETO un pago no puede
+ * registrarse sobre una orden incompleta, así que la preparación registra el
+ * pago cuando el total aún está completo y DESPUÉS aparece el uso heredado
+ * sin precio (el orden de eventos real de los datos de antes de la migración).
+ */
+async function prepararServicio(orderId, { services = 1000 } = {}) {
   await getPool().query(
     'INSERT INTO order_services (order_id, description, amount) VALUES (?, ?, ?)',
     [orderId, 'Servicio de adopción', services]
   );
+}
+
+async function usoSinPrecio(orderId, partId, { quantity = 1 } = {}) {
   await getPool().query(
     'INSERT INTO order_parts (order_id, part_id, quantity, unit_price) VALUES (?, ?, ?, NULL)',
     [orderId, partId, quantity]
@@ -98,11 +107,14 @@ test('una orden abierta parcialmente pagada adopta el precio y ajusta el saldo (
     .set('Authorization', `Bearer ${token}`)
     .send({ name: 'Refacción de adopción', code: 'ADO-001', stock: 10 });
   const orden = await crearOrden(token, vehiculoId);
-  await prepararUsoSinPrecio(orden.id, parte.body.id, { services: 1000 });
+  await prepararServicio(orden.id, { services: 1000 });
 
-  // Pago parcial: 800 de un total previo de 1000 (sin el uso sin precio).
+  // Pago parcial: 800 de un total previo de 1000 (el total aún está completo).
   const pagoParcial = await pago(orden.id, 800, token);
   expect(pagoParcial.status).toBe(201);
+
+  // El uso heredado sin precio aparece después (datos de antes de la migración).
+  await usoSinPrecio(orden.id, parte.body.id);
 
   const asignacion = await request(app)
     .put(`/api/parts/${parte.body.id}`)
@@ -135,11 +147,13 @@ test('una orden ya pagada por completo no adopta el precio (total previo, AMB-01
     .set('Authorization', `Bearer ${token}`)
     .send({ name: 'Refacción pagada', code: 'ADO-002', stock: 10 });
   const orden = await crearOrden(token, vehiculoId);
-  await prepararUsoSinPrecio(orden.id, parte.body.id, { services: 500 });
+  await prepararServicio(orden.id, { services: 500 });
 
-  // Pago igual al total previo (500): la orden queda liquidada.
+  // Pago igual al total previo (500): la orden queda liquidada mientras el
+  // total aún está completo (FR-009 no aplica).
   const pagoTotal = await pago(orden.id, 500, token);
   expect(pagoTotal.status).toBe(201);
+  await usoSinPrecio(orden.id, parte.body.id);
 
   await request(app)
     .put(`/api/parts/${parte.body.id}`)
@@ -161,7 +175,8 @@ test('una orden entregada o cancelada no adopta el precio', async () => {
     .send({ name: 'Refacción cerrada', code: 'ADO-003', stock: 10 });
 
   const entregada = await crearOrden(token, vehiculoId);
-  await prepararUsoSinPrecio(entregada.id, parte.body.id, { services: 700 });
+  await prepararServicio(entregada.id, { services: 700 });
+  await usoSinPrecio(entregada.id, parte.body.id);
   await getPool().query("UPDATE service_orders SET status = 'ENTREGADO' WHERE id = ?", [
     entregada.id,
   ]);
@@ -171,7 +186,8 @@ test('una orden entregada o cancelada no adopta el precio', async () => {
     'UPDATE service_orders SET vehicle_id = ?, mileage_entry = ?, status = ? WHERE id = ?',
     [vehiculoId, 12000, 'CANCELADA', cancelada.id]
   );
-  await prepararUsoSinPrecio(cancelada.id, parte.body.id, { services: 300 });
+  await prepararServicio(cancelada.id, { services: 300 });
+  await usoSinPrecio(cancelada.id, parte.body.id);
 
   await request(app)
     .put(`/api/parts/${parte.body.id}`)
