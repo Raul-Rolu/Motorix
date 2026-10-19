@@ -167,6 +167,34 @@ test('una orden ya pagada por completo no adopta el precio (total previo, AMB-01
   expect(uso.unit_price).toBeNull();
 });
 
+// --- T035: total previo cero sí adopta (corrección de la regla) ---
+
+test('una orden abierta con total previo cero y cobrado cero sí adopta el precio (T035)', async () => {
+  // La orden no tiene servicios ni mano de obra: total previo 0 y cobrado 0.
+  // NO está liquidada (solo lo está una orden con total previo > 0 alcanzado
+  // por lo cobrado), así que el uso sin precio debe adoptar el precio.
+  const { token, vehiculoId } = await prepararEntorno();
+  const parte = await request(app)
+    .post('/api/parts')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ name: 'Refacción de orden vacía', code: 'ADO-004', stock: 10 });
+  const orden = await crearOrden(token, vehiculoId);
+  await usoSinPrecio(orden.id, parte.body.id);
+
+  const asignacion = await request(app)
+    .put(`/api/parts/${parte.body.id}`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ salePrice: 75 });
+  expect(asignacion.status).toBe(200);
+
+  const [[uso]] = await getPool().query(
+    'SELECT unit_price FROM order_parts WHERE order_id = ? AND part_id = ?',
+    [orden.id, parte.body.id]
+  );
+  expect(uso.unit_price).not.toBeNull();
+  expect(Number(uso.unit_price)).toBe(75);
+});
+
 test('una orden entregada o cancelada no adopta el precio', async () => {
   const { token, vehiculoId } = await prepararEntorno();
   const parte = await request(app)

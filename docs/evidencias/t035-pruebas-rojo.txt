@@ -1,0 +1,37 @@
+===== server (jest) — T035 antes de la corrección =====
+node : (node:26124) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+En línea: 1 Carácter: 12
++ $salida = (node --experimental-vm-modules ./node_modules/jest/bin/jes ...
++            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:26124) Ex...nge at any time:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+FAIL tests/integration/part-price-adoption.test.js
+  ΓêÜ una orden abierta parcialmente pagada adopta el precio y ajusta el saldo (CA-11) (389 ms)
+  ΓêÜ una orden ya pagada por completo no adopta el precio (total previo, AMB-01) (300 ms)
+  ├ù una orden abierta con total previo cero y cobrado cero s├¡ adopta el precio (T035) (397 ms)
+  ΓêÜ una orden entregada o cancelada no adopta el precio (386 ms)
+
+  ΓùÅ una orden abierta con total previo cero y cobrado cero s├¡ adopta el precio (T035)
+
+    expect(received).not.toBeNull()
+
+    Received: null
+
+    [0m [90m 192 |[39m     [orden[33m.[39mid[33m,[39m parte[33m.[39mbody[33m.[39mid]
+     [90m 193 |[39m   )[33m;[39m
+    [31m[1m>[22m[39m[90m 194 |[39m   
+expect(uso[33m.[39munit_price)[33m.[39mnot[33m.[39mtoBeNull()[33m;[39m
+     [90m     |[39m                              [31m[1m^[22m[39m
+     [90m 195 |[39m   expect([33mNumber[39m(uso[33m.[39munit_price))[33m.[39mtoBe([35m75[39m)[33m;[39m
+     [90m 196 |[39m })[33m;[39m
+     [90m 197 |[39m[0m
+
+      at Object.<anonymous> (tests/integration/part-price-adoption.test.js:194:30)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 passed, 4 total
+Snapshots:   0 total
+Time:        2.964 s, estimated 4 s
+Ran all test suites matching /part-price-adoption/i.
