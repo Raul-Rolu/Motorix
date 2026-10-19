@@ -1,0 +1,20 @@
+===== server (jest) — T035 después de la corrección =====
+node : (node:24444) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+En línea: 1 Carácter: 12
++ $salida = (node --experimental-vm-modules ./node_modules/jest/bin/jes ...
++            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:24444) Ex...nge at any time:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/integration/part-price-adoption.test.js
+  ΓêÜ una orden abierta parcialmente pagada adopta el precio y ajusta el saldo (CA-11) (389 ms)
+  ΓêÜ una orden ya pagada por completo no adopta el precio (total previo, AMB-01) (267 ms)
+  ΓêÜ una orden abierta con total previo cero y cobrado cero s├¡ adopta el precio (T035) (375 ms)
+  ΓêÜ una orden entregada o cancelada no adopta el precio (388 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        2.84 s, estimated 3 s
+Ran all test suites matching /part-price-adoption/i.

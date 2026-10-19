@@ -114,15 +114,17 @@ export async function update({ id, name, code, minStock, isActive, salePrice }) 
 }
 
 /**
- * Adopción dirigida de precio (005, FR-011, research D4 + AMB-01): copia el
- * precio nuevo a los usos SIN precio (`unit_price IS NULL`) solo de órdenes
- * abiertas NO liquidadas, evaluando la liquidación contra el total PREVIO a
- * la adopción (servicios + mano de obra + usos ya con precio), de modo que
- * una orden ya pagada nunca adopta y no hay circularidad. Los pagos
- * registrados se conservan y el saldo se recalcula al vuelo; la adopción
- * nunca deja liquidada a una orden porque el precio no reduce el total. El
- * GROUP BY fuerza la materialización de la subconsulta (evita el error
- * 1093 de MySQL al leer `order_parts` mientras se actualiza).
+ * Adopción dirigida de precio (005, FR-011, research D4 + AMB-01 + T035): copia
+ * el precio nuevo a los usos SIN precio (`unit_price IS NULL`) solo de órdenes
+ * abiertas NO liquidadas, evaluando la liquidación contra el total PREVIO a la
+ * adopción (servicios + mano de obra + usos ya con precio), de modo que una
+ * orden ya pagada nunca adopta y no hay circularidad. Una orden se considera
+ * liquidada SOLO si su total previo es mayor que cero y lo cobrado lo alcanza:
+ * con total previo 0 (orden sin partidas) y cobrado 0 NO está liquidada y SÍ
+ * adopta (T035). Los pagos registrados se conservan y el saldo se recalcula al
+ * vuelo; la adopción nunca deja liquidada a una orden porque el precio no
+ * reduce el total. El GROUP BY fuerza la materialización de la subconsulta
+ * (evita el error 1093 de MySQL al leer `order_parts` mientras se actualiza).
  */
 export async function adoptarPrecios(partId, precio) {
   await getPool().query(
@@ -143,7 +145,7 @@ export async function adoptarPrecios(partId, precio) {
      WHERE op.part_id = ?
        AND op.unit_price IS NULL
        AND so.status NOT IN ('ENTREGADO', 'CANCELADA')
-       AND t.cobrado < t.total_previo`,
+       AND (t.total_previo = 0 OR t.cobrado < t.total_previo)`,
     [precio ?? null, partId]
   );
 }

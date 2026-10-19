@@ -1,0 +1,73 @@
+===== validación quickstart 005 (T031) contra motorix_test =====
+Recreando la base de pruebas "motorix_test" desde cero...
+Migraciones aplicadas: 16; seeds aplicados: 8.
+
+===== Puesta en marcha =====
+  [Γ£ô] La migraci├│n 016_add_part_prices.sql queda registrada en schema_migrations
+  [Γ£ô] Se aplicaron las 16 migraciones (001ΓÇô016), no se tocaron las previas
+  [Γ£ô] Las 6 refacciones de ejemplo muestran precio de venta (6)
+  [Γ£ô] Existe exactamente una refacci├│n activa sin precio: "Bater├¡a 12V 60Ah"
+  [Γ£ô] La orden 2 tiene usos de refacciones con precio congelado
+  [Γ£ô] Stock absoluto tras los usos del seed (filtro=11, aceite=34; SC-004 intacto)
+  [Γ£ô] Ning├║n uso de ejemplo tiene total incompleto (CA-20)
+
+===== Escenario 1 ΓÇö Precio de venta en la ficha de la refacci├│n (CA-2, CA-17) =====
+  [Γ£ô] La bater├¡a se lista sin precio de venta
+  [Γ£ô] Un precio negativo se rechaza con 400 (status 400)
+  [Γ£ô] El precio inv├ílido no se guarda
+  [Γ£ô] El filtro "solo sin precio de venta" lista ├║nicamente la bater├¡a
+  [Γ£ô] El administrador guarda el precio (status 200)
+  [Γ£ô] Al asignarlo la lista de pendientes queda vac├¡a (CA-17)
+
+===== Escenario 2 ΓÇö Solo administraci├│n edita precios (CA-16) =====
+  [Γ£ô] Recepci├│n no puede editar precios: 403 (status 403)
+  [Γ£ô] El precio de la parte 1 sigue en 120.00 (no se modific├│)
+
+===== Escenario 3 ΓÇö El total de la orden incluye las refacciones (CA-6, CA-4, CA-15) =====
+  [Γ£ô] Totales con refacciones (servicios=600, mano de obra=500, refacciones=840, total=1940)
+  [Γ£ô] La orden 2 del seed tiene total completo
+  [Γ£ô] Al cambiar el precio de la refacci├│n el total de la orden no cambia (CA-4)
+  [Γ£ô] Se retira el filtro de la orden (status 204)
+  [Γ£ô] Al retirar la refacci├│n el total baja en su importe (refacciones=720, total=1820)
+  [Γ£ô] El stock de la parte 1 vuelve a 12 tras el retiro
+
+===== Escenario 4 ΓÇö Rechazo al usar una refacci├│n sin precio (CA-8) =====
+  [Γ£ô] La orden queda asignada al mec├ínico (status 200)
+  [Γ£ô] El mec├ínico recibe PART_SIN_PRECIO (status 409, codigo PART_SIN_PRECIO)
+  [Γ£ô] El stock no cambia tras el rechazo
+  [Γ£ô] El total de la orden no cambia tras el rechazo
+
+===== Escenario 5 ΓÇö Cobro de la orden con refacciones (CA-12, CA-10) =====
+  [Γ£ô] El resumen del cobro usa el total con refacciones (total=1820, cobrado=800, saldo=1020)
+  [Γ£ô] Estado de cobro PARCIAL con total completo
+  [Γ£ô] Recepci├│n registra el pago del saldo (status 201)
+  [Γ£ô] La orden queda LIQUIDADA (saldo 0)
+  [Γ£ù FALLA] El pago de la orden incompleta se bloquea con TOTAL_INCOMPLETO (status 409)
+  [Γ£ù FALLA] details.refaccionesSinPrecio es la lista [{orderPartId, partId, nombre}] (undefined)
+
+===== Escenario 6 ΓÇö Ticket de la orden con refacciones (CA-13, CA-14, CA-10, CA-21) =====
+  [Γ£ô] El ticket de la orden liquidada se emite (status 200)
+  [Γ£ô] El total del ticket es id├⌐ntico al de la orden (1820 = 1820; CA-14)
+  [Γ£ô] La l├¡nea del ticket trae unitPrice y amount congelados ({"nombre":"Aceite sint├⌐tico 5W30 (litro)","codigo":"LUB-0530-1L","cantidad":4,"unitPrice":180,"amount":720,"sinPrecio":false})
+  [Γ£ù FALLA] El ticket de una orden incompleta no liquidada se bloquea con TOTAL_INCOMPLETO (status 200; CA-10)
+  [Γ£ô] La orden se liquida por completo
+  [Γ£ô] El ticket de la orden liquidada se emite con la l├¡nea "sin precio" y sin alterar el total (status 200, total 600; CA-21)
+
+===== Escenario 7 ΓÇö Adopci├│n del precio en ├│rdenes abiertas (CA-19) =====
+  [Γ£ô] Se registra un pago parcial de 800
+  [Γ£ô] El administrador asigna el precio de venta
+  [Γ£ô] El uso heredado adopta el precio y el pago parcial se conserva (total=1150, saldo=350, estado=PARCIAL; CA-19)
+
+===== Escenario 8 ΓÇö El historial del veh├¡culo suma las refacciones (CA-6) =====
+  [Γ£ù FALLA] La orden 2 aparece en el historial del veh├¡culo 1
+  [Γ£ù FALLA] El total del historial coincide con el detalle de la orden (undefined = 1820)
+
+===== Resumen: 37/42 verificaciones OK =====
+Verificaciones fallidas:
+  - [Escenario 5 ΓÇö Cobro de la orden con refacciones (CA-12, CA-10)] El pago de la orden incompleta se bloquea con TOTAL_INCOMPLETO (status 409)
+  - [Escenario 5 ΓÇö Cobro de la orden con refacciones (CA-12, CA-10)] details.refaccionesSinPrecio es la lista [{orderPartId, partId, nombre}] (undefined)
+  - [Escenario 6 ΓÇö Ticket de la orden con refacciones (CA-13, CA-14, CA-10, CA-21)] El ticket de una orden incompleta no liquidada se bloquea con TOTAL_INCOMPLETO (status 200; CA-10)
+  - [Escenario 8 ΓÇö El historial del veh├¡culo suma las refacciones (CA-6)] La orden 2 aparece en el historial del veh├¡culo 1
+  - [Escenario 8 ΓÇö El historial del veh├¡culo suma las refacciones (CA-6)] El total del historial coincide con el detalle de la orden (undefined = 1820)
+
+[código de salida: 1]

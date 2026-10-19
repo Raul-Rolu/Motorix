@@ -131,6 +131,7 @@ description: "Lista de tareas para la feature 005-precio-venta-refacciones"
 - [ ] T032 [P] Ejecutar las suites completas (`cd server && npm test` contra `motorix_test` y `cd client && flutter test`) y confirmar que ningún flujo de los sprints 1–4 quedó roto [FR-005][CA-8]
 - [ ] T033 [P] Actualizar `database/README.md` con la migración 016 y el seed 008 en sus listados correspondientes [FR-015]
 - [ ] T034 Revisión final de consistencia: precios `DECIMAL(10,2)` redondeados a 2 decimales con la utilidad existente, mensajes de éxito/error visibles y tokens del sistema de diseño en los cambios de Flutter [FR-001][CA-1]
+- [ ] T035 Corrección en `adoptarPrecios` (`server/models/part.js`): una orden se considera liquidada solo si su total previo es mayor que cero y lo cobrado lo alcanza; una orden con total previo 0 y cobrado 0 SÍ debe adoptar el precio. Prueba de integración en `server/tests/integration/part-price-adoption.test.js` (TDD: prueba primero, corrección después) [FR-011]
 
 ---
 
