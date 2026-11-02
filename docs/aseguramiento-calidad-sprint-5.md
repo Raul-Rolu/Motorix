@@ -1,10 +1,10 @@
 # Aseguramiento de la calidad - Sprint 5: Precio de venta de refacciones
 
-Este documento es el registro de calidad del Sprint 5 de Motorix. Reúne las puertas de calidad, las decisiones, los riesgos, la trazabilidad de los criterios de aceptación, los hallazgos y la regresión de los sprints anteriores. El control de calidad final y el cierre se completan en la fase 3.
+Este documento es el registro de calidad del Sprint 5 de Motorix. Reúne las puertas de calidad, las decisiones, los riesgos, la trazabilidad de los criterios de aceptación, los hallazgos y la regresión de los sprints anteriores. Incluye además el control de calidad final (sección 9), el cierre (sección 10) y el anexo de evidencias, cerrados el 2026-11-02.
 
 **Aviso de método.** El aseguramiento de este sprint se documentó **después de implementar**, no antes. La implementación terminó el 2026-10-18 y este documento se compiló el 2026-11-02. Por eso hay dos puertas ejecutadas después: el checklist de calidad de requisitos (G-04) se generó y evaluó el 2026-11-02, y la línea base de Flutter se midió el 2026-11-02 sobre el commit `fef7e92`. El documento no presenta esas actividades como si hubieran ocurrido antes del código.
 
-Resultado general: (se completa en la fase 3).
+Resultado general: el sprint se aprobó con observaciones el 2026-11-02.
 
 ## 0. Datos del documento
 
@@ -22,8 +22,8 @@ Resultado general: (se completa en la fase 3).
 | Implementación terminada | 2026-10-18 (commit `b33ea9b`) |
 | Capturas de la aplicación | 2026-10-19 (commit `78d2a7e`) |
 | Documento compilado | 2026-11-02 (después de implementar) |
-| Fecha de cierre | (se completa en la fase 3) |
-| Estado general | (se completa en la fase 3) |
+| Fecha de cierre | 2026-11-02 |
+| Estado general | Aprobado con observación |
 | Herramienta del ciclo Spec Kit | Spec Kit con OpenCode, modelo MiMo-V2.6-Flash (ciclo `specify`, `clarify`, `plan`, `tasks`, `analyze`, `implement`) |
 | Herramienta de la lista de calidad | Spec Kit con OpenCode, modelo MiMo-V2.6-Flash (`/speckit.checklist`, ejecutado el 2026-11-02) |
 | Herramienta de redacción de este documento | Claude Code |
@@ -50,7 +50,7 @@ Resultado general: (se completa en la fase 3).
 
 ## 2. Criterios de entrada y de salida
 
-Los criterios de entrada se evalúan contra el estado antes de comenzar la implementación (primer commit de código: `c577ba8`, 2026-10-18). Los de salida se cierran en la fase 3.
+Los criterios de entrada se evalúan contra el estado antes de comenzar la implementación (primer commit de código: `c577ba8`, 2026-10-18). Los de salida se evalúan al cierre, el 2026-11-02.
 
 **Criterios de entrada (para comenzar la implementación):**
 
@@ -62,13 +62,13 @@ Los criterios de entrada se evalúan contra el estado antes de comenzar la imple
 - [ ] La línea base de regresión está registrada **antes** del código. Se cumplió solo para el backend (`0273fb7`, 2026-10-18); la de Flutter se midió el 2026-11-02.
 - [x] La documentación desfasada de los sprints anteriores está identificada: `specs/004-pagos-tickets-dashboard/informe-finalizacion.md` (líneas 124 a 128) registra que el total del Sprint 4 excluyó las refacciones por falta de precio, y `spec.md` (línea 51) cita esa brecha.
 
-**Criterios de salida (para cerrar el sprint):** (se evalúan en la fase 3)
+**Criterios de salida (para cerrar el sprint):**
 
-- [ ] Los 21 criterios de aceptación están Aprobados.
-- [ ] Todas las pruebas de los sprints anteriores siguen pasando.
-- [ ] No hay defectos críticos ni altos abiertos (sección 7).
-- [ ] La matriz de calidad final (sección 9) está completa, con evidencia.
-- [ ] Reporte, análisis y matriz no se contradicen.
+- [x] Los 21 criterios de aceptación están Aprobados. Se cumplió con observación: 19 están Aprobados y 2 están Aprobados con observación (CA-10 y CA-15, sección 6); ninguno está Fallido. Los dos tienen un escenario del guion del quickstart contra la API real, pero no un caso automatizado en Jest (H-07).
+- [x] Todas las pruebas de los sprints anteriores siguen pasando. Se cumplió con observación: backend 58 suites y 260 pruebas aprobadas, Flutter 28 pruebas aprobadas, 0 fallidas (sección 8); 4 aserciones del backend se ajustaron por el cambio de contrato declarado y en Flutter no se revisaron línea por línea (H-11).
+- [x] No hay defectos críticos ni altos abiertos (sección 7): los 2 altos, H-01 y H-02, están resueltos.
+- [x] La matriz de calidad final (sección 9) está completa, con evidencia: cinco requisitos con sus bloques E-01 a E-05 y el recorrido E-06 en el anexo.
+- [x] Reporte, análisis y matriz no se contradicen. Se cumplió con observación: los conteos, las fechas y los commits de las secciones 6, 8, 9 y 10 coinciden; las diferencias entre los datos de ejemplo del spec y los de las pruebas (CA-4 y CA-5) se declaran en el anexo (E-04).
 
 ## 3. Puertas de calidad
 
@@ -164,7 +164,7 @@ Se registra todo lo encontrado en el análisis, en las pruebas y en la lista de 
 | H-09 | COV-02: el total de `historialVehiculo` con refacciones no tiene prueba automatizada (las pruebas de historial no cambiaron en el sprint) | Baja | G-07 | Abierto | Propuesta: agregar un caso a `server/tests/contract/vehicle-history.contract.test.js`. El escenario E9 de `quickstart-005.mjs` lo recorre y pasa en la corrida de 62 de 62 (el historial del vehículo 3 coincide con el detalle de la orden 2: 1940; ver H-12) | [`quickstart-005-corrida.txt`](evidencias/aseguramiento/quickstart-005-corrida.txt) |
 | H-10 | Defecto T035: `adoptarPrecios` trataba como liquidada a una orden con total previo 0 y cobrado 0, y no adoptaba el precio | Media (clasificada al compilar este documento; ningún documento del repositorio la asigna) | Prueba (T035) | Resuelto | Una orden se considera liquidada solo si su total previo es mayor que cero y lo cobrado lo alcanza. Prueba escrita primero y corrección después | Rojo: [`t035-pruebas-rojo.txt`](evidencias/t035-pruebas-rojo.txt), commit `3c79511`. Verde: [`t035-pruebas-verde.txt`](evidencias/t035-pruebas-verde.txt), commit `2b1d476`. `server/tests/integration/part-price-adoption.test.js:172` |
 | H-11 | Ajuste de pruebas de la línea base por la ampliación declarada del contrato: 4 aserciones del backend cambiaron (forma de `totals` en `orders-detail.test.js` y `orders-work.test.js`; `refacciones` y total 300 a 400 en `tickets.contract.test.js`). `SC-007` pedía no cambiar aserciones | Baja | Regresión | Aceptado | Los cambios son consecuencia de FR-007 y FR-013; ninguna prueba se borró ni se debilitó. En Flutter se reestructuraron los dobles de `payment_flow_test.dart` y `ticket_test.dart`; no se revisó línea por línea que sus aserciones se mantuvieran | `git diff fef7e92 b33ea9b` sobre `server/tests/` y `client/test/` |
-| H-12 | La evidencia del quickstart que había al compilar este documento ([`validacion-quickstart-005.txt`](evidencias/validacion-quickstart-005.txt) en `HEAD`) terminaba en 37 de 42 verificaciones y código de salida 1 (escenarios 5, 6 y 8). El árbol de trabajo traía una versión sin confirmar con 43 de 43 y código 0. Las 5 fallas se atribuyeron al guion de validación, que no estaba versionado en el repositorio. **Escenario 8 (comprobado):** la orden 2 pertenece al vehículo 3 (`database/seeds/004_demo_service_orders.sql:9`) y el guion consultaba el vehículo 1. **Escenarios 5 y 6 (causa probable, no demostrada):** la orden de prueba no quedaba incompleta; la versión corregida agrega la verificación de esa preparación. El bloqueo existe en `server/services/payment-service.js:120,164-165` y `server/services/ticket-service.js:75-77`, y lo prueban `server/tests/integration/payments-parts-total.test.js:144` y `:182` y `server/tests/integration/tickets-parts.test.js:112` | Media (clasificada al compilar este documento; por ahora) | T031 | Resuelto | Guion versionado [`quickstart-005.mjs`](evidencias/aseguramiento/quickstart-005.mjs) y corrida de 62 de 62 verificaciones con código de salida 0 el 2026-11-02, sobre una base de pruebas recreada ([`quickstart-005-corrida.txt`](evidencias/aseguramiento/quickstart-005-corrida.txt)). El escenario E9 cubre el historial del vehículo 3, y E6 y E7 verifican la preparación de la orden incompleta antes de cobrar o emitir el ticket. La primera corrida (54 de 61, 7 fallos) quedó conservada en [`quickstart-005-corrida-1-base-contaminada.txt`](evidencias/aseguramiento/quickstart-005-corrida-1-base-contaminada.txt); sus fallos se debieron a datos duplicados por el seed 004 (H-14), no a la lógica de totales del Sprint 5 | `git diff docs/evidencias/validacion-quickstart-005.txt` (origen del hallazgo); [`quickstart-005.mjs`](evidencias/aseguramiento/quickstart-005.mjs); [`quickstart-005-corrida.txt`](evidencias/aseguramiento/quickstart-005-corrida.txt) |
+| H-12 | La evidencia del quickstart que había al compilar este documento ([`validacion-quickstart-005.txt`](evidencias/validacion-quickstart-005.txt) en `HEAD`) terminaba en 37 de 42 verificaciones y código de salida 1 (escenarios 5, 6 y 8). El árbol de trabajo traía una versión sin confirmar con 43 de 43 y código 0. Las 5 fallas se atribuyeron al guion de validación, que no estaba versionado en el repositorio. **Escenario 8 (comprobado):** la orden 2 pertenece al vehículo 3 (`database/seeds/004_demo_service_orders.sql:9`) y el guion consultaba el vehículo 1. **Escenarios 5 y 6 (causa probable, no demostrada):** la orden de prueba no quedaba incompleta; la versión corregida agrega la verificación de esa preparación. El bloqueo existe en `server/services/payment-service.js:120,164-165` y `server/services/ticket-service.js:75-77`, y lo prueban `server/tests/integration/payments-parts-total.test.js:144` y `:182` y `server/tests/integration/tickets-parts.test.js:112` | Media (clasificada al compilar este documento; por ahora) | T031 | Resuelto | Guion versionado [`quickstart-005.mjs`](evidencias/aseguramiento/quickstart-005.mjs) y corrida de 62 de 62 verificaciones con código de salida 0 el 2026-11-02, sobre la base `motorix_test` ([`quickstart-005-corrida.txt`](evidencias/aseguramiento/quickstart-005-corrida.txt)). La base de pruebas se recreó antes de la corrida (borrado y creación de `motorix_test`, migraciones 001 a 016 y seeds 001 a 008 aplicados una sola vez), según el procedimiento ejecutado por el responsable; el archivo de la corrida no registra ese procedimiento. El escenario E9 cubre el historial del vehículo 3, y E6 y E7 verifican la preparación de la orden incompleta antes de cobrar o emitir el ticket. La primera corrida (54 de 61, 7 fallos) quedó conservada en [`quickstart-005-corrida-1-base-contaminada.txt`](evidencias/aseguramiento/quickstart-005-corrida-1-base-contaminada.txt); sus fallos se debieron a datos duplicados por el seed 004 (H-14), no a la lógica de totales del Sprint 5 | `git diff docs/evidencias/validacion-quickstart-005.txt` (origen del hallazgo); [`quickstart-005.mjs`](evidencias/aseguramiento/quickstart-005.mjs); [`quickstart-005-corrida.txt`](evidencias/aseguramiento/quickstart-005-corrida.txt) |
 | H-13 | En `tasks.md` siguen sin marcar T031 a T035, aunque T035 tiene commits de rojo y verde y hay cambios sin confirmar en la evidencia del quickstart (T031) y en `database/README.md`. Este último corresponde a T033 («actualizar `database/README.md` con la migración 016 y el seed 008», `tasks.md:132`): son 35 líneas nuevas, las secciones «Migraciones» (001 a 016) y «Seeds» (001 a 008), y sigue sin commit. Los nombres de las migraciones 001 a 015 y de los seeds 001 a 007 que lista el diff coinciden con los archivos reales de `database/migrations` y `database/seeds`; no hay diferencias. El diff también lista las migraciones 001 a 015 y los seeds 001 a 007 ya existentes, más de lo que pide T033 | Baja | G-06 | Abierto | Marcar las tareas cuando el responsable confirme los cambios | `specs/005-precio-venta-refacciones/tasks.md:130-134`; `git status` |
 | H-14 | El seed `database/seeds/004_demo_service_orders.sql` (Sprint 2) no es idempotente: `order_services` y `order_labor` no tienen llave única (solo la clave primaria autoincremental), por lo que cada `apply-seeds.mjs` vuelve a insertar las filas de las órdenes 2 y 4. En la corrida 2, tras aplicar los seeds dos veces, la orden 2 pasó de 2 filas de servicios (600) a 6 (1800) y de 1 fila de mano de obra (500) a 3 (1500); la orden 4, de 2 filas (950) a 6 (2850) y de 1 (400) a 3 (1200). En la corrida 1, sobre una base ya contaminada, el total de la orden 2 salió en 4140 en lugar de 1940 (servicios 1800, mano de obra 1500, refacciones 840). La lógica de totales del Sprint 5 no tenía defecto. Solo afecta datos de demostración al re-aplicar seeds; no afecta el producto | Baja | Ejecución del guion del quickstart (E1); defecto heredado del Sprint 2 | Aceptado | Se acepta y no se corrige en este sprint. Corrección propuesta para el sprint de complemento: una restricción única en `order_services` y `order_labor`, o una limpieza previa de esas filas en el seed 004. El guion mide y registra el hallazgo sin ocultarlo y restaura la base de pruebas | [`quickstart-005-corrida-1-base-contaminada.txt`](evidencias/aseguramiento/quickstart-005-corrida-1-base-contaminada.txt); [`quickstart-005-corrida.txt`](evidencias/aseguramiento/quickstart-005-corrida.txt); `database/seeds/004_demo_service_orders.sql:15-25` |
 | H-15 | `remediacion-005.md` (línea 35) nombra hallazgos bajos «AMT-01, AMT-02, COV-02, TST-01» que no existen en el análisis (allí son AMB-02, AMB-03, DUP-01 y COV-02) | Baja | G-07 | Abierto | Corregir el texto de la remediación o aclararlo en una nota | `docs/evidencias/remediacion-005.md:35`; `docs/evidencias/analisis-005.md:150-152` |
@@ -213,12 +213,244 @@ Se ejecutó la suite completa antes de tocar el código del backend, al cierre d
 
 ## 9. Control de calidad final
 
-(se completa en la fase 3)
+Cinco requisitos funcionales del sprint, elegidos entre los que más pueden fallar (permisos por rol, instantáneas de precio, rechazo de datos incompletos y compatibilidad con datos antiguos), con el mismo formato de la matriz de calidad del MVP. Las pruebas de Jest se ejecutaron en el cierre del 2026-11-02 (commit `50bba2f`); las capturas de la aplicación son del 2026-10-19 (commit `78d2a7e`). Los números de línea corresponden al título de cada prueba.
+
+| ID | Requisito | Criterio de Aceptación | Prueba ejecutada | Resultado | Evidencia / defecto |
+|:--:|---|---|---|---|---|
+| RF-01 | Spec 005, FR-001: El sistema deberá registrar el precio de venta de cada refacción como dato de su ficha, con un importe en moneda no negativo. | CA-1 y CA-2: una refacción con precio lo muestra al consultarse y una nueva puede guardarse con precio; guardar un precio negativo o no numérico devuelve un error visible, no cambia el precio previo y no deja importes parciales. | Jest + supertest: `server/tests/integration/parts-sale-price.test.js` (líneas 39 y 98; el archivo tiene 4 casos), `server/tests/unit/validators/part-validator-part-price.test.js` (líneas 24, 30 y 36; el archivo tiene 7 casos) y `server/tests/contract/parts.contract.test.js:143` (1 de los 6 casos del archivo). Flutter: `client/test/part_price_test.dart` (4 casos del modelo; el cierre del 2026-11-02 pasó las 28 pruebas de `client/test`, y el detalle de esos 4 casos consta en `us1-pruebas-verde.txt`, 2026-10-18). Guion contra la API real: escenario E2 (400 con precio negativo y con precio no numérico). Comprobación manual: capturas `01` y `03`. | Aprobado con observación | [Requisito](#e-01-requisito) · [Prueba](#e-01-prueba) · [Resultado](#e-01-resultado). Observación por HC-10 (media, abierta): el caso límite de `spec.md:93` dice que no se admite el precio vacío, pero el código lo acepta como «pendiente» y un `PUT` con `salePrice: null` borra el precio existente (`parts-sale-price.test.js:69` lo prueba como comportamiento válido), de modo que «no cambia el precio previo» no se cumple ante un valor vacío. Además, el rechazo del precio negativo (`parts-sale-price.test.js:98`) es sobre un alta y E2 lo ejecuta sobre una refacción pendiente: ninguna prueba intenta un valor inválido sobre una refacción que ya tenía precio. |
+| RF-02 | Spec 005, FR-002: El sistema deberá limitar el registro y la modificación del precio de venta al rol de administración. | CA-16: con rol mecánico o recepción el intento de registrar un precio de venta es denegado por el sistema, no solo oculto en la interfaz. | Jest + supertest: `server/tests/contract/parts.contract.test.js:173` (1 caso de los 6 del archivo): el alta con precio devuelve 403 `NO_AUTORIZADO` a mecánico y a recepción, la edición del precio devuelve 403 al mecánico y 200 a administración. Guion contra la API real: escenario E3 (403 a recepción y a mecánico al editar el precio; el precio sigue en 120.00). Sin captura: la denegación es de la API y no tiene pantalla. | Aprobado | [Requisito](#e-02-requisito) · [Prueba](#e-02-prueba) · [Resultado](#e-02-resultado). Sin defectos del requisito. Observación menor, HC-02 (baja, abierta): la prueba de Jest no verifica el mensaje ni que el precio quede intacto tras la denegación, y la edición denegada a recepción solo la cubre E3; el criterio queda demostrado con las dos evidencias. |
+| RF-03 | Spec 005, FR-005: Si se intenta agregar a una orden una refacción sin precio de venta, entonces el sistema deberá rechazar la operación con un mensaje claro, sin modificar la orden ni el inventario. | CA-8: agregar una refacción sin precio a una orden en curso muestra un mensaje claro, el total no cambia y el stock no se descuenta. | Jest + supertest: `server/tests/integration/order-parts-rejection.test.js:79` (1 caso de los 3 del archivo): 409 `PART_SIN_PRECIO`, sin línea en la orden, sin movimiento de salida y total de 800 sin cambio. Respaldo con el guion contra la API real (corrida de 62 de 62), escenario E5: 409 `PART_SIN_PRECIO`, stock de la refacción en 10 sin cambio y total de la orden sin cambio tras el rechazo. Comprobación manual del mensaje: captura `02` (barra roja con el texto «La refacción "Batería 12V 60Ah" no tiene precio de venta asignado; pida a administración que registre el precio antes de usarla en una orden.» y total $0.00). | Aprobado | [Requisito](#e-03-requisito) · [Prueba](#e-03-prueba) · [Resultado](#e-03-resultado). Sin defectos. Nota: Jest comprueba el código de error y el conteo de movimientos; el valor del stock lo cubre E5 y el texto del mensaje, la captura `02`. |
+| RF-04 | Spec 005, FR-006: Cuando cambia el precio de venta de una refacción, el sistema deberá conservar en los usos ya registrados el precio vigente al momento de agregarlos. | CA-4 y CA-5: tras cambiar el precio de una refacción, el total de una orden que ya la usó no cambia, y el mismo cambio sí eleva el importe al agregarla a una orden nueva. El spec lo ejemplifica con $150 a $200 (orden de 2 unidades que sigue en $300; orden nueva en $400). | Jest + supertest: `server/tests/integration/order-totals-parts.test.js:139` (CA-4) y `:164` (CA-5), 2 de los 3 casos del archivo. Las pruebas usan otros importes que el spec: de $100 a $150, con 2 unidades (la línea sigue en $100 y las refacciones suman $200) y 1 unidad en la orden nueva ($200). Respaldo con el guion contra la API real (corrida de 62 de 62), escenario E4: el precio de la refacción 1 pasa de 120 (E3: «sigue en 120.00») a 200 (`quickstart-005.mjs:450`) y el total de la orden 2 sigue en 1940; la línea que se agrega después usa el precio vigente (200) y el total sube a 2140. Comprobación manual aparte, con otro ejemplo: capturas `03` a `06` (Batería de $950; ver E-04). | Aprobado | [Requisito](#e-04-requisito) · [Prueba](#e-04-prueba) · [Resultado](#e-04-resultado). Sin defectos. Observación: el comportamiento del CA-4 y del CA-5 está demostrado con prueba, pero con importes distintos a los del spec. La comprobación manual es consistente con el criterio pero ninguna captura muestra por sí sola una orden después de guardar el precio nuevo (ver E-04). |
+| RF-05 | Spec 005, FR-003: Mientras existan en el inventario refacciones activas sin precio de venta, el sistema deberá permitir a la administración identificarlas (lista o filtro de pendientes de precio). | CA-17: el inventario lista o permite filtrar las refacciones sin precio de venta asignado, una refacción sin precio aparece en esa consulta y la lista queda vacía cuando todas tienen precio. | Jest + supertest: `server/tests/integration/parts-pending-price.test.js:60` (solo las activas sin precio) y `:87` (lista vacía al asignar el precio), 2 de los 3 casos del archivo. Guion contra la API real: escenario E1 (una sola refacción activa sin precio, `BAT-12V-60`) y E2 (pendientes: 0 tras asignar el precio). Comprobación manual: captura `01`. | Aprobado | [Requisito](#e-05-requisito) · [Prueba](#e-05-prueba) · [Resultado](#e-05-resultado). Sin defectos. Nota: no hay prueba de Flutter del filtro; la interfaz solo se comprobó con la captura `01`. |
 
 ## 10. Cierre
 
-(se completa en la fase 3)
+| Campo | Valor |
+|---|---|
+| Criterios de salida cumplidos | 5 de 5, evaluados contra este documento (sección 2): (1) los 21 criterios de aceptación están Aprobados, con observación (19 Aprobados y 2 Aprobados con observación: CA-10 y CA-15); (2) las pruebas de los sprints anteriores siguen pasando, con observación (backend 58 suites y 260 pruebas, Flutter 28 pruebas, 0 fallidas; 4 aserciones ajustadas, H-11); (3) no hay defectos críticos ni altos abiertos; (4) la matriz de la sección 9 está completa, con evidencia en el anexo (E-01 a E-06); (5) reporte, análisis y matriz no se contradicen, con la observación de los importes del CA-4 y el CA-5 (E-04). |
+| Defectos abiertos | Ninguno crítico ni alto (H-01 y H-02, los 2 altos, están resueltos). Medios abiertos: 6, HC-03, HC-06, HC-07, HC-08, HC-10 y HC-11, todos con resolución propuesta y sin cambio al spec. Bajos abiertos: 9 (H-07, H-09, H-13, H-15, HC-01, HC-02, HC-04, HC-05 y HC-09). Aceptados: 3, H-08, H-11 y H-14 (el seed 004 del Sprint 2 no es idempotente; solo afecta datos de demostración al volver a aplicar seeds). |
+| Observaciones | (1) La línea base de Flutter (17 pruebas) y la lista de calidad G-04 se ejecutaron después de implementar, no antes. (2) La guía pide tiempos de uso medidos con la interfaz y no se midieron: SC-006 usa «unos segundos» sin umbral (HC-01) y este documento no registra ninguna estimación como medición. (3) H-14: el seed 004 duplica servicios y mano de obra de las órdenes 2 y 4 al volver a aplicarse; la primera corrida del quickstart (54 de 61) falló por esa causa y la segunda (62 de 62) se ejecutó sobre `motorix_test`. La base de pruebas se recreó antes de la corrida (borrado y creación de `motorix_test`, migraciones 001 a 016 y seeds 001 a 008 aplicados una sola vez), según el procedimiento ejecutado por el responsable; el archivo de la corrida no registra ese procedimiento. (4) CA-10 y CA-15 quedan Aprobados con observación: el reintento tras asignar el precio y la reposición de stock están verificados contra la API real (E10 y E4) y no por un caso de Jest. (5) RF-01 queda Aprobado con observación por HC-10 (precio vacío). (6) Límites de lo comprobado: en este documento no se volvieron a ejecutar las suites (los conteos salen de los registros de cierre); no se comprobó línea por línea que las aserciones de Flutter se mantuvieran (H-11); no hay registro de análisis estático; las capturas de la aplicación no demuestran por sí solas que una orden conserve el precio anterior tras guardar el nuevo (E-04), y esa comprobación descansa en Jest y en el escenario E4. |
+| Aprobado por | Raúl Francisco Amador, Product Builder |
+| Fecha | 2026-11-02 |
 
 # Anexo de evidencias
 
-(se completa en la fase 3)
+Cada evidencia tiene tres bloques: **Requisito** (texto de la especificación con archivo y línea), **Prueba** (código y qué comprueba) y **Resultado** (comando, conteo real y capturas). Las capturas están en `docs/evidencias/capturas/` y se tomaron el 2026-10-19 (commit `78d2a7e`); los conteos de Jest salen de [`pruebas-backend-cierre.txt`](evidencias/aseguramiento/pruebas-backend-cierre.txt) (2026-11-02, commit `50bba2f`). Cada captura se describe solo con lo que se ve en la imagen.
+
+## E-01 Requisito
+
+Archivo: [`specs/005-precio-venta-refacciones/spec.md`](../specs/005-precio-venta-refacciones/spec.md), línea 100 (FR-001), líneas 119 y 120 (CA-1 y CA-2) y línea 93 (caso límite del precio vacío).
+
+> **FR-001** (Ubicuo): El sistema deberá registrar el precio de venta de cada refacción como dato de su ficha, con un importe en moneda no negativo. (CA-1, CA-2)
+
+> **CA-1**: Se comprueba que una refacción con precio registrado muestra ese precio al consultarse, y que una refacción nueva puede guardarse con precio desde su registro.
+
+> **CA-2**: Se comprueba que guardar un precio negativo o no numérico devuelve un error visible, no cambia el precio previo y no deja importes parciales.
+
+> Caso límite (línea 93): «lo que no se admite es el precio vacío ni el negativo»
+
+## E-01 Prueba
+
+Archivos: `server/tests/integration/parts-sale-price.test.js`, líneas 39 a 113 (4 casos); `server/tests/unit/validators/part-validator-part-price.test.js`, líneas 4 a 40 (7 casos); `server/tests/contract/parts.contract.test.js`, líneas 143 a 171 (1 caso); `client/test/part_price_test.dart` (4 casos del modelo).
+
+Qué comprueban: el alta con `salePrice: 85.5` devuelve 201 y el precio aparece en la consulta (línea 39, CA-1); un `salePrice` de -5 devuelve 400 `DATOS_INVALIDOS` y la refacción no se crea (línea 98, CA-2); el validador rechaza un precio negativo, uno no numérico («ochenta») y uno con tres decimales (líneas 24, 30 y 36 del archivo del validador). El caso de la línea 69 de `parts-sale-price.test.js` asigna, cambia y **limpia** el precio con `salePrice: null`: es el comportamiento que HC-10 señala frente al caso límite del spec.
+
+Fragmento clave (`parts-sale-price.test.js`, líneas 101 a 107):
+
+```js
+  const rechazo = await request(app)
+    .post('/api/parts')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ name: 'Refacción mal precio', code: 'BAD-001', stock: 1, salePrice: -5 });
+
+  expect(rechazo.status).toBe(400);
+  expect(rechazo.body.error.codigo).toBe('DATOS_INVALIDOS');
+```
+
+## E-01 Resultado
+
+Comando: `npm test` en `server/`
+
+Pasaron las 4 pruebas de `parts-sale-price.test.js`, las 7 de `part-validator-part-price.test.js` y las 6 de `parts.contract.test.js` (17 casos), dentro de las 58 suites y 260 pruebas del cierre del 2026-11-02, con código de salida 0. En Flutter, `flutter test` ejecuta todas las pruebas de `client/test`; el cierre del 2026-11-02 pasó las 28 pruebas con código de salida 0, lo que incluye `part_price_test.dart`. El registro de cierre no lista los nombres de cada archivo; el detalle de sus 4 casos consta en [`us1-pruebas-verde.txt`](evidencias/us1-pruebas-verde.txt) (2026-10-18). El escenario E2 del recorrido contra la API real (E-06) confirmó el rechazo con 400 de un precio negativo y de uno no numérico, y que el precio inválido no se guarda.
+
+![Inventario del administrador con el filtro «Solo sin precio de venta» activo: se lista Batería 12V 60Ah, código BAT-12V-60, con la leyenda «Sin precio de venta», 5 pz y mínimo 2](evidencias/capturas/01-inventario-pendientes.png)
+
+![Pantalla «Editar refacción» de Batería 12V 60Ah (BAT-12V-60) con el campo «Precio de venta» en $ 950, stock mínimo 2 y el interruptor «Refacción activa» encendido](evidencias/capturas/03-precio-asignado.png)
+
+Resultado: **Aprobado con observación** (pasaron los 17 casos de los tres archivos de Jest y los 4 de Flutter; los que comprueban FR-001 directamente son `parts-sale-price.test.js:39` y `:98`, `part-validator-part-price.test.js:24`, `:30` y `:36`, y `parts.contract.test.js:143`). La observación es HC-10 (media, abierta): el precio vacío se acepta como «pendiente» y borra el precio existente, y ninguna prueba intenta un valor inválido sobre una refacción que ya tenía precio. La captura `03` muestra el campo con el valor 950; la imagen no muestra si el precio ya se guardó (la captura `04` de E-04 muestra una orden que usa la refacción a $950).
+
+## E-02 Requisito
+
+Archivo: [`specs/005-precio-venta-refacciones/spec.md`](../specs/005-precio-venta-refacciones/spec.md), línea 101 (FR-002) y línea 134 (CA-16).
+
+> **FR-002** (Ubicuo): El sistema deberá limitar el registro y la modificación del precio de venta al rol de administración. (CA-16)
+
+> **CA-16**: Se comprueba que con rol mecánico o recepción el intento de registrar un precio de venta es denegado por el sistema, no solo oculto en la interfaz.
+
+## E-02 Prueba
+
+Archivo: `server/tests/contract/parts.contract.test.js`, líneas 173 a 218.
+
+Qué comprueba: se crean un mecánico y un usuario de recepción; ambos intentan dar de alta una refacción con `salePrice: 50` y reciben 403 con código `NO_AUTORIZADO`. Después, el administrador crea una refacción con precio 100; el mecánico intenta editar el precio a 1 y recibe 403, y el administrador lo cambia a 110 y recibe 200.
+
+Fragmento clave (líneas 190 a 195):
+
+```js
+    const altaDenegada = await request(app)
+      .post('/api/parts')
+      .set('Authorization', `Bearer ${tokens[username]}`)
+      .send({ name: `No debe crearse ${username}`, code: `DEN-${username}`, salePrice: 50 });
+    expect(altaDenegada.status).toBe(403);
+    expect(altaDenegada.body.error.codigo).toBe('NO_AUTORIZADO');
+```
+
+## E-02 Resultado
+
+Comando: `npm test` en `server/`
+
+Pasaron las 6 pruebas de `parts.contract.test.js`, incluida la de la línea 173, dentro de las 58 suites y 260 pruebas del cierre del 2026-11-02, con código de salida 0. El escenario E3 del recorrido contra la API real (E-06) verificó que el servidor devuelve 403 a recepción y a mecánico al editar el precio, y que el precio de la refacción 1 sigue en 120.00. No hay captura de este requisito: la denegación la hace la API y no tiene pantalla.
+
+Resultado: **Aprobado** (1 de 1 caso de Jest y 3 de 3 verificaciones de E3). Observación menor, HC-02 (baja, abierta): la prueba de Jest no comprueba el mensaje ni que el precio quede intacto, y la edición denegada a recepción solo la cubre E3.
+
+## E-03 Requisito
+
+Archivo: [`specs/005-precio-venta-refacciones/spec.md`](../specs/005-precio-venta-refacciones/spec.md), línea 104 (FR-005) y línea 126 (CA-8).
+
+> **FR-005** (No deseado): Si se intenta agregar a una orden una refacción sin precio de venta, entonces el sistema deberá rechazar la operación con un mensaje claro, sin modificar la orden ni el inventario. (CA-8)
+
+> **CA-8**: Se comprueba que agregar una refacción sin precio a una orden en curso muestra un mensaje claro, el total no cambia y el stock no se descuenta.
+
+## E-03 Prueba
+
+Archivo: `server/tests/integration/order-parts-rejection.test.js`, líneas 79 a 122.
+
+Qué comprueba: se crea una refacción con stock 10 y sin precio y una orden con un servicio de 800. El mecánico intenta agregar 2 unidades y recibe 409 con código `PART_SIN_PRECIO`. Después la prueba verifica que no hay líneas en la orden, que no hay movimientos de salida de esa refacción y que el total de la orden sigue en servicios 800, refacciones 0 y total 800, completo. No comprueba el texto del mensaje ni el valor del stock; esos dos puntos los cubren la captura `02` y el escenario E5.
+
+Fragmento clave (líneas 93 a 99):
+
+```js
+  const rechazo = await request(app)
+    .post(`/api/orders/${orden.id}/parts`)
+    .set('Authorization', `Bearer ${tokens.mecanico}`)
+    .send({ partId: altaParte.body.id, quantity: 2 });
+
+  expect(rechazo.status).toBe(409);
+  expect(rechazo.body.error.codigo).toBe('PART_SIN_PRECIO');
+```
+
+## E-03 Resultado
+
+Comando: `npm test` en `server/`
+
+Pasaron las 3 pruebas de `order-parts-rejection.test.js`, incluida la de la línea 79, dentro de las 58 suites y 260 pruebas del cierre del 2026-11-02, con código de salida 0. El escenario E5 del recorrido contra la API real (E-06) confirmó el 409 `PART_SIN_PRECIO`, el stock en 10 sin cambio y el total de la orden sin cambio tras el rechazo.
+
+![Pantalla de la Orden #3 con el total en $0.00 (servicios, mano de obra y refacciones en $0.00), el formulario «Refacciones usadas» con Batería 12V 60Ah (BAT-12V-60) y cantidad 1, y una barra roja con el texto «La refacción "Batería 12V 60Ah" no tiene precio de venta asignado; pida a administración que registre el precio antes de usarla en una orden.»](evidencias/capturas/02-error-sin-precio.png)
+
+Resultado: **Aprobado** (1 de 1 caso de Jest y 4 de 4 verificaciones de E5).
+
+
+## E-04 Requisito
+
+Archivo: [`specs/005-precio-venta-refacciones/spec.md`](../specs/005-precio-venta-refacciones/spec.md), línea 105 (FR-006) y líneas 122 y 123 (CA-4 y CA-5).
+
+> **FR-006** (Evento): Cuando cambia el precio de venta de una refacción, el sistema deberá conservar en los usos ya registrados el precio vigente al momento de agregarlos. (CA-4, CA-5)
+
+> **CA-4**: Se comprueba que, tras cambiar el precio de una refacción de $150 a $200, el total de una orden que ya la usó con 2 unidades sigue sumando $300 (2 × $150).
+
+> **CA-5**: Se comprueba que el mismo cambio de precio sí eleva el importe al agregar esa refacción a una orden nueva (2 × $200 = $400).
+
+## E-04 Prueba
+
+Archivo: `server/tests/integration/order-totals-parts.test.js`, líneas 139 a 194 (CA-4 en las líneas 139 a 162 y CA-5 en las líneas 164 a 194).
+
+Qué comprueba: **con importes distintos a los del spec**. La prueba del CA-4 crea una refacción de $100, la agrega a una orden con 2 unidades sobre servicios de 600 y mano de obra de 500, cambia el precio a $150 y consulta la orden: las refacciones suman $200, el total sigue en $1,300 y la línea conserva `unitPrice` 100. La prueba del CA-5 cambia el precio de $100 a $200 y agrega la refacción a una orden nueva con 1 unidad: el uso queda con `unitPrice` 200 e importe 200 (no 2 × $200 = $400 como escribe el spec). El comportamiento que exigen FR-006, CA-4 y CA-5 está demostrado; los importes del spec no se reproducen.
+
+Fragmento clave (líneas 156 a 161):
+
+```js
+  const detalle = await request(app)
+    .get(`/api/orders/${orden.id}`)
+    .set('Authorization', `Bearer ${tokens.mecanico}`);
+  expect(detalle.body.totals.parts).toBe(200); // precio congelado
+  expect(detalle.body.totals.grand).toBe(1300);
+  expect(detalle.body.refacciones[0].unitPrice).toBe(100);
+```
+
+Respaldo con el guion contra la API real (escenario E4, corrida de 62 de 62): el precio de la refacción 1 pasa de 120 (E3: «sigue en 120.00») a 200 (`docs/evidencias/aseguramiento/quickstart-005.mjs:450`) y el total de la orden 2 sigue en 1940; la línea que se agrega después usa el precio vigente (200) y el total sube a 2140.
+
+## E-04 Resultado
+
+Comando: `npm test` en `server/`
+
+Pasaron las 3 pruebas de `order-totals-parts.test.js`, incluidas las de las líneas 139 y 164, dentro de las 58 suites y 260 pruebas del cierre del 2026-11-02, con código de salida 0. Las 7 verificaciones del escenario E4 de la corrida del 2026-11-02 pasaron (E-06).
+
+**Comprobación manual aparte, con otro ejemplo (2026-10-19, commit `78d2a7e`).** No son los datos de la prueba de Jest ni los del spec. Las imágenes muestran, en este orden:
+
+![Pantalla «Editar refacción» de Batería 12V 60Ah (BAT-12V-60) con «Precio de venta» en $ 950 y stock actual 5](evidencias/capturas/03-precio-asignado.png)
+
+![Pantalla de la Orden #3 con una refacción usada: Batería 12V 60Ah (BAT-12V-60), cantidad 1, $950.00 c/u, importe $950.00; refacciones y total en $950.00; aviso verde «Refacción registrada: la salida de inventario ya se aplicó.»](evidencias/capturas/04-total-con-refaccion.png)
+
+![Pantalla «Editar refacción» de Batería 12V 60Ah (BAT-12V-60) con «Precio de venta» en $ 1000.00 y stock actual 3](evidencias/capturas/05-precio-congelado.png)
+
+![Pantalla de la Orden #2 con total $2890.00 (servicios $600.00, mano de obra $500.00, refacciones $1790.00), cobrado $800.00, saldo pendiente $2090.00 y tres refacciones usadas: Filtro de aceite 1 × $120.00, Aceite sintético 5W30 4 × $180.00 y Batería 12V 60Ah 1 × $950.00](evidencias/capturas/06-saldo-con-refacciones.png)
+
+Estas cuatro imágenes son consistentes con el criterio: la Batería aparece a $950 en dos órdenes y el formulario muestra después $1000.00. No son concluyentes: ninguna imagen muestra una orden tomada después de guardar el precio nuevo, ni se ve en la captura `05` si el precio ya se guardó. Por eso la demostración del FR-006 descansa en la prueba de Jest y en el escenario E4, y las capturas son una comprobación complementaria.
+
+Resultado: **Aprobado** (3 de 3 casos de Jest y 7 de 7 verificaciones de E4). Observación: los importes de las pruebas (de $100 a $150) difieren de los del CA-4 (de $150 a $200).
+
+## E-05 Requisito
+
+Archivo: [`specs/005-precio-venta-refacciones/spec.md`](../specs/005-precio-venta-refacciones/spec.md), línea 102 (FR-003) y línea 135 (CA-17).
+
+> **FR-003** (Mientras): Mientras existan en el inventario refacciones activas sin precio de venta, el sistema deberá permitir a la administración identificarlas (lista o filtro de pendientes de precio). (CA-17)
+
+> **CA-17**: Se comprueba que el inventario lista o permite filtrar las refacciones sin precio de venta asignado, que una refacción sin precio aparece en esa consulta y que la lista queda vacía cuando todas tienen precio.
+
+## E-05 Prueba
+
+Archivo: `server/tests/integration/parts-pending-price.test.js`, líneas 60 a 126 (3 casos; los dos del CA-17 están en las líneas 60 a 85 y 87 a 108).
+
+Qué comprueba: con una refacción con precio, una pendiente y una inactiva sin precio, `GET /api/parts?pending-price=true` devuelve solo la pendiente activa (línea 60). Con una sola refacción pendiente, el filtro la lista; al asignarle precio 350 por `PUT`, el mismo filtro devuelve una lista vacía (línea 87). El tercer caso (línea 110) comprueba que recepción también puede consultar el filtro.
+
+Fragmento clave (líneas 103 a 107):
+
+```js
+  const despues = await request(app)
+    .get('/api/parts?pending-price=true')
+    .set('Authorization', `Bearer ${tokens.admin}`);
+  expect(despues.status).toBe(200);
+  expect(despues.body.datos).toEqual([]);
+```
+
+## E-05 Resultado
+
+Comando: `npm test` en `server/`
+
+Pasaron las 3 pruebas de `parts-pending-price.test.js` dentro de las 58 suites y 260 pruebas del cierre del 2026-11-02, con código de salida 0. En el recorrido contra la API real (E-06), E1 confirmó que la única refacción activa sin precio de los datos de ejemplo es `BAT-12V-60` y E2 confirmó que, tras asignar el precio, la lista de pendientes queda en 0.
+
+![Inventario del administrador con el filtro «Solo sin precio de venta» activo: se lista Batería 12V 60Ah, código BAT-12V-60, con la leyenda «Sin precio de venta», 5 pz y mínimo 2](evidencias/capturas/01-inventario-pendientes.png)
+
+Resultado: **Aprobado** (3 de 3 casos de Jest y las verificaciones de E1 y E2 sobre pendientes). No hay prueba de Flutter del filtro; la interfaz solo se comprobó con la captura anterior, que no muestra la lista vacía.
+
+## E-06 Recorrido de los escenarios contra la API real
+
+Fecha: 2026-11-02. El guion [`quickstart-005.mjs`](evidencias/aseguramiento/quickstart-005.mjs) se ejecutó contra la API en `http://localhost:3055` arrancada con `DB_NAME=motorix_test`, con las cuentas `admin`, `recepcion` y `mecanico`, y una guardia de identidad que comprueba que la API usa esa base. La base de pruebas se recreó antes de la corrida (borrado y creación de `motorix_test`, migraciones 001 a 016 y seeds 001 a 008 aplicados una sola vez), según el procedimiento ejecutado por el responsable; el archivo de la corrida no registra ese procedimiento. Registro: [`quickstart-005-corrida.txt`](evidencias/aseguramiento/quickstart-005-corrida.txt).
+
+| # | Escenario | Resultado |
+|---|-----------|-----------|
+| E1 | Puesta en marcha e idempotencia del seed 008 (R-06) | 17 de 17 verificaciones: 6 refacciones de ejemplo con precio, una sola activa sin precio (`BAT-12V-60`), ninguna orden de ejemplo incompleta y el seed 008 sin cambios en conteos ni stock tras aplicarlo dos veces. Se registran además 4 líneas de H-14 (seed 004) y la restauración de la base |
+| E2 | Precio de venta en la ficha de la refacción (CA-2, CA-17) | 5 de 5: 400 con precio negativo y con precio no numérico, el precio inválido no se guarda, la administración asigna el precio y la lista de pendientes queda en 0 |
+| E3 | Solo administración edita precios (CA-16, FR-002) | 3 de 3: 403 a recepción y a mecánico; el precio sigue en 120.00 |
+| E4 | El total de la orden incluye las refacciones (CA-6, CA-4, CA-5, CA-15) | 7 de 7: total 1940 (600 + 500 + 840); el cambio de precio no lo altera; la línea agregada usa 200 y el total sube a 2140; el retiro (204) lo devuelve a 1940 y el stock se repone (11 a 11) |
+| E5 | Rechazo al usar una refacción sin precio (CA-8, FR-005) | 4 de 4: 409 `PART_SIN_PRECIO`; el stock sigue en 10 y el total no cambia |
+| E6 | Cobro de la orden con refacciones (CA-12, CA-10, FR-009) | 6 de 6: total 1940, cobrado 800, saldo 1140, PARCIAL; el pago del saldo la deja LIQUIDADA; el pago de una orden incompleta se bloquea con 409 `TOTAL_INCOMPLETO` y señala la refacción faltante |
+| E7 | Ticket de la orden con refacciones (CA-13, CA-14, CA-10, CA-21) | 6 de 6: ticket con total 1940 igual al de la orden y refacciones que suman 840; el ticket de la orden incompleta se bloquea (409); la orden liquidada con un uso sin precio emite ticket con total 600 |
+| E8 | Adopción del precio en órdenes abiertas (CA-19, CA-11) | 4 de 4: al asignar 150, la orden parcialmente pagada pasa a total 1150, conserva el pago de 800 y queda con saldo 350; la orden liquidada conserva su total de 600 |
+| E9 | El historial del vehículo suma las refacciones (CA-6) | 4 de 4: el historial del vehículo 3 muestra 1940, igual que el detalle de la orden 2 |
+| E10 | Cobro y ticket funcionan tras asignar el precio (H-07, CA-10) | 6 de 6: la orden sigue bloqueada (409), se asigna el precio, el total pasa a 450, el cobro y el ticket antes bloqueados se emiten, y la orden queda LIQUIDADA |
+
+Resultado: **Aprobado** (62 de 62 verificaciones, código de salida 0). El hallazgo H-14 (el seed 004 del Sprint 2 duplica servicios y mano de obra de las órdenes 2 y 4 al volver a aplicarse) se registra aparte y no suma a las fallidas.
+
+La primera corrida (54 de 61, 7 verificaciones fallidas en E4, E6 y E7) se conserva en [`quickstart-005-corrida-1-base-contaminada.txt`](evidencias/aseguramiento/quickstart-005-corrida-1-base-contaminada.txt): se hizo sobre una base ya contaminada por el seed 004 y la orden 2 tenía un total de 4140 en lugar de 1940. Ver H-12 y H-14 en la sección 7.1.
+
+Alcance: este recorrido cubre el backend contra la API y la base de pruebas, no la interfaz. Las comprobaciones manuales en la aplicación son las capturas del 2026-10-19 (`docs/evidencias/capturas/`, citadas en E-01, E-03, E-04 y E-05), sin tiempos medidos (HC-01). Las capturas `07` y `08` (orden liquidada y su ticket) no se citan en la matriz de la sección 9.
