@@ -45,7 +45,7 @@ description: "Lista de tareas para la feature 006-complemento-precios-compra"
 
 **⚠️ CRÍTICO**: ninguna historia empieza hasta terminar esta fase. Los seeds ya modificados (US5) también necesitan la migración 017 aplicada, porque escriben `category`, `brand` y `purchase_price`.
 
-- [ ] T003 Crear `database/migrations/017_part_purchase_price_stale.sql`, solo sobre `parts` y `payments`: en `parts` agregar `category ENUM('FRENOS','MOTOR','SUSPENSION','ELECTRICO','TRANSMISION','CLIMA','NEUMATICOS','LUBRICANTES','OTRO') NULL`, `brand VARCHAR(50) NULL`, `purchase_price DECIMAL(10,2) NULL` con `CHECK (purchase_price >= 0 AND purchase_price <= 999999.99)` y `CHECK (sale_price <= 999999.99)`; en `payments` ampliar `status` a `ENUM('PENDING','COMPLETED','EXPIRED','STALE')` con `STALE` al final. Sin tocar `order_services`, `order_labor` ni `order_entries`; sin borrados [FR-001][FR-002][FR-003][FR-008][CA-1][CA-2][CA-6]
+- [ ] T003 Antes de crear la migración, consultar en la base local `SELECT MIN(sale_price), MAX(sale_price) FROM parts` y confirmar que ningún valor viola los `CHECK` nuevos (≥ 0 y ≤ 999,999.99); si alguno los viola, corregir el dato a mano o detenerse y avisar. Luego crear `database/migrations/017_part_purchase_price_stale.sql`, solo sobre `parts` y `payments`: en `parts` agregar `category ENUM('FRENOS','MOTOR','SUSPENSION','ELECTRICO','TRANSMISION','CLIMA','NEUMATICOS','LUBRICANTES','OTRO') NULL`, `brand VARCHAR(50) NULL`, `purchase_price DECIMAL(10,2) NULL` con `CHECK (purchase_price >= 0 AND purchase_price <= 999999.99)` y `CHECK (sale_price <= 999999.99)`; en `payments` ampliar `status` a `ENUM('PENDING','COMPLETED','EXPIRED','STALE')` con `STALE` al final. Sin tocar `order_services`, `order_labor` ni `order_entries`; sin borrados [FR-001][FR-002][FR-003][FR-008][CA-1][CA-2][CA-6]
 - [ ] T004 Aplicar `node database/scripts/apply-migrations.mjs` sobre `motorix_test` y sobre la base local; comprobar que 017 queda registrada, que las filas existentes de `parts` y `payments` no cambian y que una segunda corrida no la repite (depende de T003) [CA-8]
 - [ ] T005 [P] Escribir `server/tests/unit/money-cents.test.js` (casos: `aCentavos(0.1 + 0.2)` = 30, `aCentavos(1234.56)` = 123456, `deCentavos`, `esImporteValido` con negativos, NaN y 3 decimales, límites `LIMITE_PRECIO_CENTAVOS` = 99 999 999 y `LIMITE_TOTAL_CENTAVOS` = 9 999 999 999); debe fallar antes de T006 [CA-5]
 - [ ] T006 Crear `server/utils/money.js` con `aCentavos()`, `deCentavos()`, `esImporteValido()` y los dos límites en centavos, y hacer pasar T005 (depende de T005) [FR-007][CA-5]
@@ -88,7 +88,7 @@ description: "Lista de tareas para la feature 006-complemento-precios-compra"
 
 ### Pruebas de la Historia 2 (escribirlas primero; deben fallar) ⚠️
 
-- [ ] T017 [P] [US2] Crear `server/tests/integration/parts-price-limits.test.js`: precio de venta y de compra negativo, no numérico, con 3 decimales → 400; 999,999.99 aceptado y 1,000,000.00 rechazado; importe de servicio o mano de obra inválido o > 999,999.99 → 400; total de orden exactamente 99,999,999.99 aceptado y mayor → 422 `ORDER_TOTAL_LIMIT_EXCEEDED` sin dejar la orden inconsistente; dos líneas idénticas pueden coexistir (sin 409) [FR-003][CA-2]
+- [ ] T017 [P] [US2] Crear `server/tests/integration/parts-price-limits.test.js`: precio de venta y de compra negativo, no numérico, con 3 decimales → 400; 999,999.99 aceptado y 1,000,000.00 rechazado; importe de servicio o mano de obra inválido o > 999,999.99 → 400; total de orden exactamente 99,999,999.99 aceptado y mayor → 422 `ORDER_TOTAL_LIMIT_EXCEEDED` sin dejar la orden inconsistente; agregar una refacción (`POST /api/orders/:id/parts`) que haría rebasar el total → 422 `ORDER_TOTAL_LIMIT_EXCEEDED` sin cambiar stock ni la orden, y una que lo deja exactamente en 99,999,999.99 se acepta; dos líneas idénticas pueden coexistir (sin 409) [FR-003][CA-2]
 - [ ] T018 [P] [US2] Agregar aserciones de centavos (diferencia $0 con importes como 0.10 + 0.20 y 19.99 × cantidades) a `server/tests/integration/order-totals-parts.test.js` [FR-007][CA-5]
 - [ ] T019 [P] [US2] Agregar aserciones de saldo y pagos en centavos (diferencia $0 tras varios pagos con decimales) a `server/tests/integration/payments.test.js` [FR-007][CA-5]
 
@@ -97,7 +97,7 @@ description: "Lista de tareas para la feature 006-complemento-precios-compra"
 - [ ] T020 [US2] Agregar el límite de 999,999.99 a los tres precios en `server/validators/part-validator.js`, con mensajes separados para negativo, decimales y límite, apoyado en `server/utils/money.js` (secuencial con T010: mismo archivo) [FR-003][CA-2]
 - [ ] T021 [P] [US2] Limitar el importe de cada partida (servicio y mano de obra) en `server/validators/order-validator.js` [FR-003][CA-2]
 - [ ] T022 [US2] Pasar `calcularTotales`/`findTotals` y las líneas de `server/models/order.js` a centavos enteros, presentando 2 decimales [FR-007][CA-5]
-- [ ] T023 [US2] En `server/services/order-service.js` validar que el total resultante no rebase 99,999,999.99 (en centavos) y responder `422 ORDER_TOTAL_LIMIT_EXCEEDED`; sin traducciones de línea duplicada; actualizar el docstring de `obtenerTotalOrden` (depende de T022) [FR-003][CA-2]
+- [ ] T023 [US2] En `server/services/order-service.js` validar que el total resultante no rebase 99,999,999.99 (en centavos) al agregar servicios, mano de obra **y refacciones** (`agregarRefaccion`, antes de descontar stock) y responder `422 ORDER_TOTAL_LIMIT_EXCEEDED`; sin traducciones de línea duplicada; actualizar el docstring de `obtenerTotalOrden` (depende de T022) [FR-003][CA-2]
 - [ ] T024 [US2] Reemplazar `redondear` por aritmética en centavos en `server/services/payment-service.js` (saldo, montos y comparaciones) sin cambiar el comportamiento observable (depende de T006) [FR-007][CA-5]
 - [ ] T025 [US2] Ejecutar T017, T018, T019 y T005 hasta verlas pasar, más `npm test` completo para confirmar que las suites previas no se rompen [CA-2][CA-5][CA-10]
 
@@ -113,14 +113,14 @@ description: "Lista de tareas para la feature 006-complemento-precios-compra"
 
 ### Pruebas de la Historia 3 (escribirlas primero; deben fallar) ⚠️
 
-- [ ] T026 [P] [US3] Crear `server/tests/contract/parts-role-visibility.test.js`: `GET /api/parts` sin la clave `purchasePrice` (no `null`) para MECHANIC y RECEPTIONIST y con ella para ADMIN; `POST`/`PUT` de `category`, `brand` o `purchasePrice` con otro rol → 403 `NO_AUTORIZADO`, sin cambiar datos [FR-005][FR-006][CA-3][CA-4]
-- [ ] T027 [P] [US3] Agregar a `client/test/part_price_test.dart` o `client/test/parts_category_brand_test.dart` el caso de que, con rol distinto de ADMIN, ni el listado ni el formulario muestran el precio de compra [FR-005][CA-3]
+- [ ] T026 [P] [US3] Crear `server/tests/contract/parts-role-visibility.test.js`: la clave `purchasePrice` (no `null`) está ausente para MECHANIC y RECEPTIONIST y presente para ADMIN en `GET /api/parts`, `GET /api/parts?pending-price=true` y la búsqueda `GET /api/parts?q=`; ausente para todos los roles no ADMIN en el detalle de orden `GET /api/orders/:id`, en las respuestas de `POST /api/orders/:id/parts` y `DELETE /api/orders/:id/parts/:partId` (no existe `GET /api/orders/:id/parts`) y en la consulta de tickets; y una prueba unitaria de que `aObjeto` sin opción omite `purchasePrice`; `POST`/`PUT` de `category`, `brand` o `purchasePrice` con otro rol → 403 `NO_AUTORIZADO`, sin cambiar datos [FR-005][FR-006][CA-3][CA-4]
+- [ ] T027 [P] [US3] Agregar a `client/test/part_price_test.dart` o `client/test/parts_category_brand_test.dart` el caso de que, con un usuario no ADMIN (`AuthProvider.esAdmin == false`, p. ej. RECEPTIONIST, que sí ve la sección Inventario), ni el listado ni el formulario muestran el precio de compra [FR-005][CA-3]
 
 ### Implementación de la Historia 3
 
-- [ ] T028 [US3] Filtrar `purchasePrice` según el rol en `server/services/part-service.js` (`listar` y las respuestas de alta/edición/detalle) y recibir el rol desde `server/controllers/part-controller.js`; opción para omitir la columna en `server/models/part.js` [FR-005][CA-3]
-- [ ] T029 [US3] Confirmar que `POST`/`PUT` de refacciones siguen protegidos con `requireRole('ADMIN')` en la ruta de refacciones de `server/routes/` y que el rechazo ocurre antes de validar el cuerpo [FR-006][CA-4]
-- [ ] T030 [P] [US3] Mostrar el precio de compra en `client/lib/screens/parts_screen.dart` y `client/lib/screens/part_form_screen.dart` solo si el usuario es ADMIN (la protección real sigue siendo la del backend) [FR-005][CA-3]
+- [ ] T028 [US3] Filtrar `purchasePrice` según el rol en `server/services/part-service.js` (`listar`, `crear` y `editar`; no existe `GET /api/parts/:id`) y recibir el rol desde `server/controllers/part-controller.js`; en `server/models/part.js` hacer que `aObjeto` omita `purchasePrice` por defecto (falla cerrada) y lo incluya solo con `{ incluirPrecioCompra: true }`, que el servicio activa únicamente para ADMIN; ajustar `findAll` para no pasar el índice de `map` como opción [FR-005][CA-3]
+- [ ] T029 [US3] Confirmar que `POST`/`PUT` de refacciones siguen protegidos con `requireRole('ADMIN')` en `server/routes/part-routes.js` (verificación: ya usan `requireRole('ADMIN')`, que se ejecuta antes del controlador y de validar el cuerpo; sin cambio de código esperado) [FR-006][CA-4]
+- [ ] T030 [P] [US3] Mostrar el precio de compra en `client/lib/screens/parts_screen.dart` y `client/lib/screens/part_form_screen.dart` solo si `context.watch<AuthProvider>().esAdmin` es verdadero (el rol sale de `usuario.role` en `client/lib/providers/auth_provider.dart`, getter `esAdmin`, patrón ya usado en `maintenances_screen.dart`). La sección Inventario NO es solo de ADMIN: `client/lib/widgets/app_shell.dart` la muestra a ADMIN y RECEPTIONIST (MECHANIC no la ve) y ni `parts_screen.dart` ni `part_form_screen.dart` consultan el rol hoy, así que el campo debe condicionarse explícitamente; la protección real sigue siendo la del backend [FR-005][CA-3]
 - [ ] T031 [US3] Ejecutar T026 y T027 hasta verlas pasar [CA-3][CA-4]
 
 **Punto de control**: US3 verificable por rol; ningún otro rol recibe el precio de compra.
@@ -135,9 +135,9 @@ description: "Lista de tareas para la feature 006-complemento-precios-compra"
 
 ### Pruebas de la Historia 4 (escribirlas primero; deben fallar) ⚠️
 
-- [ ] T032 [P] [US4] Crear `server/tests/integration/payments-stale.test.js`: cambio de total → el cobro se devuelve `STALE` al listar; `verify` no lo confirma (queda `STALE` o `409 PAYMENT_NOT_MODIFIABLE`); `cobrado` y `saldoPendiente` no lo descuentan; se permite un nuevo cobro sin `PAYMENT_DUPLICATE_PENDING`; el `monto` original queda intacto; con total sin cambio el cobro permanece `PENDING`; los pagos manuales y `COMPLETED` nunca pasan a `STALE` [FR-008][FR-009][CA-6]
-- [ ] T033 [P] [US4] Escenario E6b en el mismo `server/tests/integration/payments-stale.test.js` (bloque propio): orden con total $2,000, pago manual `COMPLETED` de $800, cobro digital de $1,200 (= saldo) → al listar y al verificar permanece `PENDING` y la verificación lo confirma (`COMPLETED`); caso contrario: tras otro pago manual de $100 el cobro de $1,200 pasa a `STALE` [FR-008][FR-009][CA-6]
-- [ ] T034 [P] [US4] Crear `server/tests/integration/payments-compat.test.js`: pagos y tickets del seed 007 (o equivalentes precargados) se consultan idénticos en importes, folios y contenido, sin mostrar `STALE` en pagos anteriores [FR-012][CA-7]
+- [ ] T032 [P] [US4] Crear `server/tests/integration/payments-stale.test.js`: cambio de total → el cobro se devuelve `STALE` al listar; `verify` no lo confirma (queda `STALE` o `409 PAYMENT_NOT_MODIFIABLE`); `cobrado` y `saldoPendiente` no lo descuentan; se permite un nuevo cobro sin `PAYMENT_DUPLICATE_PENDING`; el `monto` original queda intacto; con total sin cambio el cobro permanece `PENDING`; los pagos manuales y `COMPLETED` nunca pasan a `STALE`; si el total vuelve a coincidir con el importe de un cobro ya `STALE`, este sigue `STALE` (terminal); un cobro digital por un importe menor al saldo creado por la API queda `STALE` en la siguiente consulta (consecuencia aceptada de D6) y `crearCobroDigital` no marca `STALE` por sí mismo. La concurrencia (dos cambios simultáneos del total) queda como riesgo aceptado sin prueba automatizada [FR-008][FR-009][CA-6]
+- [ ] T033 [US4] Escenario E6b en el mismo `server/tests/integration/payments-stale.test.js` (bloque propio, después de T032; sin `[P]` porque comparte archivo): orden con total $2,000, pago manual `COMPLETED` de $800, cobro digital de $1,200 (= saldo) → al listar y al verificar permanece `PENDING` y la verificación lo confirma (`COMPLETED`); caso contrario: tras otro pago manual de $100 el cobro de $1,200 pasa a `STALE` [FR-008][FR-009][CA-6]
+- [ ] T034 [P] [US4] Crear `server/tests/integration/payments-compat.test.js`: la prueba crea **sus propios fixtures** dentro del archivo (orden, pagos manuales y digitales, ticket) y no depende de `apply-seeds` ni de los datos del seed 007 (las suites Jest no aplican seeds); verifica que pagos y tickets emitidos antes del cambio se consultan idénticos en importes, folios y contenido, sin mostrar `STALE` en pagos anteriores [FR-012][CA-7]
 - [ ] T035 [P] [US4] Crear `client/test/stale_payment_chip_test.dart`: un pago `STALE` se muestra con el chip "Desfasado" con los tokens de color del tema y no ofrece confirmar [FR-008][CA-6]
 
 ### Implementación de la Historia 4
@@ -146,7 +146,7 @@ description: "Lista de tareas para la feature 006-complemento-precios-compra"
 - [ ] T037 [US4] En `server/services/payment-service.js` llamar al marcado perezoso en `listar` (tras `expireStaleDigital`, con el saldo ya calculado) y en `verificarCobro` (tras la caducidad y antes de consultar al proveedor; si no coincide con el saldo, `PENDING → STALE` y se devuelve sin confirmar); no llamarlo en `crearCobroDigital` ni en el panel (depende de T024 y T036) [FR-008][FR-009][CA-6]
 - [ ] T038 [US4] Mensaje de `409 PAYMENT_NOT_MODIFIABLE` sobre un pago `STALE` en `server/services/payment-service.js` que mencione el estado desfasado [FR-009][CA-6]
 - [ ] T039 [P] [US4] Agregar el estado `STALE` (etiqueta "Desfasado") a `client/lib/models/payment.dart` y a `client/lib/providers/payments_provider.dart` [FR-008][CA-6]
-- [ ] T040 [US4] Mostrar el chip "Desfasado" (tokens existentes de advertencia) en `client/lib/screens/order_detail_screen.dart` y `client/lib/screens/payment_form_screen.dart`, y refrescar los pagos antes de ofrecer un cobro nuevo (depende de T039) [FR-008][CA-6]
+- [ ] T040 [US4] Mostrar el chip "Desfasado" (tokens existentes de advertencia) en `client/lib/screens/payment_form_screen.dart` (junto a `EXPIRED`, donde se resuelve la etiqueta de estado) y `client/lib/models/payment.dart`, sin tocar `order_detail_screen.dart`; y refrescar los pagos antes de ofrecer un cobro nuevo (depende de T039) [FR-008][CA-6]
 - [ ] T041 [US4] Ejecutar T032 a T035 hasta verlas pasar y confirmar que `digital-payments.test.js`, `dashboard.test.js` y `payments.test.js` previas siguen en verde [CA-6][CA-7][CA-10]
 
 **Punto de control**: US4 verificable; ningún cobro correcto con pagos parciales se marca `STALE`.
@@ -217,9 +217,9 @@ Todos los CA (CA-1 a CA-11) tienen al menos una tarea. CA-8, CA-9 y CA-11 se val
 ### Dependencias entre historias
 
 - **US1 (P1)**: tras la Fase 2; sin dependencias de otras historias.
-- **US2 (P2)**: tras la Fase 2; comparte `server/validators/part-validator.js` con US1 (T020 después de T010).
-- **US3 (P2)**: tras la Fase 2; comparte `part-service.js`, `part-controller.js` y las pantallas de inventario con US1, por lo que T028 y T030 van después de T012, T014 y T015.
-- **US4 (P3)**: tras la Fase 2; T037 depende de T024 (US2) porque usa el saldo en centavos.
+- **US2 (P2)**: tras la Fase 2 y **depende de US1 (T010, T011)**: T017 prueba el límite de `purchasePrice` y T020 comparte `server/validators/part-validator.js` (T020 después de T010).
+- **US3 (P2)**: tras la Fase 2 y **depende de US1 (T010–T012)**: sus pruebas necesitan que exista `purchasePrice`; además comparte `part-service.js`, `part-controller.js` y las pantallas de inventario, por lo que T028 y T030 van después de T012, T014 y T015.
+- **US4 (P3)**: tras la Fase 2 y **depende de US2 (T024)**, porque T037 usa el saldo en centavos.
 - **US5 (P3)**: los seeds ya están hechos; la verificación T045 depende de T003 y T004 (la migración 017 debe estar aplicada).
 
 ### Dentro de cada historia
@@ -230,7 +230,7 @@ Todos los CA (CA-1 a CA-11) tienen al menos una tarea. CA-8, CA-9 y CA-11 se val
 ### Oportunidades de paralelismo
 
 - Fase 2: T005 y T007 en paralelo con T003.
-- US1: T008, T009 y T013 en paralelo; US2: T017, T018, T019 y T021 en paralelo; US3: T026, T027 y T030 en paralelo; US4: T032 a T035 y T039 en paralelo (T032 y T033 comparten archivo, así que se escriben de forma consecutiva aunque se planifican por separado).
+- US1: T008, T009 y T013 en paralelo; US2: T017, T018, T019 y T021 en paralelo; US3: T026, T027 y T030 en paralelo; US4: T032, T034, T035 y T039 en paralelo (T033 va después de T032 porque comparte archivo y por eso no lleva `[P]`).
 - Con varias personas, tras la Fase 2 US1, US2 y US4 pueden avanzar a la vez si se coordinan los archivos compartidos indicados arriba.
 
 ## Estrategia de implementación

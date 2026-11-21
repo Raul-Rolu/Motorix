@@ -43,6 +43,11 @@ Extiende el contrato base y los previos (`specs/003-historial-inventario/contrac
 
 - **Sin cambio de forma**: el bloque `totals` se sigue calculando en centavos enteros (servicios + mano de obra + refacciones) y se responde con 2 decimales; se agrega la validación de tope (ver `422 ORDER_TOTAL_LIMIT_EXCEEDED`).
 
+### `POST /api/orders/:id/parts` (CA-2)
+
+- **Cuerpo**: sin cambios. **Nueva respuesta de error**: `422 ORDER_TOTAL_LIMIT_EXCEEDED` si agregar la refacción (cantidad × precio de venta vigente) dejaría el total de la orden por encima de 99,999,999.99; la orden y el stock no cambian.
+- La respuesta de este endpoint y la de `DELETE /api/orders/:id/parts/:partId` **nunca** incluyen `purchasePrice` (solo se proyectan nombre, código, cantidad y precio unitario).
+
 ### `POST /api/orders/:id/services` y `POST /api/orders/:id/labor` (CA-2)
 
 - **Cuerpo**: sin cambios (`{ "description": "...", "amount": 450.0 }`). No hay restricción de unicidad: dos líneas idénticas (misma orden, descripción e importe) pueden coexistir.
@@ -64,8 +69,13 @@ Extiende el contrato base y los previos (`specs/003-historial-inventario/contrac
 ### `POST /api/orders/:id/payments/digital` (FR-008, CA-6)
 
 - **Roles**: ADMIN, RECEPTIONIST (sin cambio).
-- **Comportamiento**: antes de crear, se marcan como `STALE` los cobros `PENDING` desfasados; por lo tanto `409 PAYMENT_DUPLICATE_PENDING` **solo** aplica si queda un cobro `PENDING` **con importe vigente**. Un cobro `STALE` previo no bloquea: se crea el nuevo con el importe del saldo actual.
+- **Comportamiento**: este endpoint **no** marca `STALE` (el desfase se detecta únicamente en `GET .../payments` y en `POST /api/payments/:id/verify`). `409 PAYMENT_DUPLICATE_PENDING` conserva su significado actual: existe un cobro `PENDING`. Un cobro desfasado deja de bloquear en cuanto una consulta de pagos lo marca `STALE`; la interfaz consulta `GET .../payments` **antes** de ofrecer un cobro nuevo, de modo que al crearlo el desfasado ya está `STALE` y el nuevo se crea con el importe del saldo actual.
 - **Cuerpo**: sin cambios (`{ "monto": 1800.0 }`); sigue validándose contra el saldo (que ya no descuenta `STALE`).
+
+### Consecuencia aceptada: cobro digital parcial creado por la API (D6)
+
+- `POST .../payments/digital` acepta cualquier `monto` mayor que cero y no mayor que el saldo. La **aplicación de escritorio solo genera el enlace por el saldo completo** (`payment_form_screen.dart` envía `monto: saldoPendiente`; no ofrece un cobro digital parcial). Por tanto, un cobro digital por un importe **menor** al saldo solo puede crearse llamando directamente a la API.
+- Como la regla de `STALE` compara contra el saldo pendiente, ese cobro parcial queda `STALE` en la **siguiente** consulta (`GET .../payments`) o verificación, aunque nadie haya cambiado el total. Es un comportamiento aceptado y documentado; los pagos parciales se registran con los métodos manuales.
 
 ### `POST /api/payments/:id/verify` (FR-008, FR-009, CA-6)
 

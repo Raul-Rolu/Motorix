@@ -86,13 +86,13 @@ server/
 │   ├── errors.js                           # nuevo código: ORDER_TOTAL_LIMIT_EXCEEDED
 │   └── money.js                            # NUEVO: aCentavos()/deCentavos() y topes (999,999.99 / 99,999,999.99)
 ├── models/
-│   ├── part.js                             # columnas nuevas en aObjeto/create/update; opción sin purchasePrice
+│   ├── part.js                             # columnas nuevas en create/update; aObjeto omite purchasePrice por defecto (falla cerrada)
 │   ├── payment.js                          # transición PENDING → STALE; marcado perezoso del desfase
 │   └── order.js                            # totales y líneas en centavos enteros
 ├── services/
-│   ├── part-service.js                     # filtrado de purchasePrice por rol; validación de catálogo
+│   ├── part-service.js                     # pide purchasePrice al modelo solo si el rol es ADMIN; validación de catálogo; tope de total también al agregar refacciones
 │   ├── order-service.js                    # topes de total en centavos
-│   └── payment-service.js                  # flujo STALE al listar/crear/verificar cobro
+│   └── payment-service.js                  # flujo STALE al listar y verificar cobro (no en crear)
 └── tests/
     ├── unit/money-cents.test.js            # NUEVO (CA-5)
     ├── contract/parts-role-visibility.test.js  # NUEVO (CA-3, CA-4)
@@ -128,7 +128,7 @@ Resuelve las 10 decisiones técnicas (D1–D10), incluidas todas las NEEDS CLARI
 
 1. Migración 017 (columnas y `CHECK` de límites en `parts`, `ENUM STALE` en `payments`; sin tocar líneas de orden) → D1, D2.
 2. Lista fija de categorías con valores concretos → D3.
-3. Filtrado de `purchasePrice` por rol en API con validación en backend → D4.
+3. Filtrado de `purchasePrice` por rol en API con validación en backend, con falla cerrada en `aObjeto` (se omite salvo petición explícita de ADMIN) → D4.
 4. Centavos enteros y límites 999,999.99 / 99,999,999.99 → D5.
 5. Flujo de detección de `STALE` al consultar o confirmar y generación de un cobro nuevo → D6.
 6. Chip `STALE` y columnas de categoría/marca en el cliente → D7.

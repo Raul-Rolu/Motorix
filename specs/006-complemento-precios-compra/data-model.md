@@ -15,7 +15,7 @@ Todos los cambios viven en la migración aditiva `database/migrations/017_part_p
 
 **Validación (backend, `part-validator.js`)**: los **tres** precios (venta, compra y, por proxy, cualquier importe capturado) deben ser numéricos, no negativos, con hasta 2 decimales y ≤ 999,999.99; `category` debe pertenecer al catálogo; `brand` ≤ 50 caracteres. Errores → `400 DATOS_INVALIDOS` con mensajes en español.
 
-**Visibilidad**: `GET /api/parts` devuelve `category` y `brand` a los tres roles; `purchasePrice` **solo si `role === 'ADMIN'`** (filtro en `part-service.listar`, D4).
+**Visibilidad**: `GET /api/parts` devuelve `category` y `brand` a los tres roles; `purchasePrice` **solo si `role === 'ADMIN'`** (D4: `part.aObjeto` omite `purchasePrice` por defecto y solo lo incluye cuando el servicio lo pide de forma explícita para ADMIN, así ninguna otra consulta puede filtrarlo por omisión).
 
 **Relaciones**: sin cambios (`order_parts.part_id`, `inventory_movements.part_id`).
 
