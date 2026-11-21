@@ -34,8 +34,8 @@ description: "Lista de tareas para la feature 006-complemento-precios-compra"
 
 **Propósito**: línea base verde antes de tocar nada.
 
-- [ ] T001 Ejecutar `npm test` en `server/` y `flutter test` en `client/` sobre la rama actual y anotar el resultado como línea base (todas las suites previas deben estar en verde) [CA-10]
-- [ ] T002 Confirmar en `server/tests/helpers/db-test.js` que la base `motorix_test` aplica automáticamente toda migración numerada (incluida la futura `017_part_purchase_price_stale.sql`); solo se edita el helper si no la detecta [CA-10]
+- [X] T001 Ejecutar `npm test` en `server/` y `flutter test` en `client/` sobre la rama actual y anotar el resultado como línea base (todas las suites previas deben estar en verde) [CA-10]
+- [X] T002 Confirmar en `server/tests/helpers/db-test.js` que la base `motorix_test` aplica automáticamente toda migración numerada (incluida la futura `017_part_purchase_price_stale.sql`); solo se edita el helper si no la detecta [CA-10]
 
 ---
 
@@ -45,11 +45,11 @@ description: "Lista de tareas para la feature 006-complemento-precios-compra"
 
 **⚠️ CRÍTICO**: ninguna historia empieza hasta terminar esta fase. Los seeds ya modificados (US5) también necesitan la migración 017 aplicada, porque escriben `category`, `brand` y `purchase_price`.
 
-- [ ] T003 Antes de crear la migración, consultar en la base local `SELECT MIN(sale_price), MAX(sale_price) FROM parts` y confirmar que ningún valor viola los `CHECK` nuevos (≥ 0 y ≤ 999,999.99); si alguno los viola, corregir el dato a mano o detenerse y avisar. Luego crear `database/migrations/017_part_purchase_price_stale.sql`, solo sobre `parts` y `payments`: en `parts` agregar `category ENUM('FRENOS','MOTOR','SUSPENSION','ELECTRICO','TRANSMISION','CLIMA','NEUMATICOS','LUBRICANTES','OTRO') NULL`, `brand VARCHAR(50) NULL`, `purchase_price DECIMAL(10,2) NULL` con `CHECK (purchase_price >= 0 AND purchase_price <= 999999.99)` y `CHECK (sale_price <= 999999.99)`; en `payments` ampliar `status` a `ENUM('PENDING','COMPLETED','EXPIRED','STALE')` con `STALE` al final. Sin tocar `order_services`, `order_labor` ni `order_entries`; sin borrados [FR-001][FR-002][FR-003][FR-008][CA-1][CA-2][CA-6]
+- [X] T003 Antes de crear la migración, consultar en la base local `SELECT MIN(sale_price), MAX(sale_price) FROM parts` y confirmar que ningún valor viola los `CHECK` nuevos (≥ 0 y ≤ 999,999.99); si alguno los viola, corregir el dato a mano o detenerse y avisar. Luego crear `database/migrations/017_part_purchase_price_stale.sql`, solo sobre `parts` y `payments`: en `parts` agregar `category ENUM('FRENOS','MOTOR','SUSPENSION','ELECTRICO','TRANSMISION','CLIMA','NEUMATICOS','LUBRICANTES','OTRO') NULL`, `brand VARCHAR(50) NULL`, `purchase_price DECIMAL(10,2) NULL` con `CHECK (purchase_price >= 0 AND purchase_price <= 999999.99)` y `CHECK (sale_price <= 999999.99)`; en `payments` ampliar `status` a `ENUM('PENDING','COMPLETED','EXPIRED','STALE')` con `STALE` al final. Sin tocar `order_services`, `order_labor` ni `order_entries`; sin borrados [FR-001][FR-002][FR-003][FR-008][CA-1][CA-2][CA-6]
 - [ ] T004 Aplicar `node database/scripts/apply-migrations.mjs` sobre `motorix_test` y sobre la base local; comprobar que 017 queda registrada, que las filas existentes de `parts` y `payments` no cambian y que una segunda corrida no la repite (depende de T003) [CA-8]
-- [ ] T005 [P] Escribir `server/tests/unit/money-cents.test.js` (casos: `aCentavos(0.1 + 0.2)` = 30, `aCentavos(1234.56)` = 123456, `deCentavos`, `esImporteValido` con negativos, NaN y 3 decimales, límites `LIMITE_PRECIO_CENTAVOS` = 99 999 999 y `LIMITE_TOTAL_CENTAVOS` = 9 999 999 999); debe fallar antes de T006 [CA-5]
-- [ ] T006 Crear `server/utils/money.js` con `aCentavos()`, `deCentavos()`, `esImporteValido()` y los dos límites en centavos, y hacer pasar T005 (depende de T005) [FR-007][CA-5]
-- [ ] T007 [P] Agregar el código `ORDER_TOTAL_LIMIT_EXCEEDED` (422) al catálogo de `server/utils/errors.js`; no se agrega ningún código de línea duplicada [FR-003][CA-2]
+- [X] T005 [P] Escribir `server/tests/unit/money-cents.test.js` (casos: `aCentavos(0.1 + 0.2)` = 30, `aCentavos(1234.56)` = 123456, `deCentavos`, `esImporteValido` con negativos, NaN y 3 decimales, límites `LIMITE_PRECIO_CENTAVOS` = 99 999 999 y `LIMITE_TOTAL_CENTAVOS` = 9 999 999 999); debe fallar antes de T006 [CA-5]
+- [X] T006 Crear `server/utils/money.js` con `aCentavos()`, `deCentavos()`, `esImporteValido()` y los dos límites en centavos, y hacer pasar T005 (depende de T005) [FR-007][CA-5]
+- [X] T007 [P] Agregar el código `ORDER_TOTAL_LIMIT_EXCEEDED` (422) al catálogo de `server/utils/errors.js`; no se agrega ningún código de línea duplicada [FR-003][CA-2]
 
 **Punto de control**: migración 017 aplicada y repetible, `money.js` probado y error nuevo disponible; las suites previas siguen en verde.
 

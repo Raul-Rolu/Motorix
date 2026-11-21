@@ -148,4 +148,13 @@ export const errores = {
       'El total de la orden está incompleto porque falta el precio de venta de una refacción usada; asigne el precio para poder continuar.',
       { refaccionesSinPrecio }
     ),
+  // 006-complemento-precios-compra, T007 (FR-003, CA-2): el total de la orden
+  // no puede rebasar 99,999,999.99 (se evalúa en centavos enteros).
+  totalOrdenExcedeLimite: (limite = 99999999.99) =>
+    new AppError(
+      422,
+      'ORDER_TOTAL_LIMIT_EXCEEDED',
+      `La operación dejaría el total de la orden por encima del máximo permitido (${Number(limite).toFixed(2)}).`,
+      { limite: Number(limite) }
+    ),
 };
