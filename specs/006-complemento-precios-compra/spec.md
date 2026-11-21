@@ -12,7 +12,7 @@
 
 ### Session 2026-11-21
 
-- Q: ¿Cómo se representa exactamente el cobro de Mercado Pago desfasado: un nuevo estado `STALE` en `payments` o una columna/marca aparte? (FR-008) → A: Se agrega el estado `STALE` a `payments`; un cobro de Mercado Pago `PENDING` cuyo importe ya no coincide con el total de la orden pasa a `STALE`, no puede confirmarse y no cuenta como pago vigente (ni para la regla de un solo pago vigente ni para el saldo pendiente), de modo que se puede generar uno nuevo con el importe vigente.
+- Q: ¿Cómo se representa exactamente el cobro de Mercado Pago desfasado: un nuevo estado `STALE` en `payments` o una columna/marca aparte? (FR-008) → A: Se agrega el estado `STALE` a `payments`; un cobro de Mercado Pago `PENDING` cuyo importe ya no coincide con el saldo pendiente de la orden (total menos pagos confirmados) pasa a `STALE`, no puede confirmarse y no cuenta como pago vigente (ni para la regla de un solo pago vigente ni para el saldo pendiente), de modo que se puede generar uno nuevo con el importe vigente.
 - Q: ¿Cómo se muestran la categoría y la marca en el listado de inventario: columnas fijas, filtros o ambos? (FR-014) → A: El listado de inventario muestra columnas fijas de categoría y marca, sin filtros nuevos.
 
 ## Alcance de esta especificación
@@ -36,7 +36,7 @@ Esta feature es **solo la diferencia** entre la rama actual (spec `005-precio-ve
 - **Categoría**: lista fija definida en el sistema (no administrable) con valores de ejemplo; **marca**: texto libre de hasta 50 caracteres. Ambas opcionales.
 - **Precio de venta menor al precio de compra**: se permite y se muestra una advertencia al administrador.
 - **Precio de venta para mecánico y recepción**: lo ven (ya lo usan en la orden); solo el precio de compra se oculta.
-- **Cobro desfasado de Mercado Pago**: un cobro `PENDING` cuyo importe ya no coincide con el total pasa al estado `STALE` (nuevo estado en `payments`), no puede confirmarse, no cuenta como pago vigente y se permite generar uno nuevo; no se actualiza el importe de un cobro ya generado.
+- **Cobro desfasado de Mercado Pago**: un cobro `PENDING` cuyo importe ya no coincide con el saldo pendiente (total menos pagos confirmados) pasa al estado `STALE` (nuevo estado en `payments`), no puede confirmarse, no cuenta como pago vigente y se permite generar uno nuevo; no se actualiza el importe de un cobro ya generado.
 - **Corrección del precio de una línea de orden abierta**: no se permite (se mantiene la instantánea de la spec 005).
 - **Tickets anteriores**: se muestran igual que hoy, sin tocar su contenido.
 
@@ -96,7 +96,7 @@ Como mecánico o recepcionista, quiero seguir trabajando con refacciones sin que
 
 ### Historia de usuario 4 - Cobro de Mercado Pago desfasado detectado y resuelto (Prioridad: P3)
 
-Como recepcionista, quiero que un cobro de Mercado Pago pendiente cuyo importe ya no coincide con el total se detecte y se resuelva para no cobrar de más ni de menos.
+Como recepcionista, quiero que un cobro de Mercado Pago pendiente cuyo importe ya no coincide con el saldo pendiente se detecte y se resuelva para no cobrar de más ni de menos.
 
 **Por qué esta prioridad**: Es visible para el cliente y evita cobros incorrectos, pero depende del total correcto ya entregado por la spec 005; se prueba de forma independiente sobre una orden con un cobro ya generado.
 
@@ -106,7 +106,7 @@ Como recepcionista, quiero que un cobro de Mercado Pago pendiente cuyo importe y
 
 1. **Dado** una orden con total de $1,800 y un cobro de Mercado Pago pendiente por ese importe, **Cuando** la administración asigna precio a una refacción usada en esa orden y el total pasa a $2,000, **Entonces** el cobro pendiente pasa al estado `STALE` (desfasado) y la interfaz lo señala de forma visible.
 2. **Dado** un cobro desfasado (`STALE`), **Cuando** se intenta confirmarlo con el importe anterior, **Entonces** el sistema lo rechaza.
-3. **Dado** una orden con un cobro `STALE` y sin otro cobro vigente, **Cuando** la recepción genera un nuevo cobro, **Entonces** este se crea con el importe vigente del total, el cobro `STALE` no cuenta como pago vigente y la orden puede liquidarse por el importe nuevo.
+3. **Dado** una orden con un cobro `STALE` y sin otro cobro vigente, **Cuando** la recepción genera un nuevo cobro, **Entonces** este se crea con el importe vigente del saldo pendiente, el cobro `STALE` no cuenta como pago vigente y la orden puede liquidarse por el importe nuevo.
 4. **Dado** un cobro desfasado, **Cuando** se consulta, **Entonces** su importe original se conserva sin modificarse (no se reescribe un cobro ya generado).
 5. **Dado** una orden cuyo total no cambia, **Cuando** existe un cobro pendiente, **Entonces** el cobro permanece en estado pendiente (`PENDING`), no pasa a `STALE` y su flujo sigue siendo el habitual.
 
@@ -135,9 +135,9 @@ Como equipo, quiero que los datos de ejemplo se puedan cargar varias veces sin d
 - ¿Qué ocurre si el total de una orden alcanza su máximo permitido? (el sistema rechaza operaciones que lo rebasen con un mensaje claro y la orden no queda en un estado inconsistente)
 - ¿Qué pasa con un cobro de Mercado Pago ya confirmado cuando cambia el total de la orden? (no se toca: solo los cobros pendientes pueden quedar desfasados; los confirmados conservan su importe, en línea con "los pagos ya emitidos no cambian")
 - ¿Qué ocurre si el total vuelve a coincidir con el importe de un cobro desfasado? (sigue requiriendo atención explícita de la recepción para resolverlo; el sistema no lo revierte por silencio)
-- ¿Cómo se ve el saldo de una orden con un cobro en `STALE`? (el cobro `STALE` no cuenta como pago vigente: el saldo pendiente se muestra sin descontar ese importe hasta que se registre un cobro nuevo por el total vigente)
+- ¿Cómo se ve el saldo de una orden con un cobro en `STALE`? (el cobro `STALE` no cuenta como pago vigente: el saldo pendiente se muestra sin descontar ese importe hasta que se registre un cobro nuevo por el saldo pendiente vigente)
 - ¿Qué ocurre con las columnas de categoría y marca cuando la refacción no tiene esos datos opcionales? (las columnas existen siempre en el listado y muestran el campo vacío, sin ocultar la fila)
-- ¿Qué ocurre si dos personas cambian el total de una orden con un cobro pendiente casi al mismo tiempo? (el cobro queda desfasado como máximo una vez y nunca puede confirmarse con un importe distinto al total vigente)
+- ¿Qué ocurre si dos personas cambian el total de una orden con un cobro pendiente casi al mismo tiempo? (el cobro queda desfasado como máximo una vez y nunca puede confirmarse con un importe distinto al saldo pendiente vigente)
 - ¿Qué ocurre con un pago o ticket emitidos antes de este cambio? (se consultan y muestran exactamente igual que hoy; el cambio no altera su contenido ni su importe)
 - ¿Qué ocurre si un integrante sin permiso intenta leer el precio de compra directamente por la interfaz de servicio? (el backend lo rechaza u omite el campo, con prueba automatizada por rol)
 - ¿Qué ocurre si la carga de datos de ejemplo se ejecuta a media instalación? (se comporta como cualquier reejecución: completa lo que falte sin duplicar lo ya cargado)
@@ -154,8 +154,8 @@ Como equipo, quiero que los datos de ejemplo se puedan cargar varias veces sin d
 - **FR-006** (Ubicuo): Solo administración podrá registrar o modificar categoría, marca y precio de compra; con cualquier otro rol la operación será rechazada por el sistema. (CA-4)
 - **FR-007** (Ubicuo): Los totales de orden, saldos y pagos se calcularán en centavos enteros y se conservarán con precisión de dos decimales, sin diferencias de redondeo. (CA-5)
 - **FR-008** (Evento): Cuando cambie el total de una orden mientras exista un cobro de Mercado Pago pendiente (`PENDING`) sobre ella, el sistema deberá pasar ese cobro al estado `STALE` (desfasado) de los pagos; el cobro en `STALE` no podrá confirmarse con el importe anterior, no contará como pago vigente (ni para la regla de un solo pago vigente ni para el saldo pendiente) y se permitirá generar un nuevo cobro con el importe vigente; el importe del cobro ya generado no se modifica. (CA-6)
-- **FR-009** (No deseado): Si se intenta confirmar un cobro de Mercado Pago cuyo importe no coincide con el total vigente de la orden, entonces el sistema deberá rechazar la confirmación. (CA-6)
-- **FR-010** (Evento): Cuando se carguen los datos de ejemplo, la ejecución deberá ser idempotente: poder repetirse dos veces seguidas sin duplicar registros ni reiniciar datos de trabajo, corrigiendo la duplicación del seed 004 (hallazgo H-14) con las llaves únicas que hagan falta en los servicios y la mano de obra de las órdenes de ejemplo. (CA-8)
+- **FR-009** (No deseado): Si se intenta confirmar un cobro de Mercado Pago cuyo importe no coincide con el saldo pendiente vigente de la orden (el total menos los pagos confirmados), entonces el sistema deberá rechazar la confirmación. (CA-6)
+- **FR-010** (Evento): Cuando se carguen los datos de ejemplo, la ejecución deberá ser idempotente: poder repetirse dos veces seguidas sin duplicar registros ni reiniciar datos de trabajo, corrigiendo la duplicación del seed 004 (hallazgo H-14) con identificadores fijos en los servicios, la mano de obra y las entradas de las órdenes de ejemplo, sin llaves únicas ni borrado de filas. (CA-8)
 - **FR-011** (Evento): Cuando se instala o se cargan los datos de ejemplo, el sistema deberá entregar refacciones que incluyan categoría, marca, precio de compra y precio de venta. (CA-9)
 - **FR-012** (Evento): Cuando se emita un pago o un ticket antes de este cambio, el sistema deberá conservar su consulta y su contenido exactamente como están hoy (prueba explícita de compatibilidad). (CA-7)
 - **FR-013** (Evento): Cuando cierre este sprint, el equipo deberá actualizar `docs/project-context.md`, `docs/design-system.md` y los comentarios del código que afirman que las refacciones no suman importe, para que la documentación no contradiga al sistema. (CA-11)
@@ -181,7 +181,7 @@ Como equipo, quiero que los datos de ejemplo se puedan cargar varias veces sin d
 - **Refacción** (existente, se amplía): además de código, nombre, stock y precios de venta, incorpora categoría (lista fija), marca (texto libre opcional) y precio de compra (dato financiero reservado a administración). Relación: puede aparecer en muchas órdenes.
 - **Pago** (existente, se amplía): conserva su importe original de forma inmutable y sus estados incluyen el nuevo `STALE` (desfasado): cuando su orden cambia de total con el cobro en estado pendiente (`PENDING`), el pago pasa a `STALE`, no puede confirmarse y no cuenta como pago vigente (ni para la regla de un solo pago vigente ni para el saldo pendiente), habilitando un nuevo cobro. Relación: siempre pertenece a una orden (RN-13).
 - **Orden de servicio** (existente, solo cálculo): sus totales, saldos y pagos se calculan en centavos enteros; su cambio de total es lo que provoca el desfase de un cobro pendiente.
-- **Servicios y mano de obra de ejemplo** (datos, se corrigen): filas de los datos de ejemplo que reciben una llave única para que su carga sea repetible sin duplicarse (H-14).
+- **Servicios y mano de obra de ejemplo** (datos, se corrigen): filas de los datos de ejemplo que reciben un identificador fijo para que su carga sea repetible sin duplicarse (H-14).
 
 ## Criterios de éxito *(obligatorio)*
 
@@ -211,6 +211,6 @@ Como equipo, quiero que los datos de ejemplo se puedan cargar varias veces sin d
 - Las refacciones existentes al aplicar este cambio quedan con precio de compra pendiente de captura por administración, sin bloquear su uso en órdenes.
 - Los límites de precio (999,999.99) y de total (99,999,999.99) son los acordados en el insumo y aplican a capturas nuevas; los datos ya guardados dentro del rango no se alteran.
 - Solo los cobros de Mercado Pago **pendientes** pueden quedar desfasados; los confirmados y los tickets ya emitidos no se modifican.
-- La corrección del seed 004 (H-14) se hace con llaves únicas en las filas de servicios y mano de obra de ejemplo, sin cambiar el resto del contenido de demostración.
+- La corrección del seed 004 (H-14) se hace con identificadores fijos en las filas de servicios, mano de obra y entradas de ejemplo (sin llaves únicas ni limpieza de duplicados previos), sin cambiar el resto del contenido de demostración.
 - Las migraciones siguen siendo aditivas y numeradas (siguiente número disponible, `017_...`), sin modificar scripts ya aplicados.
 - Las restricciones técnicas heredadas del insumo se mantienen: backend en ES Modules, permisos validados en backend, solo el backend accede a MySQL, pruebas de integración contra `motorix_test`, español en docs, comentarios y pruebas, e interfaces conforme a `docs/design-system.md`.
