@@ -19,6 +19,7 @@ import { paymentRoutes } from './routes/payment-routes.js';
 import { ticketRoutes } from './routes/ticket-routes.js';
 import { dashboardRoutes } from './routes/dashboard-routes.js';
 import { meRoutes } from './routes/me-routes.js';
+import { notificationRoutes } from './routes/notification-routes.js';
 
 export function crearApp() {
   const app = express();
@@ -53,6 +54,8 @@ export function crearApp() {
   app.use('/api/tickets', ticketRoutes);
   app.use('/api/dashboard', dashboardRoutes);
   app.use('/api/me', meRoutes);
+  // 007-notificaciones-internas: un router por recurso en su prefijo.
+  app.use('/api/notifications', notificationRoutes);
 
   // Manejo centralizado de errores (al final de la cadena).
   app.use(errorHandler);

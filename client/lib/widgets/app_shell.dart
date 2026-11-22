@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 
 import '../config/theme.dart';
 import '../providers/auth_provider.dart';
+import '../providers/notifications_provider.dart';
 import '../screens/appointments_screen.dart';
 import '../screens/clients_screen.dart';
 import '../screens/home_content.dart';
@@ -19,6 +20,8 @@ import '../screens/orders_screen.dart';
 import '../screens/parts_screen.dart';
 import '../screens/users_screen.dart';
 import '../screens/vehicles_screen.dart';
+import 'notification_bell.dart';
+import 'notifications_panel.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -70,6 +73,8 @@ class _AppShellState extends State<AppShell> {
       appBar: AppBar(
         title: Text(secciones[_indice].titulo),
         actions: [
+          // 007-notificaciones-internas: campana de avisos del encabezado.
+          const CampanaAvisos(),
           Padding(
             padding: const EdgeInsets.only(right: MotorixEspaciados.s),
             child: Center(
@@ -90,6 +95,8 @@ class _AppShellState extends State<AppShell> {
           ),
         ],
       ),
+      // Panel lateral de avisos, agrupados por tipo (se abre desde la campana).
+      endDrawer: const PanelAvisos(),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -113,6 +120,8 @@ class _AppShellState extends State<AppShell> {
                 onTap: () {
                   setState(() => _indice = i);
                   Navigator.of(context).pop(); // cierra el drawer
+                  // Actualiza el contador de avisos al cambiar de sección.
+                  context.read<NotificationsProvider>().alCambiarSeccion();
                 },
               ),
           ],

@@ -15,6 +15,7 @@ import 'providers/clients_provider.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/history_provider.dart';
 import 'providers/maintenances_provider.dart';
+import 'providers/notifications_provider.dart';
 import 'providers/orders_provider.dart';
 import 'providers/parts_provider.dart';
 import 'providers/payments_provider.dart';
@@ -53,6 +54,11 @@ void main() {
         ChangeNotifierProvider(create: (_) => PaymentsProvider(api)),
         ChangeNotifierProvider(create: (_) => TicketsProvider(api)),
         ChangeNotifierProvider(create: (_) => DashboardProvider(api)),
+        // 007-notificaciones-internas: avisos del usuario; escucha la sesión para
+        // limpiarse al cerrar sesión o al entrar otro usuario.
+        ChangeNotifierProvider(
+          create: (context) => NotificationsProvider(api, context.read<AuthProvider>()),
+        ),
       ],
       child: const MotorixApp(),
     ),
