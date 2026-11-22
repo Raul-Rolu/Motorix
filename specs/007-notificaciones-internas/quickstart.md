@@ -12,6 +12,8 @@ Guía de validación de extremo a extremo. No incluye código de implementación
 
 ## 2. Puesta en marcha
 
+> **Orden obligatorio: migraciones → seeds → servidor.** El servidor nuevo escribe `status_changed_at` en cada cambio de estado de una orden: si arranca antes de aplicar la migración 018, todo cambio de estado de órdenes falla (columna inexistente). Los seeds ajustados (004) y el nuevo (009) también necesitan la columna: si se corren antes de la migración, `apply-seeds` se detiene en el seed 004 y no aplica los siguientes.
+
 ```powershell
 # 1. Aplicar migraciones (incluye la nueva 018)
 node database/scripts/apply-migrations.mjs
@@ -93,6 +95,8 @@ cd client; flutter test
 1. Con la app abierta como `admin`, crear desde otra sesión un hecho nuevo (por ejemplo, una salida de stock que deje una refacción agotada).
 2. **Esperado**: el contador se actualiza solo en ≤ 60 segundos, sin recargar; también se actualiza al cambiar de sección.
 3. Con el servidor detenido, el panel muestra el mensaje de error «No se pudieron cargar los avisos.» con «Reintentar»; con una base sin avisos muestra «No tienes avisos pendientes.».
+4. **Cambio de usuario**: cerrar sesión como `admin` e iniciar como `mecanico` en el mismo equipo: el panel del mecánico no muestra ni por un instante avisos de stock, mantenimientos ni marcas de leído del administrador.
+5. **Sesión vencida**: con el token expirado, la siguiente consulta periódica cierra la sesión (401) sin mostrar el error de carga ni dejar avisos visibles.
 
 ### E8 — Compatibilidad con el panel de control (CA-8)
 
@@ -102,7 +106,7 @@ cd client; flutter test
 ### E9 — Rendimiento (CA-13)
 
 1. `cd server; npx jest notifications-performance`.
-2. **Esperado**: con 1,000 órdenes, 600 citas, 400 refacciones y 500 mantenimientos pendientes, el máximo de 5 mediciones de `GET /api/notifications` es **< 1,000 ms** para cada rol y la petición ejecuta **≤ 8** consultas SQL.
+2. **Esperado**: con 1,000 órdenes, 600 citas, 400 refacciones y 500 mantenimientos pendientes, el máximo de 5 mediciones de `GET /api/notifications` es **< 1,000 ms** para cada rol y la petición ejecuta **≤ 10** consultas SQL (incluida la autenticación).
 
 ### E10 — Suites previas y nuevas en verde (CA-13) y documentación (CA-14)
 

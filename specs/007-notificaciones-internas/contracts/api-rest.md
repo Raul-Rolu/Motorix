@@ -9,7 +9,8 @@ Extiende el contrato base y los previos (`specs/003-historial-inventario/contrac
 - **Aviso**: objeto derivado al consultar (no se almacena). Se identifica por `clave` con el formato `TIPO:ID:ESTADO` (ver `data-model.md`, sección 4).
 - **Grupos** (`grupo`): `MANTENIMIENTO_VENCIDO | ORDEN_DETENIDA | STOCK | MANTENIMIENTO_PROXIMO | CITA_DEL_DIA`, en el orden de presentación del panel.
 - **Destino** (`destino`): `{ "pantalla": "ORDEN" | "VEHICULO" | "INVENTARIO" | "CITAS", "id": number | null }`; el cliente lo usa para abrir la pantalla relacionada (orden, vehículo, inventario o citas).
-- **Textos en español** (`titulo`, `detalle`) los arma el servidor, de modo que cliente y pruebas comparten una sola redacción.
+- **Textos en español** (`titulo`, `detalle`) los arma el servidor, de modo que cliente y pruebas comparten una sola redacción. El nombre del estado de una orden en el detalle del aviso («Recibido», «Diagnóstico», «En reparación», «Esperando refacción») también lo mapea el servidor (`utils/notification-text.js`); no depende del mapeo del cliente.
+- **Montaje**: dos routers independientes, `/api/notifications` y `/api/client-notices` (un router por recurso, como el resto de la API).
 - **Constantes del servidor** (no configurables en este sprint): orden detenida = más de **3 días** sin cambio de estado; mantenimiento próximo = umbral más cercano a **30 días** o **1,000 km** o menos.
 - **Códigos de error nuevos**: `NOTIFICATION_NOT_FOUND` (404), `CLIENT_NOTICE_NOT_PENDING` (409), `CLIENT_NOTICE_DUPLICATE` (409). Se reutilizan `NO_AUTORIZADO` (403), `DATOS_INVALIDOS` (400) y los errores de sesión existentes.
 

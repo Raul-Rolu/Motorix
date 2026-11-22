@@ -22,11 +22,11 @@ Reunir en un solo lugar del encabezado los avisos internos que hoy están disper
 
 **Tipo de proyecto**: Aplicación con API REST (frontend Flutter + backend Express).
 
-**Metas de rendimiento**: `GET /api/notifications` responde en **menos de 1 segundo** (máximo de 5 mediciones tras un calentamiento) con un volumen ampliado: 1,000 órdenes, 600 citas, 400 refacciones y 500 mantenimientos pendientes, y con no más de 8 consultas SQL por petición. Detalle y método de medición en `research.md` D11.
+**Metas de rendimiento**: `GET /api/notifications` responde en **menos de 1 segundo** (máximo de 5 mediciones tras un calentamiento) con un volumen ampliado: 1,000 órdenes, 600 citas, 400 refacciones y 500 mantenimientos pendientes, y con no más de 10 consultas SQL por petición (incluida la autenticación). Detalle y método de medición en `research.md` D11.
 
 **Restricciones**: Permisos solo en backend (RN-5, RN-15); sin secretos en el repo; español en docs, comentarios y pruebas; pantallas según `docs/design-system.md`; seeds idempotentes con IDs fijos; el estado de un aviso no se copia a otra tabla (RN-10); la sesión JWT dura 30 min (el cliente ya cierra sesión ante un 401 mediante `onSesionExpirada`).
 
-**Escala/Alcance**: Base local de demostración; ~15 criterios de aceptación, 1 migración, 1 seed nuevo y 1 ajustado, 4 rutas, ~7 suites backend nuevas, ~4 suites Flutter nuevas, 3 documentos.
+**Escala/Alcance**: Base local de demostración; ~15 criterios de aceptación, 1 migración, 1 seed nuevo y 1 ajustado, 4 rutas, 9 suites backend nuevas, 5 suites Flutter nuevas, 3 documentos.
 
 ## Verificación de la constitución
 
@@ -93,21 +93,25 @@ server/
 │   ├── part.js                 # constante CONDICION_STOCK_EN_ALERTA compartida con el panel
 │   ├── appointment.js          # consultas de citas programadas por fecha (hoy y mañana)
 │   ├── dashboard.js            # contarStockBajo usa la condición compartida (mismo resultado)
-│   ├── notification.js         # NUEVO: lecturas por usuario y consultas de avisos (órdenes detenidas, etc.)
-│   └── client-notice.js        # NUEVO: avisos a clientes (alta, consulta de hechos ya avisados)
+│   ├── notification.js         # NUEVO: lecturas por usuario y consulta de órdenes detenidas
+│   └── client-notice.js        # NUEVO: alta del aviso a cliente y consultas propias de hechos pendientes (órdenes TERMINADO, citas de mañana, mantenimientos pendientes; todas con cliente, teléfono y vehículo, excluyendo los ya avisados)
 ├── services/
 │   ├── maintenance-state.js    # esProximo(…) y márgenes constantes (funciones puras)
-│   └── notification-service.js # NUEVO: arma avisos por rol, claves, lectura y clientes por avisar
+│   ├── notification-service.js # NUEVO: arma los avisos por rol, claves y lectura
+│   └── client-notice-service.js   # NUEVO: clientes por avisar y marcar como avisado (US7)
 ├── validators/
-│   └── notification-validator.js  # NUEVO: clave de lectura, tipo/hecho/nota (≤ 255)
+│   └── notification-validator.js  # NUEVO: clave de lectura (US6) y tipo/hecho/nota ≤ 255 (US7)
 ├── controllers/
-│   └── notification-controller.js # NUEVO
+│   ├── notification-controller.js     # NUEVO
+│   └── client-notice-controller.js    # NUEVO
 ├── routes/
-│   └── notification-routes.js     # NUEVO: /api/notifications y /api/client-notices
+│   ├── notification-routes.js         # NUEVO: router montado en /api/notifications
+│   └── client-notice-routes.js        # NUEVO: router montado en /api/client-notices
 ├── utils/
 │   ├── errors.js               # nuevos códigos: NOTIFICATION_NOT_FOUND, CLIENT_NOTICE_NOT_PENDING, CLIENT_NOTICE_DUPLICATE
-│   └── notification-keys.js    # NUEVO: construir, validar y descomponer claves TIPO:ID:ESTADO (funciones puras)
-├── app.js                      # monta las rutas nuevas
+│   ├── notification-keys.js    # NUEVO: construir, validar y descomponer claves TIPO:ID:ESTADO (funciones puras)
+│   └── notification-text.js    # NUEVO: nombre en español del estado de una orden para el detalle del aviso (el mapeo hoy solo existe en el cliente)
+├── app.js                      # monta los dos routers nuevos con `app.use('/api/notifications', …)` y `app.use('/api/client-notices', …)`
 └── tests/
     ├── helpers/db-test.js                            # limpiarTablas también vacía notification_reads y client_notices (helper, no una prueba)
     ├── unit/maintenance-proximo.test.js              # NUEVO (CA-3, CA-5)
@@ -174,5 +178,9 @@ Resuelve las decisiones D1–D14: migración 018 y relleno sin alterar `updated_
 - **Demostración en bases ya sembradas**: en una base donde el seed 004 ya corrió, la orden 3 no tendría fecha antigua; el seed 009 la ajusta con una condición estricta que solo actúa una vez y nunca reinicia trabajo real (D13).
 - **Concurrencia al marcar «avisado»**: dos marcas simultáneas se resuelven con la restricción `UNIQUE (notice_type, fact_id)`; la segunda recibe `409 CLIENT_NOTICE_DUPLICATE` sin duplicar (D10).
 - **Sesión de 30 minutos y consulta cada 60 s**: la consulta periódica no renueva el token; al vencer, el 401 ya cierra la sesión (`onSesionExpirada`) y el temporizador se detiene con el cierre (D12).
+- **Orden de despliegue obligatorio: migraciones → seeds → servidor.** `orderModel.setStatus` pasa a escribir `status_changed_at`; si el servidor nuevo arranca antes de aplicar la migración 018, todo cambio de estado de una orden falla por columna inexistente, y el seed 004 ajustado detendría `apply-seeds` en ese punto (los seeds 005 a 009 no se aplicarían). Se documenta en el quickstart y en `database/README.md` (T076).
+- **Montaje de rutas**: se sigue la convención existente de un router por recurso montado en su prefijo (`/api/clients`, `/api/orders`, …) y no el router de `/api` con rutas completas que usan los pagos, porque `/api/notifications` y `/api/client-notices` son recursos distintos con permisos distintos.
+- **Estado del cliente al cambiar de usuario**: `NotificationsProvider` es global; al cerrar sesión o cambiar de usuario descarta lista, contadores y marcas de leído (T019, prueba en T014) para no mostrar avisos ajenos ni por un instante.
+- **Autorización de operaciones destructivas en pruebas**: recrear `motorix_test` o cualquier base requiere autorización explícita del usuario; si una base desechable necesita permisos, el usuario ejecuta el `GRANT` como root (nunca se piden ni se escriben contraseñas).
 - **Listas largas**: no se pagina el panel (la spec no lo pide); con el volumen ampliado se mide la respuesta y el cliente usa una lista con desplazamiento. Si el volumen real creciera mucho, se paginaría en una feature posterior.
 - **Los datos de demostración cambian ligeramente** (seed 009 **aceptado el 2026-11-22**; la revisión de las cifras absolutas de `quickstart-005.mjs` es una tarea explícita en `tasks.md`): se agregan la orden 6, el mantenimiento 6 y ajustes de fechas; los scripts de evidencia que comparan conteos entre dos corridas (p. ej. `quickstart-005.mjs`) siguen válidos, pero cualquier cifra absoluta de tablas cambia y debe revisarse al cerrar el sprint.

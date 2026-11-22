@@ -27,7 +27,7 @@ Hoy los avisos están dispersos y limitados al administrador. Esta feature los r
 |---|---|
 | Tarjeta «Alertas que requieren atención» (`alertasPanel`) del panel de control de ADMIN (mantenimientos vencidos, stock bajo y cobros digitales pendientes). El insumo hablaba además de una insignia en Inventario y de un `StockAlertsProvider`, que **no existen** en este repositorio | Se conserva sin cambios y no debe contradecir al centro de notificaciones; no se agrega ninguna insignia |
 | Contadores del panel de control (mantenimientos próximos y vencidos, citas, stock bajo; solo ADMIN) | Se conservan; los avisos usan el mismo cálculo de mantenimientos y de stock |
-| Lista de Mantenimientos con su indicador calculado (Próximo / Vencido) | Se conserva; es la fuente de la regla de mantenimiento próximo y vencido |
+| Lista de Mantenimientos, que solo muestra «Pendiente» o «Vencido» (no tiene indicador «Próximo» ni margen) | Se conserva sin cambios; es la fuente de la regla de **vencido** (RN-11). La regla de **próximo** del aviso es nueva y usa los márgenes de 30 días o 1,000 km (ver «Aclaraciones») |
 | Alertas de stock ya calculadas (`stock <= stock mínimo`) | Se consumen; no se redefinen |
 | Precios de refacciones, cobros y `STALE` (specs 005 y 006) | No se tocan |
 
@@ -86,7 +86,7 @@ Como recepcionista, quiero ver los mantenimientos próximos y vencidos y las cit
 
 **Escenarios de aceptación**:
 
-1. **Dado** un mantenimiento próximo y otro vencido según el cálculo existente de la lista de Mantenimientos, **Cuando** la recepcionista abre el centro, **Entonces** ve un aviso por cada uno con su estado correcto.
+1. **Dado** un mantenimiento vencido (según la regla existente de la lista de Mantenimientos) y otro próximo (pendiente con su umbral a 30 días o menos, o a 1,000 km o menos), **Cuando** la recepcionista abre el centro, **Entonces** ve un aviso por cada uno con su estado correcto.
 2. **Dado** una cita de hoy en estado `PROGRAMADA`, **Cuando** la recepcionista abre el centro, **Entonces** ve el aviso de cita del día.
 3. **Dado** una cita de hoy cancelada o completada, **Cuando** se abre el centro, **Entonces** no genera aviso.
 4. **Dado** una refacción con stock bajo, **Cuando** la recepcionista consulta sus avisos, **Entonces** el aviso de stock no aparece ni se devuelve en la respuesta.
@@ -196,6 +196,7 @@ Como recepcionista, quiero una lista de clientes por avisar (vehículo listo, ci
 - ¿Qué ocurre con un mantenimiento cancelado o completado? (no genera aviso: solo los pendientes se evalúan)
 - ¿Qué ocurre con una refacción inactiva? (no genera aviso, igual que en las alertas de stock actuales)
 - ¿Qué ocurre si la sesión expira durante la consulta periódica de 60 segundos? (se trata como cualquier sesión vencida: se cierra la sesión sin dejar la campana con datos obsoletos)
+- ¿Qué ocurre si en el mismo equipo cierra sesión un usuario e inicia otro con un rol distinto? (el centro de notificaciones descarta de inmediato la lista, los contadores y las marcas de leído del usuario anterior; no se muestran avisos ajenos mientras carga la consulta del nuevo usuario)
 - ¿Qué ocurre con los datos de los sprints anteriores? (no se modifican; la feature solo agrega tablas y consultas)
 
 ## Requisitos *(obligatorio)*
@@ -214,7 +215,7 @@ Como recepcionista, quiero una lista de clientes por avisar (vehículo listo, ci
 - **FR-010** (Estado): Mientras una orden esté en estado Recibido, Diagnóstico, En reparación o Esperando refacción y su último cambio de estado haya ocurrido hace más de 3 días, el sistema deberá mostrarla como orden detenida, calculado con la fecha propia de último cambio de estado de la orden (FR-020); nunca aplicará a órdenes Terminadas, Entregadas ni Canceladas. (CA-3)
 - **FR-011** (Estado): Mientras una cita de hoy esté en estado `PROGRAMADA`, el sistema deberá mostrarla como aviso de cita del día; las citas canceladas o completadas no generarán aviso. (CA-3)
 - **FR-012** (Ubicuo): El aviso de mantenimiento vencido deberá usar el cálculo que ya existe (RN-11) sin modificarlo; el aviso de mantenimiento próximo será un pendiente no vencido con su umbral más cercano a 30 días o menos, o a 1,000 km o menos (márgenes constantes solo del aviso, no de la lista ni del panel). (CA-5)
-- **FR-013** (Evento): Cuando el usuario inicie sesión, navegue entre pantallas o transcurran 60 segundos con la app abierta, el sistema deberá actualizar el contador de avisos mediante una consulta, sin notificaciones en tiempo real. (CA-1)
+- **FR-013** (Evento): Cuando el usuario inicie sesión, navegue entre pantallas o transcurran 60 segundos con la app abierta, el sistema deberá actualizar el contador de avisos mediante una consulta, sin notificaciones en tiempo real. Al cerrar sesión o al cambiar de usuario, el cliente deberá descartar la lista de avisos, los contadores y las marcas de leído del usuario anterior, de modo que nunca se muestren a otro usuario ni por un instante. (CA-1)
 - **FR-014** (Ubicuo): ADMIN y RECEPTIONIST podrán ver la lista de clientes por avisar con cliente, teléfono, vehículo y motivo (orden terminada sin entregar, cita de mañana, mantenimiento próximo o vencido); MECHANIC no tendrá acceso, validado en el backend. (CA-10)
 - **FR-015** (Evento): Cuando un usuario autorizado marque a un cliente como avisado, el sistema deberá guardar quién lo avisó, cuándo y una nota opcional de hasta 255 caracteres, sacarlo de la lista y no volver a mostrarlo por el mismo hecho; un hecho nuevo (otra orden, otra cita u otro registro de mantenimiento) lo hará aparecer de nuevo. Un mantenimiento ya avisado como próximo que pasa a vencido es el mismo hecho y no vuelve a la lista. (CA-11)
 - **FR-016** (Evento): Cuando se carguen los datos de ejemplo del sprint, el sistema deberá incluir al menos un caso de cada tipo de aviso, y la carga será idempotente (IDs fijos, sin duplicar ni reiniciar datos de trabajo). (CA-12)
