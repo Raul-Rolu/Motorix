@@ -2,6 +2,7 @@
 
 **Propósito**: Validar la completitud y la calidad de la especificación antes de pasar a planificación
 **Creada**: 2026-11-22
+**Actualizada**: 2026-11-22 (tras `/speckit.clarify`)
 **Feature**: [spec.md](../spec.md)
 
 ## Calidad del contenido
@@ -13,7 +14,7 @@
 
 ## Completitud de los requisitos
 
-- [ ] No quedan marcadores [NEEDS CLARIFICATION]
+- [x] No quedan marcadores [NEEDS CLARIFICATION]
 - [x] Los requisitos son comprobables y no ambiguos
 - [x] Los criterios de éxito son medibles
 - [x] Los criterios de éxito son independientes de la tecnología (sin detalles de implementación)
@@ -31,11 +32,9 @@
 
 ## Notas
 
-- **Ítems pendientes por decisión del usuario (no por calidad de redacción):**
-  - «No quedan marcadores [NEEDS CLARIFICATION]»: quedan **2** aclaraciones abiertas (máximo permitido: 3):
-    1. **FR-010 (orden detenida)**: el sistema no guarda la fecha del último cambio de estado de una orden (la tabla de historial de estados que cita el insumo no existe). Opciones: (a) usar la última modificación del registro de la orden como aproximación (cualquier edición la reinicia), o (b) agregar una marca propia de «último cambio de estado» en la migración 018.
-    2. **FR-015 (cliente avisado por mantenimiento)**: si un mantenimiento ya avisado como próximo pasa después a vencido, ¿es el mismo hecho (no vuelve a aparecer) o uno nuevo (vuelve a la lista)?
-  - «Sin detalles de implementación»: la spec menciona de forma deliberada elementos del insumo que son entregables o restricciones heredadas (la migración `018_...sql`, los estados existentes `PROGRAMADA`, `COMPLETADA` y `CANCELADA`, la ausencia de WebSocket, la consulta cada 60 segundos y los archivos `docs/project-context.md` y `docs/design-system.md`). No introducen stack, lenguajes ni estructura de código; se conservan porque el insumo los fijó como alcance.
-- Discrepancias detectadas entre el insumo y el sistema real (registradas en la sección «Supuestos»): no existe historial de estados de órdenes; las citas no tienen estado «confirmada»; el panel de control cuenta las citas completadas de hoy mientras el centro las excluye.
-- El resto de los ítems se validó como cumplido al momento de crear el checklist.
+- **Aclaraciones resueltas el 2026-11-22** (sección «Aclaraciones» de la spec): FR-010 → fecha propia de último cambio de estado de la orden (`status_changed_at`, migración 018, rellenada con `updated_at`, N = 3 días); FR-015 → un mantenimiento avisado como próximo que pasa a vencido es el mismo hecho y no vuelve a la lista. Ya no queda ningún marcador [NEEDS CLARIFICATION] (solo la cita histórica del campo Input de la spec).
+- **Ítems que siguen sin marcar (por decisión del usuario, no por calidad de redacción):**
+  - «Sin detalles de implementación» (dos ítems): la spec menciona de forma deliberada elementos que el insumo o el usuario fijaron como alcance: la migración `018_...sql`, la fecha `status_changed_at`, los estados existentes `PROGRAMADA`, `COMPLETADA` y `CANCELADA`, la ausencia de WebSocket, la consulta cada 60 segundos y los archivos existentes (`order.js`, `order-service.js`, seed 004) que deben actualizar la fecha. Esto último responde a la instrucción expresa de indicar qué componentes existentes se verán afectados. No introducen stack, lenguajes ni estructura de código nueva.
+- Discrepancias entre el insumo y el sistema real, ya registradas en «Supuestos»: no existía historial de estados de órdenes (resuelto con la fecha propia); las citas no tienen estado «confirmada» (se usa `PROGRAMADA`); el panel de control cuenta las citas completadas de hoy mientras el centro las excluye.
+- Revisión de otras ambigüedades de alto impacto: ninguna encontrada; los valores por defecto adoptados (cita identificada por su registro, independencia entre «leído» y «avisado», fecha local del servidor para «hoy» y «mañana») están en «Supuestos».
 - Marcar ítems `[x]` solo tras revisión; `/speckit.clarify` reevalúa este archivo tras resolver las aclaraciones.
