@@ -137,3 +137,82 @@ test('el stock insuficiente responde PART_SIN_STOCK con details.stockDisponible'
     mensaje: expect.any(String),
   });
 });
+
+// --- 005-precio-venta-refacciones, T009 (US1): salePrice en el contrato ---
+
+test('la refacción incluye salePrice en alta, consulta y edición (FR-001)', async () => {
+  const { token } = await prepararEntorno();
+
+  const alta = await request(app)
+    .post('/api/parts')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ name: 'Contrato precio', code: 'CTP-PREC', stock: 2, salePrice: 85.5 });
+
+  expect(alta.status).toBe(201);
+  expect(alta.body).toMatchObject({
+    id: expect.any(Number),
+    name: 'Contrato precio',
+    code: 'CTP-PREC',
+    salePrice: 85.5,
+    isActive: true,
+  });
+
+  const listado = await request(app)
+    .get('/api/parts')
+    .set('Authorization', `Bearer ${token}`);
+  expect(listado.body.datos.find((p) => p.code === 'CTP-PREC').salePrice).toBe(85.5);
+
+  const edicion = await request(app)
+    .put(`/api/parts/${alta.body.id}`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ salePrice: 90 });
+  expect(edicion.status).toBe(200);
+  expect(edicion.body.salePrice).toBe(90);
+});
+
+test('el alta y la edición de precios son solo de administración (FR-002, CA-16)', async () => {
+  const { token: adminToken } = await prepararEntorno();
+  const hash = await bcrypt.hash('Usuario123', 10);
+  const tokens = {};
+  for (const [username, nombre, rol] of [
+    ['mecanico', 'Mecánico del Taller', 'MECHANIC'],
+    ['recepcion', 'Recepción', 'RECEPTIONIST'],
+  ]) {
+    await getPool().query(
+      'INSERT INTO users (username, email, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)',
+      [username, `${username}@motorix.local`, hash, nombre, rol]
+    );
+    const login = await request(app)
+      .post('/api/auth/login')
+      .send({ identificacion: username, contrasena: 'Usuario123' });
+    tokens[username] = login.body.token;
+
+    const altaDenegada = await request(app)
+      .post('/api/parts')
+      .set('Authorization', `Bearer ${tokens[username]}`)
+      .send({ name: `No debe crearse ${username}`, code: `DEN-${username}`, salePrice: 50 });
+    expect(altaDenegada.status).toBe(403);
+    expect(altaDenegada.body.error.codigo).toBe('NO_AUTORIZADO');
+  }
+
+  // La edición del precio sobre una refacción existente también es de ADMIN.
+  const alta = await request(app)
+    .post('/api/parts')
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ name: 'Precio protegido', code: 'PRO-001', salePrice: 100 });
+  expect(alta.status).toBe(201);
+
+  const edicionDenegada = await request(app)
+    .put(`/api/parts/${alta.body.id}`)
+    .set('Authorization', `Bearer ${tokens.mecanico}`)
+    .send({ salePrice: 1 });
+  expect(edicionDenegada.status).toBe(403);
+  expect(edicionDenegada.body.error.codigo).toBe('NO_AUTORIZADO');
+
+  const edicionAdmin = await request(app)
+    .put(`/api/parts/${alta.body.id}`)
+    .set('Authorization', `Bearer ${adminToken}`)
+    .send({ salePrice: 110 });
+  expect(edicionAdmin.status).toBe(200);
+  expect(edicionAdmin.body.salePrice).toBe(110);
+});

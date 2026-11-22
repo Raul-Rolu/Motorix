@@ -4,6 +4,7 @@
  * users) y el historial de partidas y entradas.
  */
 import { getPool } from '../config/db.js';
+import { aCentavos, deCentavos } from '../utils/money.js';
 
 export function aObjeto(fila) {
   if (!fila) {
@@ -181,7 +182,35 @@ export async function findLabor(orderId) {
   }));
 }
 
-/** Totales informativos de la orden (sumas de partidas y mano de obra). */
+/**
+ * Cálculo puro de los totales de una orden (005, FR-007/FR-008, CA-6/CA-7).
+ * `partsTotal` es la suma de `unit_price × quantity` de las líneas con
+ * precio; `refaccionesSinPrecio` cuenta los usos con `unit_price` nulo, que
+ * marcan el total como incompleto.
+ *
+ * 006 (FR-007, CA-5): la suma se hace en centavos enteros y solo se vuelve a
+ * decimales al presentar, así 0.10 + 0.20 es exactamente 0.30.
+ */
+export function calcularTotales({
+  services = 0,
+  labor = 0,
+  partsTotal = 0,
+  refaccionesSinPrecio = 0,
+} = {}) {
+  const serviciosCentavos = aCentavos(services);
+  const manoDeObraCentavos = aCentavos(labor);
+  const refaccionesCentavos = aCentavos(partsTotal);
+  return {
+    services: deCentavos(serviciosCentavos),
+    labor: deCentavos(manoDeObraCentavos),
+    parts: deCentavos(refaccionesCentavos),
+    grand: deCentavos(serviciosCentavos + manoDeObraCentavos + refaccionesCentavos),
+    totalCompleto: refaccionesSinPrecio === 0,
+    refaccionesSinPrecio,
+  };
+}
+
+/** Totales informativos de la orden: servicios + mano de obra + refacciones. */
 export async function findTotals(orderId) {
   const [servicios] = await getPool().query(
     'SELECT COALESCE(SUM(amount), 0) AS total FROM order_services WHERE order_id = ?',
@@ -191,11 +220,18 @@ export async function findTotals(orderId) {
     'SELECT COALESCE(SUM(amount), 0) AS total FROM order_labor WHERE order_id = ?',
     [orderId]
   );
-  const totales = {
+  const [refacciones] = await getPool().query(
+    `SELECT COALESCE(SUM(unit_price * quantity), 0) AS total,
+            SUM(unit_price IS NULL) AS sinPrecio
+     FROM order_parts WHERE order_id = ?`,
+    [orderId]
+  );
+  return calcularTotales({
     services: Number(servicios[0].total),
     labor: Number(manoDeObra[0].total),
-  };
-  return { ...totales, grand: totales.services + totales.labor };
+    partsTotal: Number(refacciones[0].total),
+    refaccionesSinPrecio: Number(refacciones[0].sinPrecio ?? 0),
+  });
 }
 
 /** Registra una entrada fechada (historial inmutable; sin UPDATE ni DELETE). */
@@ -288,7 +324,10 @@ export async function findVehicleHistory(vehicleId, { order = 'desc' } = {}) {
             (SELECT COALESCE(SUM(s.amount), 0) FROM order_services s WHERE s.order_id = o.id) AS services_total,
             (SELECT COUNT(*) FROM order_labor l WHERE l.order_id = o.id) AS labor_count,
             (SELECT COALESCE(SUM(l.amount), 0) FROM order_labor l WHERE l.order_id = o.id) AS labor_total,
-            (SELECT COUNT(*) FROM order_parts op WHERE op.order_id = o.id) AS parts_count
+            (SELECT COUNT(*) FROM order_parts op WHERE op.order_id = o.id) AS parts_count,
+            (SELECT COALESCE(SUM(op2.unit_price * op2.quantity), 0)
+               FROM order_parts op2
+              WHERE op2.order_id = o.id AND op2.unit_price IS NOT NULL) AS parts_total
      FROM service_orders o
      JOIN vehicles v ON v.id = o.vehicle_id
      LEFT JOIN users u ON u.id = o.mechanic_id
@@ -306,7 +345,7 @@ export async function findPartsByOrders(orderIds) {
   }
   const marcadores = orderIds.map(() => '?').join(', ');
   const [filas] = await getPool().query(
-    `SELECT op.order_id, p.name AS part_name, op.quantity
+    `SELECT op.order_id, p.name AS part_name, op.quantity, op.unit_price
      FROM order_parts op
      JOIN parts p ON p.id = op.part_id
      WHERE op.order_id IN (${marcadores})
@@ -316,10 +355,15 @@ export async function findPartsByOrders(orderIds) {
   return filas;
 }
 
+/** Importe de una línea (precio × cantidad) calculado en centavos enteros (006, CA-5). */
+export function importeDeLinea(precioUnitario, cantidad) {
+  return deCentavos(aCentavos(precioUnitario) * Number(cantidad));
+}
+
 /** Refacciones usadas por una orden (Sprint 3, US7; detalle GET /api/orders/:id). */
 export async function findOrderParts(orderId) {
   const [filas] = await getPool().query(
-    `SELECT op.id, op.part_id, op.quantity, p.name, p.code
+    `SELECT op.id, op.part_id, op.quantity, op.unit_price, p.name, p.code
      FROM order_parts op
      JOIN parts p ON p.id = op.part_id
      WHERE op.order_id = ?
@@ -332,7 +376,32 @@ export async function findOrderParts(orderId) {
     nombre: fila.name,
     code: fila.code,
     quantity: fila.quantity,
+    // Precio congelado al momento de agregarla (005, FR-004/FR-006).
+    unitPrice: fila.unit_price === null || fila.unit_price === undefined
+      ? null
+      : Number(fila.unit_price),
+    amount:
+      fila.unit_price === null || fila.unit_price === undefined
+        ? null
+        : importeDeLinea(fila.unit_price, fila.quantity),
   }));
+}
+
+/**
+ * Usos de refacción SIN precio de la orden, en la forma del `details` del
+ * error `TOTAL_INCOMPLETO` (005, contracts/api-rest.md: lista de
+ * `{ orderPartId, partId, nombre }`).
+ */
+export async function findOrderPartsSinPrecio(orderId) {
+  const [filas] = await getPool().query(
+    `SELECT op.id AS orderPartId, op.part_id AS partId, p.name AS nombre
+     FROM order_parts op
+     JOIN parts p ON p.id = op.part_id
+     WHERE op.order_id = ? AND op.unit_price IS NULL
+     ORDER BY op.id ASC`,
+    [orderId]
+  );
+  return filas;
 }
 
 /**
@@ -351,17 +420,24 @@ export async function findOrderPart(orderId, orderPartId, conexion = null) {
   return { id: filas[0].id, partId: filas[0].part_id, quantity: filas[0].quantity };
 }
 
-/** Registra una línea de refacción usada (T046, US7). */
+/** Registra una línea de refacción usada, con su precio congelado (005, T046/T021). */
 export async function createOrderPart(
-  { orderId, partId, quantity, createdBy },
+  { orderId, partId, quantity, unitPrice = null, createdBy },
   conexion = null
 ) {
   const db = conexion ?? getPool();
   const [resultado] = await db.query(
-    'INSERT INTO order_parts (order_id, part_id, quantity, created_by) VALUES (?, ?, ?, ?)',
-    [orderId, partId, quantity, createdBy ?? null]
+    `INSERT INTO order_parts (order_id, part_id, quantity, unit_price, created_by)
+     VALUES (?, ?, ?, ?, ?)`,
+    [orderId, partId, quantity, unitPrice ?? null, createdBy ?? null]
   );
-  return { id: resultado.insertId, partId, quantity };
+  return {
+    id: resultado.insertId,
+    partId,
+    quantity,
+    unitPrice: unitPrice === null ? null : Number(unitPrice),
+    amount: unitPrice === null ? null : importeDeLinea(unitPrice, quantity),
+  };
 }
 
 /** Elimina una línea de refacción usada (T046, US7; la devolución genera su movimiento). */

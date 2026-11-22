@@ -15,12 +15,22 @@ class PagosDeOrden {
   final String estadoCobro;
   final List<Pago> pagos;
 
+  /// false = la orden tiene usos de refacciones sin precio (005, FR-009);
+  /// en ese estado el servidor rechaza cualquier cobro con
+  /// `TOTAL_INCOMPLETO` salvo que la orden ya esté liquidada (FR-016).
+  final bool totalCompleto;
+
+  /// Cantidad de usos de refacciones sin precio (005, CA-12).
+  final int refaccionesSinPrecio;
+
   const PagosDeOrden({
     required this.total,
     required this.cobrado,
     required this.saldoPendiente,
     required this.estadoCobro,
     required this.pagos,
+    this.totalCompleto = true,
+    this.refaccionesSinPrecio = 0,
   });
 
   factory PagosDeOrden.desdeJson(Map<String, dynamic> json) {
@@ -30,6 +40,8 @@ class PagosDeOrden {
       cobrado: (json['cobrado'] as num? ?? 0).toDouble(),
       saldoPendiente: (json['saldoPendiente'] as num? ?? 0).toDouble(),
       estadoCobro: json['estadoCobro'] as String? ?? 'PENDIENTE',
+      totalCompleto: json['totalCompleto'] as bool? ?? true,
+      refaccionesSinPrecio: json['refaccionesSinPrecio'] as int? ?? 0,
       pagos: datos
           .map((elemento) => Pago.desdeJson(elemento as Map<String, dynamic>))
           .toList(),
@@ -56,7 +68,8 @@ class Pago {
   final String metodo;
   final double monto;
 
-  /// COMPLETED | PENDING | EXPIRED (solo los COMPLETED cuentan, FR-009).
+  /// COMPLETED | PENDING | EXPIRED | STALE (solo los COMPLETED cuentan, FR-009;
+  /// STALE = cobro digital desfasado respecto del saldo, 006 FR-008).
   final String estado;
   final String? externalReference;
   final String? registradoPor;
@@ -107,6 +120,8 @@ class Pago {
         return 'Pendiente';
       case 'EXPIRED':
         return 'Expirado';
+      case 'STALE':
+        return 'Desfasado';
       default:
         return estado;
     }
@@ -120,7 +135,7 @@ class Pago {
 class CobroDigital {
   final int id;
 
-  /// PENDING | COMPLETED | EXPIRED.
+  /// PENDING | COMPLETED | EXPIRED | STALE.
   final String estado;
   final double monto;
   final String enlace;
@@ -152,6 +167,8 @@ class CobroDigital {
         return 'Confirmado';
       case 'EXPIRED':
         return 'Expirado';
+      case 'STALE':
+        return 'Desfasado';
       default:
         return 'Pendiente de confirmación';
     }

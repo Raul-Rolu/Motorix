@@ -19,7 +19,10 @@ class TicketsProvider extends ChangeNotifier {
   String? error;
   String? codigoError;
 
-  /// Carga (o emite) el ticket de la orden.
+  /// Carga (o emite) el ticket de la orden (lo emite el servidor si aún no
+  /// existe). Con total incompleto en una orden no liquidada el servidor
+  /// responde `TOTAL_INCOMPLETO` (005, FR-010); el mensaje queda en `error`
+  /// con su código en `codigoError` y se muestra en la vista.
   Future<void> cargar(int orderId) async {
     cargando = true;
     error = null;

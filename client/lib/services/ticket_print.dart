@@ -22,12 +22,20 @@ String construirHtmlTicket(TicketServicio ticket) {
       .join('\n');
   final refacciones = ticket.refacciones.isEmpty
       ? '<tr><td colspan="2">Sin refacciones registradas.</td></tr>'
-      : ticket.refacciones
-          .map((refaccion) =>
-              '<tr><td>${_escapar(refaccion.nombre)} '
-              '(${_escapar(refaccion.codigo)})</td>'
-              '<td class="num">x${refaccion.cantidad}</td></tr>')
-          .join('\n');
+      : ticket.refacciones.map((refaccion) {
+          // 005-precio-venta-refacciones: precio e importe por línea o la
+          // marca "sin precio" de los usos heredados (CA-13, FR-016).
+          final detalle = refaccion.sinPrecio
+              ? 'x${refaccion.cantidad} · sin precio'
+              : 'x${refaccion.cantidad} · '
+                  '${formatearMoneda(refaccion.unitPrice!)} c/u';
+          final importe =
+              refaccion.sinPrecio ? 'Sin precio' : formatearMoneda(refaccion.amount!);
+          return '<tr><td>${_escapar(refaccion.nombre)} '
+              '(${_escapar(refaccion.codigo)})<br>'
+              '<span class="metodo">$detalle</span></td>'
+              '<td class="num">$importe</td></tr>';
+        }).join('\n');
   final pagos = ticket.metodosDePago.isEmpty
       ? '<tr><td colspan="2">Sin pagos registrados.</td></tr>'
       : ticket.metodosDePago
@@ -145,8 +153,13 @@ String construirTextoTicket(TicketServicio ticket) {
   if (ticket.refacciones.isNotEmpty) {
     buffer.writeln('Refacciones:');
     for (final refaccion in ticket.refacciones) {
+      // 005-precio-venta-refacciones: precio e importe o "sin precio" (CA-13).
+      final importe = refaccion.sinPrecio
+          ? 'sin precio'
+          : '${formatearMoneda(refaccion.unitPrice!)} c/u — '
+              '${formatearMoneda(refaccion.amount!)}';
       buffer.writeln(
-          '  - ${refaccion.nombre} (${refaccion.codigo}) x${refaccion.cantidad}');
+          '  - ${refaccion.nombre} (${refaccion.codigo}) x${refaccion.cantidad} — $importe');
     }
   }
   buffer

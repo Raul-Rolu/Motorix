@@ -1,0 +1,71 @@
+===== server (jest) — pruebas US3 después de implementar =====
+node : (node:15672) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+En línea: 1 Carácter: 10
++ $jest = (node --experimental-vm-modules ./node_modules/jest/bin/jest. ...
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:15672) Ex...nge at any time:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/integration/payments-parts-total.test.js
+  ΓêÜ el resumen de pagos suma las refacciones y el saldo parte del total completo (CA-12) (369 ms)
+  ΓêÜ un pago en orden con total incompleto se rechaza con TOTAL_INCOMPLETO antes que PAYMENT_EXCEEDS_BALANCE (CA-10) 
+(269 ms)
+  ΓêÜ el cobro digital tambi├⌐n se bloquea con TOTAL_INCOMPLETO sin crear el cobro (CA-10) (394 ms)
+  ΓêÜ una orden liquidada con usos sin precio conserva su total hist├│rico y deja ver el resumen (FR-016) (417 ms)
+
+PASS tests/integration/tickets-parts.test.js
+  ΓêÜ el ticket desglosea las refacciones con precio e importe y su total es id├⌐ntico al de la orden (CA-13, CA-14) 
+(525 ms)
+  ΓêÜ una orden no liquidada con uso sin precio no emite ticket: TOTAL_INCOMPLETO con la lista de refacciones (CA-10) 
+(407 ms)
+  ΓêÜ una orden liquidada emite el ticket con total hist├│rico y las l├¡neas sin precio marcadas (FR-016, CA-21) (409 
+ms)
+
+PASS tests/contract/payments.contract.test.js
+  ΓêÜ GET /api/orders/:id/payments sigue la forma del contrato (469 ms)
+  ΓêÜ POST /api/orders/:id/payments devuelve el pago creado en 201 (payload directo) (373 ms)
+  ΓêÜ los errores siguen el envoltorio { error: { codigo, mensaje } } (378 ms)
+
+PASS tests/contract/tickets.contract.test.js
+  ΓêÜ GET /api/tickets/:orderId sigue la forma del contrato (461 ms)
+  ΓêÜ los errores del ticket siguen el envoltorio centralizado (398 ms)
+
+Test Suites: 4 passed, 4 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        9.085 s, estimated 10 s
+Ran all test suites matching /(payments-parts-total|tickets-parts|payments\.contract|tickets\.contract)/i.
+
+
+===== client (flutter test) — pruebas US3 después de implementar =====
+00:00 +0: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart
+00:00 +0: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: el modelo lee los agregados del contrato (FR-014 a FR-016)
+00:00 +1: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:01 +3: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:01 +4: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:01 +5: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:01 +6: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:01 +7: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el bot├│n verificar
+00:01 +8: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el bot├│n verificar
+00:01 +9: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el bot├│n verificar
+00:01 +10: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el bot├│n verificar
+00:02 +11: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/login_screen_test.dart: con campos vac├¡os aparecen los mensajes de validaci├│n
+00:02 +12: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el formulario de cobro muestra m├⌐todo, monto y saldo (escenario 1)
+00:02 +13: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el formulario de cobro muestra m├⌐todo, monto y saldo (escenario 1)
+00:02 +14: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el formulario de cobro muestra m├⌐todo, monto y saldo (escenario 1)
+00:02 +15: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el formulario de cobro muestra m├⌐todo, monto y saldo (escenario 1)
+00:03 +16: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/ticket_test.dart: la vista muestra folio, cliente, servicios y total (escenario 1)
+00:03 +17: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: un monto en cero muestra el mensaje de validaci├│n (caso l├¡mite)
+00:03 +18: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: un monto en cero muestra el mensaje de validaci├│n (caso l├¡mite)
+00:03 +19: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: un monto en cero muestra el mensaje de validaci├│n (caso l├¡mite)
+00:03 +20: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: un monto en cero muestra el mensaje de validaci├│n (caso l├¡mite)
+00:03 +21: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: un monto en cero muestra el mensaje de validaci├│n (caso l├¡mite)
+00:03 +22: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: un monto en cero muestra el mensaje de validaci├│n (caso l├¡mite)
+00:03 +23: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/ticket_test.dart: la vista muestra "Sin precio" y el aviso ├ímbar en una l├¡nea sin precio (FR-016)
+00:03 +24: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: registrar un cobro confirma, env├¡a el POST y muestra ├⌐xito
+00:04 +25: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el modelo lee la marca de total incompleto y sus refacciones sin precio
+00:04 +26: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: con total incompleto el formulario avisa y bloquea el registro del cobro
+00:04 +27: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: con total completo el formulario sigue habilitado (regresi├│n)
+00:04 +28: All tests passed!

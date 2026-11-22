@@ -12,13 +12,24 @@ class RefaccionOrden {
   final String code;
   final int quantity;
 
+  /// Precio congelado al momento de agregarla (005, FR-004); null = uso
+  /// heredado sin precio (total incompleto, FR-008).
+  final double? unitPrice;
+
+  /// Importe de la línea (`unitPrice × quantity`); null sin precio.
+  final double? amount;
+
   const RefaccionOrden({
     required this.id,
     required this.partId,
     required this.nombre,
     required this.code,
     required this.quantity,
+    this.unitPrice,
+    this.amount,
   });
+
+  bool get sinPrecio => unitPrice == null;
 
   factory RefaccionOrden.desdeJson(Map<String, dynamic> json) => RefaccionOrden(
         id: json['id'] as int? ?? 0,
@@ -26,5 +37,7 @@ class RefaccionOrden {
         nombre: json['nombre'] as String? ?? '',
         code: json['code'] as String? ?? '',
         quantity: json['quantity'] as int? ?? 0,
+        unitPrice: (json['unitPrice'] as num?)?.toDouble(),
+        amount: (json['amount'] as num?)?.toDouble(),
       );
 }

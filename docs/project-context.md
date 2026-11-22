@@ -294,6 +294,31 @@ Cuando una refacción sea utilizada en una orden, el sistema debe
 reflejar la salida correspondiente del inventario. La implementación
 debe evitar que el stock quede en valores inválidos.
 
+### Refacción completa (spec 006)
+
+La entidad `Part` incluye `category` (catálogo fijo), `brand` (opcional),
+`purchasePrice` y `salePrice`:
+
+-   **`purchasePrice` es un dato financiero exclusivo del ADMIN:** solo el
+    administrador lo ve y lo escribe. Para los demás roles el backend
+    omite la clave de la respuesta (no se envía como `null`) en el listado,
+    la búsqueda, el detalle de orden y el ticket.
+-   Una refacción sin `salePrice` queda pendiente de precio de venta y no
+    puede agregarse a una orden (`PART_WITHOUT_PRICE`).
+-   Topes: cada precio unitario admite hasta **999,999.99** y el total de
+    una orden hasta **99,999,999.99** (`422 ORDER_TOTAL_LIMIT_EXCEEDED`).
+-   Si el precio de venta es menor que el de compra se advierte, pero se
+    permite guardar.
+
+### Importes en centavos enteros
+
+Todo cálculo de importes (totales de orden, importes de línea, saldo
+pendiente y estado de cobro) se hace en **centavos enteros** y solo se
+presenta con 2 decimales, para evitar errores de coma flotante
+(0.10 + 0.20 = 0.30). El total de una orden es la suma de **servicios +
+mano de obra + refacciones usadas** (precio congelado × cantidad). La mano
+de obra se agrega con `POST /api/orders/:id/services` y `kind: LABOR`.
+
 ------------------------------------------------------------------------
 
 ## 6.8 Pagos
@@ -310,6 +335,19 @@ Métodos contemplados: - Efectivo. - Tarjeta. - Transferencia. - Mercado
 Pago.
 
 Estados sugeridos: - Pendiente. - Pagado. - Rechazado. - Cancelado.
+
+Estados del pago implementados (`payments.status`): `COMPLETED`
+(Completado), `PENDING` (Pendiente de confirmación), `EXPIRED` (Expirado)
+y **`STALE` (Desfasado)**.
+
+-   Un cobro de Mercado Pago `PENDING` pasa a `STALE` cuando su importe
+    deja de coincidir con el **saldo pendiente** de la orden (total menos
+    pagos `COMPLETED`), no con el total. Un cobro parcial por el saldo
+    restante nunca se desfasa.
+-   El desfase se marca solo al listar los pagos y al verificar el cobro;
+    no al crearlo. `STALE` es terminal: no se confirma (`409
+    PAYMENT_NOT_MODIFIABLE`), no cuenta como pago vigente y permite crear
+    un cobro nuevo por el saldo actual. El importe original nunca cambia.
 
 ------------------------------------------------------------------------
 

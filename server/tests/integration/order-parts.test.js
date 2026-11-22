@@ -83,6 +83,12 @@ async function crearParte(token, stock = 10) {
     .post('/api/parts')
     .set('Authorization', `Bearer ${token}`)
     .send({ name: 'Refacción orden', code: `ORD-${Math.floor(Math.random() * 100000)}`, stock });
+  // Preparación (005-precio-venta-refacciones): registrar un precio de
+  // venta antes de usar la refacción en una orden; ninguna aserción cambia.
+  await getPool().query('UPDATE parts SET sale_price = ? WHERE id = ?', [
+    150.0,
+    respuesta.body.id,
+  ]);
   return respuesta.body;
 }
 

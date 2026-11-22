@@ -17,6 +17,41 @@ durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se version
 - `data/` — (opcional) directorio de datos del servidor MySQL; está en
   `.gitignore` y nunca se versiona.
 
+### Migraciones
+
+- `001_create_users.sql` — usuarios, roles y sesiones.
+- `002_create_clients.sql` — clientes.
+- `003_create_vehicles.sql` — vehículos.
+- `004_create_schema_migrations.sql` — registro de migraciones aplicadas.
+- `005_create_appointments.sql` — citas.
+- `006_create_service_orders.sql` — órdenes de servicio.
+- `007_create_order_services.sql` — partidas de servicios de la orden.
+- `008_create_order_labor.sql` — partidas de mano de obra.
+- `009_create_order_entries.sql` — entradas/notas de diagnóstico de la orden.
+- `010_create_parts.sql` — refacciones e inventario.
+- `011_create_inventory_movements.sql` — movimientos de inventario.
+- `012_create_maintenance_plans.sql` — planes de mantenimiento.
+- `013_create_order_parts.sql` — refacciones usadas en la orden.
+- `014_create_payments.sql` — pagos y cobros digitales.
+- `015_create_tickets.sql` — tickets de servicio.
+- `016_add_part_prices.sql` — **005-precio-venta-refacciones (FR-015)**: agrega
+  `parts.sale_price` (precio de venta) y `order_parts.unit_price` (precio
+  congelado por línea). No toca las migraciones 001–015.
+
+### Seeds
+
+- `001_initial_accounts.sql` — cuentas `admin`, `recepcion` y `mecanico`.
+- `002_demo_clients_vehicles.sql` — clientes y vehículos de ejemplo.
+- `003_demo_appointments.sql` — citas de ejemplo.
+- `004_demo_service_orders.sql` — órdenes, servicios y mano de obra.
+- `005_demo_parts.sql` — refacciones y movimientos de inventario.
+- `006_demo_maintenances.sql` — mantenimientos de ejemplo.
+- `007_demo_payments_tickets.sql` — pagos y tickets de ejemplo.
+- `008_demo_part_prices.sql` — **005-precio-venta-refacciones (FR-015, CA-20)**:
+  precios de venta de las 6 refacciones existentes, una refacción activa sin
+  precio (filtro de pendientes) y los usos con precio congelado de la orden 2.
+  Idempotente, con stock en valores absolutos.
+
 ## Requisitos
 
 - MySQL local instalado (instalación nativa, no Docker).

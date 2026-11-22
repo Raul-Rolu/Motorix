@@ -38,6 +38,9 @@ class PaymentsProvider extends ChangeNotifier {
   }
 
   /// Registra un pago manual (nace COMPLETED en el servidor, FR-001).
+  /// Con total incompleto el servidor responde `TOTAL_INCOMPLETO` (005,
+  /// FR-009) y el mensaje queda en `error` con su código en `codigoError`;
+  /// el formulario además bloquea el envío con su aviso ámbar.
   /// Devuelve el pago creado o null con el mensaje en `error`.
   Future<Pago?> registrar(
     int orderId, {
@@ -107,6 +110,17 @@ class PaymentsProvider extends ChangeNotifier {
     } on ExcepcionApi catch (excepcion) {
       error = excepcion.mensaje;
       codigoError = excepcion.codigo;
+      // 409 PAYMENT_NOT_MODIFIABLE: el servidor ya había marcado el cobro como
+      // desfasado (006); se recarga para reflejar su estado real y el saldo.
+      if (excepcion.codigo == 'PAYMENT_NOT_MODIFIABLE') {
+        await cargar(orderId);
+        final actual = pagos?.pagos.where((p) => p.id == paymentId).firstOrNull;
+        if (actual != null) {
+          cobroDigital = cobroDigital?.copiarCon(estado: actual.estado);
+        }
+        error = excepcion.mensaje;
+        codigoError = excepcion.codigo;
+      }
       notifyListeners();
       return null;
     }

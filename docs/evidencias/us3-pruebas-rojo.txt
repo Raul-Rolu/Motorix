@@ -1,0 +1,434 @@
+===== server (jest) — pruebas US3 antes de implementar =====
+node : (node:2996) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+En línea: 1 Carácter: 10
++ $jest = (node --experimental-vm-modules ./node_modules/jest/bin/jest. ...
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:2996) Exp...nge at any time:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+FAIL tests/integration/payments-parts-total.test.js
+  ├ù el resumen de pagos suma las refacciones y el saldo parte del total completo (CA-12) (322 ms)
+  ├ù un pago en orden con total incompleto se rechaza con TOTAL_INCOMPLETO antes que PAYMENT_EXCEEDS_BALANCE (CA-10) 
+(265 ms)
+  ├ù el cobro digital tambi├⌐n se bloquea con TOTAL_INCOMPLETO sin crear el cobro (CA-10) (335 ms)
+  ├ù una orden liquidada con usos sin precio conserva su total hist├│rico y deja ver el resumen (FR-016) (412 ms)
+
+  ΓùÅ el resumen de pagos suma las refacciones y el saldo parte del total completo (CA-12)
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 2
+    + Received  + 0
+
+      Object {
+        "cobrado": 0,
+        "estadoCobro": "PENDIENTE",
+    -   "refaccionesSinPrecio": 0,
+        "saldoPendiente": 1500,
+        "total": 1500,
+    -   "totalCompleto": true,
+      }
+
+    [0m [90m 101 |[39m     [33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m`Bearer 
+${token}`[39m)[33m;[39m
+     [90m 102 |[39m   expect(resumen[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 103 |[39m   expect(resumen[33m.[39mbody)[33m.[39mtoMatchObject({
+     [90m     |[39m                        [31m[1m^[22m[39m
+     [90m 104 |[39m     total[33m:[39m [35m1500[39m[33m,[39m [90m// 1000 + 200 + 2 ├ù 150[39m
+     [90m 105 |[39m     cobrado[33m:[39m [35m0[39m[33m,[39m
+     [90m 106 |[39m     saldoPendiente[33m:[39m [35m1500[39m[33m,[39m[0m
+
+      at Object.<anonymous> (tests/integration/payments-parts-total.test.js:103:24)
+
+  ΓùÅ un pago en orden con total incompleto se rechaza con TOTAL_INCOMPLETO antes que PAYMENT_EXCEEDS_BALANCE (CA-10)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "TOTAL_INCOMPLETO"
+    Received: "PAYMENT_EXCEEDS_BALANCE"
+
+    [0m [90m 155 |[39m
+     [90m 156 |[39m   expect(rechazo[33m.[39mstatus)[33m.[39mtoBe([35m409[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 157 |[39m   
+expect(rechazo[33m.[39mbody[33m.[39merror[33m.[39mcodigo)[33m.[39mtoBe([32m'TOTAL_INCOMPLETO'[39m)[33m;[39m
+     [90m     |[39m                                     [31m[1m^[22m[39m
+     [90m 158 |[39m   expect(rechazo[33m.[39mbody[33m.[39merror[33m.[39mdetails[33m.[39mrefaccionesSinPrecio)
+[33m.[39mtoHaveLength([35m1[39m)[33m;[39m
+     [90m 159 |[39m   expect(rechazo[33m.[39mbody[33m.[39merror[33m.[39mdetails[33m.[39mrefaccionesSinPrecio[
+[35m0[39m])[33m.[39mtoMatchObject({
+     [90m 160 |[39m     partId[33m,[39m[0m
+
+      at Object.<anonymous> (tests/integration/payments-parts-total.test.js:157:37)
+
+  ΓùÅ el cobro digital tambi├⌐n se bloquea con TOTAL_INCOMPLETO sin crear el cobro (CA-10)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 409
+    Received: 201
+
+    [0m [90m 191 |[39m     [33m.[39msend({ monto[33m:[39m [35m500[39m })[33m;[39m
+     [90m 192 |[39m
+    [31m[1m>[22m[39m[90m 193 |[39m   expect(rechazo[33m.[39mstatus)[33m.[39mtoBe([35m409[39m)[33m;[39m
+     [90m     |[39m                          [31m[1m^[22m[39m
+     [90m 194 |[39m   
+expect(rechazo[33m.[39mbody[33m.[39merror[33m.[39mcodigo)[33m.[39mtoBe([32m'TOTAL_INCOMPLETO'[39m)[33m;[39m
+     [90m 195 |[39m
+     [90m 196 |[39m   [36mconst[39m [pagos] [33m=[39m [36mawait[39m getPool()[33m.[39mquery([0m
+
+      at Object.<anonymous> (tests/integration/payments-parts-total.test.js:193:26)
+
+  ΓùÅ una orden liquidada con usos sin precio conserva su total hist├│rico y deja ver el resumen (FR-016)
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 2
+    + Received  + 0
+
+      Object {
+        "cobrado": 1100,
+        "estadoCobro": "LIQUIDADA",
+    -   "refaccionesSinPrecio": 1,
+        "saldoPendiente": 0,
+        "total": 1100,
+    -   "totalCompleto": false,
+      }
+
+    [0m [90m 219 |[39m     [33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m`Bearer 
+${token}`[39m)[33m;[39m
+     [90m 220 |[39m   expect(resumen[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 221 |[39m   expect(resumen[33m.[39mbody)[33m.[39mtoMatchObject({
+     [90m     |[39m                        [31m[1m^[22m[39m
+     [90m 222 |[39m     total[33m:[39m [35m1100[39m[33m,[39m [90m// hist├│rico: el uso sin precio nunca 
+sum├│[39m
+     [90m 223 |[39m     cobrado[33m:[39m [35m1100[39m[33m,[39m
+     [90m 224 |[39m     saldoPendiente[33m:[39m [35m0[39m[33m,[39m[0m
+
+      at Object.<anonymous> (tests/integration/payments-parts-total.test.js:221:24)
+
+FAIL tests/integration/tickets-parts.test.js
+  ├ù el ticket desglosea las refacciones con precio e importe y su total es id├⌐ntico al de la orden (CA-13, CA-14) 
+(502 ms)
+  ├ù una orden no liquidada con uso sin precio no emite ticket: TOTAL_INCOMPLETO con la lista de refacciones (CA-10) 
+(417 ms)
+  ├ù una orden liquidada emite el ticket con total hist├│rico y las l├¡neas sin precio marcadas (FR-016, CA-21) (412 
+ms)
+
+  ΓùÅ el ticket desglosea las refacciones con precio e importe y su total es id├⌐ntico al de la orden (CA-13, CA-14)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: undefined
+
+    [0m [90m 91 |[39m
+     [90m 92 |[39m   expect(ticket[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 93 |[39m   
+expect(ticket[33m.[39mbody[33m.[39mtotalCompleto)[33m.[39mtoBe([36mtrue[39m)[33m;[39m
+     [90m    |[39m                                     [31m[1m^[22m[39m
+     [90m 94 |[39m   
+expect(ticket[33m.[39mbody[33m.[39mrefacciones)[33m.[39mtoHaveLength([35m1[39m)[33m;[39m
+     [90m 95 |[39m   expect(ticket[33m.[39mbody[33m.[39mrefacciones[[35m0[39m])[33m.[39mtoMatchObject({
+     [90m 96 |[39m     nombre[33m:[39m expect[33m.[39mstringContaining([32m'TKP-001'[39m)[33m,[39m[0m
+
+      at Object.<anonymous> (tests/integration/tickets-parts.test.js:93:37)
+
+  ΓùÅ una orden no liquidada con uso sin precio no emite ticket: TOTAL_INCOMPLETO con la lista de refacciones (CA-10)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 409
+    Received: 200
+
+    [0m [90m 120 |[39m     [33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m`Bearer 
+${token}`[39m)[33m;[39m
+     [90m 121 |[39m
+    [31m[1m>[22m[39m[90m 122 |[39m   expect(rechazo[33m.[39mstatus)[33m.[39mtoBe([35m409[39m)[33m;[39m
+     [90m     |[39m                          [31m[1m^[22m[39m
+     [90m 123 |[39m   
+expect(rechazo[33m.[39mbody[33m.[39merror[33m.[39mcodigo)[33m.[39mtoBe([32m'TOTAL_INCOMPLETO'[39m)[33m;[39m
+     [90m 124 |[39m   expect(rechazo[33m.[39mbody[33m.[39merror[33m.[39mdetails[33m.[39mrefaccionesSinPrecio)
+[33m.[39mtoHaveLength([35m1[39m)[33m;[39m
+     [90m 125 |[39m   expect(rechazo[33m.[39mbody[33m.[39merror[33m.[39mdetails[33m.[39mrefaccionesSinPrecio[
+[35m0[39m])[33m.[39mtoMatchObject({[0m
+
+      at Object.<anonymous> (tests/integration/tickets-parts.test.js:122:26)
+
+  ΓùÅ una orden liquidada emite el ticket con total hist├│rico y las l├¡neas sin precio marcadas (FR-016, CA-21)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: undefined
+
+    [0m [90m 156 |[39m   expect(ticket[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 157 |[39m   
+expect(ticket[33m.[39mbody[33m.[39mestadoPago)[33m.[39mtoBe([32m'LIQUIDADA'[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 158 |[39m   
+expect(ticket[33m.[39mbody[33m.[39mtotalCompleto)[33m.[39mtoBe([36mfalse[39m)[33m;[39m
+     [90m     |[39m                                     [31m[1m^[22m[39m
+     [90m 159 |[39m   [90m// Total hist├│rico: servicios + mano de obra + usos con precio (CA-14).[39m
+     [90m 160 |[39m   expect(ticket[33m.[39mbody[33m.[39mtotal)[33m.[39mtoBe([35m1100[39m)[33m;[39m
+     [90m 161 |[39m[0m
+
+      at Object.<anonymous> (tests/integration/tickets-parts.test.js:158:37)
+
+FAIL tests/contract/payments.contract.test.js
+  ├ù GET /api/orders/:id/payments sigue la forma del contrato (462 ms)
+  ΓêÜ POST /api/orders/:id/payments devuelve el pago creado en 201 (payload directo) (402 ms)
+  ΓêÜ los errores siguen el envoltorio { error: { codigo, mensaje } } (404 ms)
+
+  ΓùÅ GET /api/orders/:id/payments sigue la forma del contrato
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 2
+    + Received  + 0
+
+      Object {
+        "cobrado": Any<Number>,
+        "datos": Any<Array>,
+        "estadoCobro": Any<String>,
+    -   "refaccionesSinPrecio": Any<Number>,
+        "saldoPendiente": Any<Number>,
+        "total": Any<Number>,
+    -   "totalCompleto": Any<Boolean>,
+      }
+
+    [0m [90m 69 |[39m
+     [90m 70 |[39m   expect(listado[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 71 |[39m   expect(listado[33m.[39mbody)[33m.[39mtoMatchObject({
+     [90m    |[39m                        [31m[1m^[22m[39m
+     [90m 72 |[39m     total[33m:[39m expect[33m.[39many([33mNumber[39m)[33m,[39m
+     [90m 73 |[39m     cobrado[33m:[39m expect[33m.[39many([33mNumber[39m)[33m,[39m
+     [90m 74 |[39m     saldoPendiente[33m:[39m expect[33m.[39many([33mNumber[39m)[33m,[39m[0m
+
+      at Object.<anonymous> (tests/contract/payments.contract.test.js:71:24)
+
+FAIL tests/contract/tickets.contract.test.js
+  ├ù GET /api/tickets/:orderId sigue la forma del contrato (493 ms)
+  ΓêÜ los errores del ticket siguen el envoltorio centralizado (399 ms)
+
+  ΓùÅ GET /api/tickets/:orderId sigue la forma del contrato
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 1
+    + Received  + 0
+
+    @@ -15,11 +15,10 @@
+          "direccion": Any<String>,
+          "nombre": Any<String>,
+          "telefono": Any<String>,
+        },
+        "total": Any<Number>,
+    -   "totalCompleto": true,
+        "vehiculo": Object {
+          "anio": Any<Number>,
+          "id": Any<Number>,
+          "kilometraje": Any<Number>,
+          "marca": Any<String>,
+
+    [0m [90m 79 |[39m
+     [90m 80 |[39m   expect(ticket[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 81 |[39m   expect(ticket[33m.[39mbody)[33m.[39mtoMatchObject({
+     [90m    |[39m                       [31m[1m^[22m[39m
+     [90m 82 |[39m     folio[33m:[39m expect[33m.[39mstringMatching([35m/^TCK-\d{4}-\d{4}$/[39m)[33m,[39m
+     [90m 83 |[39m     fecha[33m:[39m expect[33m.[39manything()[33m,[39m
+     [90m 84 |[39m     taller[33m:[39m {[0m
+
+      at Object.<anonymous> (tests/contract/tickets.contract.test.js:81:23)
+
+Test Suites: 4 failed, 4 total
+Tests:       9 failed, 3 passed, 12 total
+Snapshots:   0 total
+Time:        9.237 s, estimated 10 s
+Ran all test suites matching /(payments-parts-total|tickets-parts|payments\.contract|tickets\.contract)/i.
+
+
+===== client (flutter test) — pruebas US3 antes de implementar =====
+00:00 +0: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart
+flutter : test/payment_flow_test.dart:224:9: Error: No named parameter with the name 'totalCompleto'.
+En línea: 1 Carácter: 13
++ $flutter = (flutter test 2>&1 | Out-String); $ruta = Resolve-Path ..\ ...
++             ~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (test/payment_fl...totalCompleto'.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+        totalCompleto: false,
+        ^^^^^^^^^^^^^
+lib/screens/payment_form_screen.dart:21:9: Context: Found this candidate, but the arguments don't match.
+  const PaymentFormScreen({
+        ^^^^^^^^^^^^^^^^^
+test/payment_flow_test.dart:203:18: Error: The getter 'totalCompleto' isn't defined for the type 'PagosDeOrden'.
+ - 'PagosDeOrden' is from 'package:motorix_client/models/payment.dart' ('lib/models/payment.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'totalCompleto'.
+    expect(pagos.totalCompleto, isFalse);
+                 ^^^^^^^^^^^^^
+test/payment_flow_test.dart:204:18: Error: The getter 'refaccionesSinPrecio' isn't defined for the type 'PagosDeOrden'.
+ - 'PagosDeOrden' is from 'package:motorix_client/models/payment.dart' ('lib/models/payment.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'refaccionesSinPrecio'.
+    expect(pagos.refaccionesSinPrecio, 2);
+                 ^^^^^^^^^^^^^^^^^^^^
+test/payment_flow_test.dart:209:21: Error: The getter 'totalCompleto' isn't defined for the type 'PagosDeOrden'.
+ - 'PagosDeOrden' is from 'package:motorix_client/models/payment.dart' ('lib/models/payment.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'totalCompleto'.
+    expect(completo.totalCompleto, isTrue);
+                    ^^^^^^^^^^^^^
+test/payment_flow_test.dart:210:21: Error: The getter 'refaccionesSinPrecio' isn't defined for the type 'PagosDeOrden'.
+ - 'PagosDeOrden' is from 'package:motorix_client/models/payment.dart' ('lib/models/payment.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'refaccionesSinPrecio'.
+    expect(completo.refaccionesSinPrecio, 0);
+                    ^^^^^^^^^^^^^^^^^^^^
+00:00 +0 -1: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart [E]
+  Failed to load "C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart":
+  Compilation failed for testPath=C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: test/payment_flow_test.dart:224:9: Error: No named parameter with the name 'totalCompleto'.
+          totalCompleto: false,
+          ^^^^^^^^^^^^^
+  lib/screens/payment_form_screen.dart:21:9: Context: Found this candidate, but the arguments don't match.
+    const PaymentFormScreen({
+          ^^^^^^^^^^^^^^^^^
+  test/payment_flow_test.dart:203:18: Error: The getter 'totalCompleto' isn't defined for the type 'PagosDeOrden'.
+   - 'PagosDeOrden' is from 'package:motorix_client/models/payment.dart' ('lib/models/payment.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'totalCompleto'.
+      expect(pagos.totalCompleto, isFalse);
+                   ^^^^^^^^^^^^^
+  test/payment_flow_test.dart:204:18: Error: The getter 'refaccionesSinPrecio' isn't defined for the type 'PagosDeOrden'.
+   - 'PagosDeOrden' is from 'package:motorix_client/models/payment.dart' ('lib/models/payment.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'refaccionesSinPrecio'.
+      expect(pagos.refaccionesSinPrecio, 2);
+                   ^^^^^^^^^^^^^^^^^^^^
+  test/payment_flow_test.dart:209:21: Error: The getter 'totalCompleto' isn't defined for the type 'PagosDeOrden'.
+   - 'PagosDeOrden' is from 'package:motorix_client/models/payment.dart' ('lib/models/payment.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'totalCompleto'.
+      expect(completo.totalCompleto, isTrue);
+                      ^^^^^^^^^^^^^
+  test/payment_flow_test.dart:210:21: Error: The getter 'refaccionesSinPrecio' isn't defined for the type 'PagosDeOrden'.
+   - 'PagosDeOrden' is from 'package:motorix_client/models/payment.dart' ('lib/models/payment.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'refaccionesSinPrecio'.
+      expect(completo.refaccionesSinPrecio, 0);
+                      ^^^^^^^^^^^^^^^^^^^^
+  .
+00:00 +0 -1: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: el modelo lee los agregados del contrato (FR-014 a FR-016)
+00:00 +0 -2: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart [E]
+  Error: The Dart compiler exited unexpectedly.
+  package:flutter_tools/src/base/common.dart 34:3  throwToolExit
+  package:flutter_tools/src/compile.dart 1024:11   DefaultResidentCompiler._compile.<fn>
+  dart:async/zone_root.dart 48:47                  _rootRunUnary
+  dart:async/zone.dart 816:35                      _CustomZone.runUnary
+  dart:async/future_impl.dart 948:45               Future._propagateToListeners.handleValueCallback
+  dart:async/future_impl.dart 977:13               Future._propagateToListeners
+  dart:async/future_impl.dart 862:9                Future._propagateToListeners
+  dart:async/future_impl.dart 720:5                Future._completeWithValue
+  dart:async/future_impl.dart 804:7                Future._asyncCompleteWithValue.<fn>
+  dart:async/zone_root.dart 35:13                  _rootRun
+  dart:async/zone.dart 810:35                      _CustomZone.run
+  dart:async/zone.dart 702:7                       _CustomZone.runGuarded
+  dart:async/zone.dart 743:23                      _CustomZone.bindCallbackGuarded.<fn>
+  dart:async/schedule_microtask.dart 40:35         _microtaskLoop
+  dart:async/schedule_microtask.dart 49:5          _startMicrotaskLoop
+  dart:isolate-patch/isolate_patch.dart 127:13     _runPendingImmediateCallback
+  dart:isolate-patch/isolate_patch.dart 193:5      _RawReceivePort._handleMessage
+  
+00:00 +1 -2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +2 -2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +3 -2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +4 -2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +5 -2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +6 -2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:01 +7 -2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el bot├│n verificar
+test/ticket_test.dart:176:21: Error: The getter 'totalCompleto' isn't defined for the type 'TicketServicio'.
+ - 'TicketServicio' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'totalCompleto'.
+    expect(desglose.totalCompleto, isTrue);
+                    ^^^^^^^^^^^^^
+test/ticket_test.dart:178:39: Error: The getter 'unitPrice' isn't defined for the type 'TicketRefaccion'.
+ - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'unitPrice'.
+    expect(desglose.refacciones.first.unitPrice, 120.0);
+                                      ^^^^^^^^^
+test/ticket_test.dart:179:39: Error: The getter 'amount' isn't defined for the type 'TicketRefaccion'.
+ - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'amount'.
+    expect(desglose.refacciones.first.amount, 240.0);
+                                      ^^^^^^
+test/ticket_test.dart:180:39: Error: The getter 'sinPrecio' isn't defined for the type 'TicketRefaccion'.
+ - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'sinPrecio'.
+    expect(desglose.refacciones.first.sinPrecio, isFalse);
+                                      ^^^^^^^^^
+test/ticket_test.dart:188:19: Error: The getter 'totalCompleto' isn't defined for the type 'TicketServicio'.
+ - 'TicketServicio' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'totalCompleto'.
+    expect(ticket.totalCompleto, isFalse);
+                  ^^^^^^^^^^^^^
+test/ticket_test.dart:190:19: Error: The getter 'sinPrecio' isn't defined for the type 'TicketRefaccion'.
+ - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'sinPrecio'.
+    expect(filtro.sinPrecio, isTrue);
+                  ^^^^^^^^^
+test/ticket_test.dart:191:19: Error: The getter 'unitPrice' isn't defined for the type 'TicketRefaccion'.
+ - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'unitPrice'.
+    expect(filtro.unitPrice, isNull);
+                  ^^^^^^^^^
+test/ticket_test.dart:192:19: Error: The getter 'amount' isn't defined for the type 'TicketRefaccion'.
+ - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'amount'.
+    expect(filtro.amount, isNull);
+                  ^^^^^^
+00:01 +8 -2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el bot├│n verificar
+00:01 +8 -3: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/ticket_test.dart [E]
+  Failed to load "C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/ticket_test.dart":
+  Compilation failed for testPath=C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/ticket_test.dart: test/ticket_test.dart:176:21: Error: The getter 'totalCompleto' isn't defined for the type 'TicketServicio'.
+   - 'TicketServicio' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'totalCompleto'.
+      expect(desglose.totalCompleto, isTrue);
+                      ^^^^^^^^^^^^^
+  test/ticket_test.dart:178:39: Error: The getter 'unitPrice' isn't defined for the type 'TicketRefaccion'.
+   - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'unitPrice'.
+      expect(desglose.refacciones.first.unitPrice, 120.0);
+                                        ^^^^^^^^^
+  test/ticket_test.dart:179:39: Error: The getter 'amount' isn't defined for the type 'TicketRefaccion'.
+   - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'amount'.
+      expect(desglose.refacciones.first.amount, 240.0);
+                                        ^^^^^^
+  test/ticket_test.dart:180:39: Error: The getter 'sinPrecio' isn't defined for the type 'TicketRefaccion'.
+   - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'sinPrecio'.
+      expect(desglose.refacciones.first.sinPrecio, isFalse);
+                                        ^^^^^^^^^
+  test/ticket_test.dart:188:19: Error: The getter 'totalCompleto' isn't defined for the type 'TicketServicio'.
+   - 'TicketServicio' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'totalCompleto'.
+      expect(ticket.totalCompleto, isFalse);
+                    ^^^^^^^^^^^^^
+  test/ticket_test.dart:190:19: Error: The getter 'sinPrecio' isn't defined for the type 'TicketRefaccion'.
+   - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'sinPrecio'.
+      expect(filtro.sinPrecio, isTrue);
+                    ^^^^^^^^^
+  test/ticket_test.dart:191:19: Error: The getter 'unitPrice' isn't defined for the type 'TicketRefaccion'.
+   - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'unitPrice'.
+      expect(filtro.unitPrice, isNull);
+                    ^^^^^^^^^
+  test/ticket_test.dart:192:19: Error: The getter 'amount' isn't defined for the type 'TicketRefaccion'.
+   - 'TicketRefaccion' is from 'package:motorix_client/models/ticket.dart' ('lib/models/ticket.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'amount'.
+      expect(filtro.amount, isNull);
+                    ^^^^^^
+  .
+00:01 +9 -3: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el bot├│n verificar
+00:01 +10 -3: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/login_screen_test.dart: con campos vac├¡os aparecen los mensajes de validaci├│n
+00:01 +11 -3: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: verificar el cobro lo confirma y recarga los saldos (decisi├│n Q1)
+00:02 +12 -3: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/login_screen_test.dart: un error del servidor se muestra en la interfaz
+00:02 +13 -3: Some tests failed.
+
+Failing tests:
+  C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart
+  C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart
+  C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/ticket_test.dart: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/ticket_test.dart

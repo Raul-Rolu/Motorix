@@ -73,6 +73,10 @@ test('GET /api/orders/:id/payments sigue la forma del contrato', async () => {
     cobrado: expect.any(Number),
     saldoPendiente: expect.any(Number),
     estadoCobro: expect.any(String),
+    // 005-precio-venta-refacciones (T026): total con refacciones y su marca
+    // de completitud (FR-009, FR-012, CA-12).
+    totalCompleto: expect.any(Boolean),
+    refaccionesSinPrecio: expect.any(Number),
     datos: expect.any(Array),
   });
   expect(['PENDIENTE', 'PARCIAL', 'LIQUIDADA']).toContain(listado.body.estadoCobro);

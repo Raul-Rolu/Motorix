@@ -115,6 +115,26 @@ export async function expireStaleDigital(orderId) {
   );
 }
 
+/**
+ * Desfase del cobro digital (006, FR-008, CA-6): los cobros Mercado Pago
+ * PENDING de la orden cuyo importe ya no coincide con el saldo pendiente
+ * (total − pagos COMPLETED) pasan a STALE. Es terminal: no se confirma, no
+ * cuenta como pago vigente y el importe original no se toca. El `WHERE
+ * status = 'PENDING'` hace que la transición ocurra una sola vez, igual que
+ * `transitionFromPending`. Devuelve cuántos cobros se marcaron.
+ */
+export async function markStaleMismatchedDigital(orderId, saldoCentavos) {
+  const saldo = (saldoCentavos / 100).toFixed(2);
+  const [resultado] = await getPool().query(
+    `UPDATE payments
+     SET status = 'STALE'
+     WHERE order_id = ? AND status = 'PENDING' AND method = 'MERCADO_PAGO'
+       AND amount <> CAST(? AS DECIMAL(10,2))`,
+    [orderId, saldo]
+  );
+  return resultado.affectedRows;
+}
+
 /** Dinero cobrado de hoy (solo COMPLETED; los pendientes/expirados no cuentan). */
 export async function sumCompletedToday() {
   const [filas] = await getPool().query(

@@ -24,22 +24,51 @@ const String _ticketJson = '''
   "cliente": { "id": 1, "nombreCompleto": "Ana Ticket Díaz" },
   "vehiculo": { "id": 1, "marca": "Toyota", "modelo": "Yaris", "anio": 2020, "placas": "TKT-777-B", "kilometraje": 45120 },
   "servicios": [ { "nombre": "Cambio de aceite", "precio": 650.0 } ],
-  "refacciones": [ { "nombre": "Filtro de aceite", "codigo": "FLT-001", "cantidad": 1 } ],
+  "refacciones": [ { "nombre": "Filtro de aceite", "codigo": "FLT-001", "cantidad": 1, "unitPrice": null, "amount": null, "sinPrecio": true } ],
   "manoObra": 200.0,
   "subtotal": 850.0,
   "total": 850.0,
+  "totalCompleto": false,
   "metodosDePago": [ { "metodo": "CASH", "monto": 850.0, "estado": "COMPLETED" } ],
   "estadoPago": "LIQUIDADA",
   "saldoPendiente": 0.0
 }
 ''';
 
-/// Cliente HTTP falso: el GET devuelve el ticket de la orden.
+// 005-precio-venta-refacciones, T027: ticket con desglose de precios (CA-13).
+const String _ticketJsonDesglose = '''
+{
+  "folio": "TCK-2026-0008",
+  "fecha": "2026-10-13T11:00:00",
+  "taller": { "nombre": "Motorix", "direccion": "Av. Taller 123", "telefono": "555-000-0000" },
+  "cliente": { "id": 2, "nombreCompleto": "Luis Desglose" },
+  "vehiculo": { "id": 2, "marca": "Mazda", "modelo": "3", "anio": 2021, "placas": "TDG-111-C", "kilometraje": 22000 },
+  "servicios": [ { "nombre": "Cambio de aceite", "precio": 650.0 } ],
+  "refacciones": [
+    { "nombre": "Aceite 5W30", "codigo": "LUB-0530", "cantidad": 2, "unitPrice": 120.0, "amount": 240.0, "sinPrecio": false },
+    { "nombre": "Filtro de aceite", "codigo": "FLT-001", "cantidad": 1, "unitPrice": 80.0, "amount": 80.0, "sinPrecio": false }
+  ],
+  "manoObra": 200.0,
+  "subtotal": 1170.0,
+  "total": 1170.0,
+  "totalCompleto": true,
+  "metodosDePago": [],
+  "estadoPago": "PENDIENTE",
+  "saldoPendiente": 1170.0
+}
+''';
+
+/// Cliente HTTP falso: el GET devuelve el ticket con el formato del contrato.
 class _ClienteFalso extends Fake implements http.Client {
+  /// Cuerpo alternativo a devolver (por defecto el ticket original).
+  final String? cuerpo;
+
+  _ClienteFalso({this.cuerpo});
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     return http.StreamedResponse(
-      Stream.fromIterable([utf8.encode(_ticketJson)]),
+      Stream.fromIterable([utf8.encode(cuerpo ?? _ticketJson)]),
       200,
       headers: {'content-type': 'application/json'},
     );
@@ -136,5 +165,64 @@ void main() {
     expect(texto, contains('Saldo pendiente: \$0.00'));
     // El portapapeles no lleva datos de tarjeta (RN-14).
     expect(texto.toLowerCase(), isNot(contains('tarjeta')));
+  });
+
+  // --- 005-precio-venta-refacciones, T027 (FR-010, FR-013, FR-016, CA-13) ---
+
+  test('el modelo lee el desglose de precios y la marca de total completo', () {
+    final desglose =
+        TicketServicio.desdeJson(jsonDecode(_ticketJsonDesglose) as Map<String, dynamic>);
+
+    expect(desglose.totalCompleto, isTrue);
+    expect(desglose.refacciones, hasLength(2));
+    expect(desglose.refacciones.first.unitPrice, 120.0);
+    expect(desglose.refacciones.first.amount, 240.0);
+    expect(desglose.refacciones.first.sinPrecio, isFalse);
+    expect(desglose.total, 1170.0);
+  });
+
+  test('el modelo marca una línea sin precio como sinPrecio (FR-016)', () {
+    final ticket =
+        TicketServicio.desdeJson(jsonDecode(_ticketJson) as Map<String, dynamic>);
+
+    expect(ticket.totalCompleto, isFalse);
+    final filtro = ticket.refacciones.single;
+    expect(filtro.sinPrecio, isTrue);
+    expect(filtro.unitPrice, isNull);
+    expect(filtro.amount, isNull);
+  });
+
+  testWidgets('la vista muestra precio e importe por refacción (CA-13)',
+      (tester) async {
+    final api = ApiClient(httpClient: _ClienteFalso(cuerpo: _ticketJsonDesglose));
+    final provider = TicketsProvider(api);
+
+    await tester.pumpWidget(_envolver(provider));
+    await tester.pumpAndSettle();
+
+    expect(find.text('x2 · \$120.00 c/u'), findsOneWidget);
+    expect(find.text('\$240.00'), findsOneWidget);
+    expect(find.text('x1 · \$80.00 c/u'), findsOneWidget);
+    expect(find.text('\$1170.00'), findsWidgets);
+    // Con total completo no hay aviso de datos faltantes.
+    expect(find.byKey(const Key('avisoTotalIncompletoTicket')), findsNothing);
+  });
+
+  testWidgets(
+      'la vista muestra "Sin precio" y el aviso ámbar en una línea sin precio (FR-016)',
+      (tester) async {
+    final api = ApiClient(httpClient: _ClienteFalso());
+    final provider = TicketsProvider(api);
+
+    await tester.pumpWidget(_envolver(provider));
+    await tester.pumpAndSettle();
+
+    expect(find.text('x1 · sin precio'), findsOneWidget);
+    expect(find.text('Sin precio'), findsOneWidget);
+    expect(find.byKey(const Key('avisoTotalIncompletoTicket')), findsOneWidget);
+    expect(
+      find.textContaining('falta el precio de venta'),
+      findsOneWidget,
+    );
   });
 }

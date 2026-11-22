@@ -1,0 +1,31 @@
+00:00 +0: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart
+00:00 +0: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: el modelo lee los agregados del contrato (FR-014 a FR-016)
+00:00 +1: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +3: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +4: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +5: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +6: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +7: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +8: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:00 +9: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el botón verificar
+00:01 +10: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el botón verificar
+00:01 +11: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el botón verificar
+00:01 +12: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el formulario de cobro muestra método, monto y saldo (escenario 1)
+00:01 +13: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el formulario de cobro muestra método, monto y saldo (escenario 1)
+00:01 +14: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/ticket_test.dart: la vista muestra folio, cliente, servicios y total (escenario 1)
+00:01 +15: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/ticket_test.dart: la vista muestra folio, cliente, servicios y total (escenario 1)
+00:01 +16: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/login_screen_test.dart: un error del servidor se muestra en la interfaz
+00:01 +17: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/login_screen_test.dart: un error del servidor se muestra en la interfaz
+00:01 +18: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/login_screen_test.dart: un error del servidor se muestra en la interfaz
+00:01 +19: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/login_screen_test.dart: un error del servidor se muestra en la interfaz
+00:01 +20: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/login_screen_test.dart: un error del servidor se muestra en la interfaz
+00:01 +21: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/login_screen_test.dart: un error del servidor se muestra en la interfaz
+00:01 +22: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: un monto en cero muestra el mensaje de validación (caso límite)
+00:01 +23: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: un monto en cero muestra el mensaje de validación (caso límite)
+00:01 +24: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: registrar un cobro confirma, envía el POST y muestra éxito
+00:01 +25: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el modelo lee la marca de total incompleto y sus refacciones sin precio
+00:01 +26: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: con total incompleto el formulario avisa y bloquea el registro del cobro
+00:02 +27: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: con total completo el formulario sigue habilitado (regresión)
+00:02 +28: All tests passed!
+codigo_salida=0 

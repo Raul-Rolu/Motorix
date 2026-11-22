@@ -1,0 +1,328 @@
+(node:23448) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/integration/maintenances.test.js (15.289 s)
+  √ el mecánico registra un mantenimiento con ambos umbrales (594 ms)
+  √ el registro acepta un solo umbral (solo fecha o solo kilometraje) (334 ms)
+  √ el registro sin ningún umbral responde MAINTENANCE_INVALID_THRESHOLD (422) (316 ms)
+  √ un vehículo admite varios mantenimientos pendientes simultáneos (328 ms)
+  √ un mantenimiento se completa manualmente y deja de estar PENDING (340 ms)
+  √ entregar una orden del vehículo NO completa automáticamente los mantenimientos (Q1) (351 ms)
+  √ la cancelación es exclusiva de administración y exige motivo (338 ms)
+  √ un mantenimiento inexistente responde MAINTENANCE_NOT_FOUND (404) (310 ms)
+  √ el registro de mantenimientos restringe el rol en el servidor (RN-15) (308 ms)
+
+PASS tests/integration/order-parts.test.js
+  √ agregar una refacción descuenta el stock y registra el OUT con la orden (RN-6) (456 ms)
+  √ stock insuficiente se rechaza con PART_SIN_STOCK sin modificar el stock (RN-7) (412 ms)
+  √ una orden ENTREGADO o CANCELADA rechaza refacciones con ORDER_CLOSED (413 ms)
+  √ una orden en pausa ESPERANDO_REFACCION sí permite agregar refacciones (414 ms)
+  √ un mecánico no puede usar refacciones en la orden de otro mecánico (FORBIDDEN_ORDER) (398 ms)
+  √ retirar una refacción genera la devolución IN y restaura el stock (RN-8) (425 ms)
+  √ retirar una refacción que no está en la orden responde ORDER_PART_NOT_FOUND (406 ms)
+  √ recepción no gestiona refacciones de órdenes (solo ADMIN y el mecánico dueño) (425 ms)
+  √ una refacción inactiva no puede agregarse a una orden (PART_INACTIVE) (420 ms)
+
+PASS tests/integration/orders-status.test.js
+  √ la secuencia completa RECIBIDO a ENTREGADO funciona (CA-5) (383 ms)
+  √ la pausa ESPERANDO_REFACCION regresa al estado de origen (364 ms)
+  √ los retrocesos permitidos funcionan para el mecánico dueño (340 ms)
+  √ los saltos de secuencia son solo del administrador (354 ms)
+  √ DIAGNOSTICO a RECIBIDO solo lo hace el administrador (329 ms)
+  √ la entrega es de recepción/administración, nunca del mecánico (359 ms)
+  √ la cancelación es de recepción/administración y bloquea en ENTREGADO (342 ms)
+  √ el mecánico no cambia estados de órdenes ajenas (RN-15) (325 ms)
+
+PASS tests/integration/maintenances-list.test.js
+  √ los vencidos aparecen primero y los pendientes por proximidad del umbral (Q5) (370 ms)
+  √ los vencidos por fecha también encabezan la lista (337 ms)
+  √ los cancelados no aparecen por defecto y el filtro status los consulta (337 ms)
+  √ el filtro vehicleId limita la lista a un vehículo (369 ms)
+  √ el listado incluye los datos de cliente y vehículo para el aviso (FR-007) (333 ms)
+  √ el listado es solo de recepción y administración (RN-15) (331 ms)
+
+PASS tests/integration/appointments.test.js
+  √ la recepción crea una cita PROGRAMADA (FR-001, CA-1) (274 ms)
+  √ rechaza una cita con fecha anterior a hoy (FR-002) (250 ms)
+  √ rechaza una cita duplicada del vehículo en la misma fecha y hora (CA-1) (245 ms)
+  √ el mecánico no tiene acceso a las citas (RN-15) (236 ms)
+  √ editar funciona solo con citas PROGRAMADA (FR-002) (257 ms)
+  √ completar y cancelar con motivo; cancelar sin motivo se rechaza (FR-003) (282 ms)
+  √ no se agenda una cita para un vehículo que no pertenezca al cliente (RN-2) (248 ms)
+  √ el listado acepta los filtros de fecha y texto (249 ms)
+
+PASS tests/integration/orders-entries.test.js
+  √ el dueño registra observaciones y recomendaciones con autor y fecha (FR-014) (347 ms)
+  √ las entradas del dueño son visibles para recepción y administración en el detalle (345 ms)
+  √ se rechazan entradas sin contenido o con tipo inválido (FR-014) (327 ms)
+  √ no existe endpoint para borrar entradas: el historial es inmutable (FR-014) (335 ms)
+  √ las órdenes ENTREGADO no admiten nuevas entradas (RN-9) (318 ms)
+
+PASS tests/integration/orders-assignment.test.js
+  √ la recepción asigna, reasigna y libera mecánicos (FR-009) (358 ms)
+  √ rechaza mecánicos inexistentes, inactivos o de otro rol (FR-008) (332 ms)
+  √ el mecánico no puede asignar ni liberar (RN-15) (333 ms)
+  √ la reasignación está prohibida en órdenes ENTREGADO (RN-9) (317 ms)
+  √ el mecánico solo ve y accede a sus propias órdenes (CA-3, RN-15) (344 ms)
+
+PASS tests/integration/payments-validation.test.js
+  √ un monto en cero o negativo se rechaza con DATOS_INVALIDOS (400, caso límite) (372 ms)
+  √ un monto mayor al saldo pendiente se rechaza con el saldo en details (409) (336 ms)
+  √ una orden cancelada rechaza pagos con ORDER_CANCELLED (409, FR-020) (327 ms)
+  √ el rol mecánico no puede registrar ni consultar pagos (403, RN-15) (328 ms)
+  √ administración y recepción pueden registrar pagos (FR-005) (342 ms)
+
+PASS tests/integration/orders-work.test.js
+  √ el mecánico dueño agrega diagnósticos y partidas con sus totales (FR-011, CA-4) (312 ms)
+  √ no se agregan partidas antes de avanzar a diagnóstico (FR-011) (244 ms)
+  √ las órdenes cerradas no admiten partidas ni entradas (RN-9) (267 ms)
+  √ el mecánico no trabaja órdenes ajenas (RN-15) (248 ms)
+  √ una partida se puede borrar antes de entregar y ya no después (FR-011) (267 ms)
+  √ las entradas rechazan tipo o contenido inválidos (FR-011) (258 ms)
+  √ la recepción edita motivo, notas y kilometraje en estados de trabajo (PUT del contrato) (269 ms)
+
+PASS tests/integration/users.test.js
+  √ el administrador crea, consulta y edita usuarios (252 ms)
+  √ crear un usuario con username o email duplicado responde 409 (391 ms)
+  √ la gestión de usuarios responde 403 para roles no autorizados (156 ms)
+  √ no se puede desactivar al único administrador activo (ULTIMO_ADMIN) (468 ms)
+  √ un usuario desactivado pierde el acceso y lo recupera al reactivarse (FR-015) (390 ms)
+
+PASS tests/integration/orders.test.js
+  √ la recepción crea una orden en RECIBIDO con el cliente derivado (RN-2, CA-2) (278 ms)
+  √ el mecánico no puede crear órdenes (RN-15) (244 ms)
+  √ rechaza un vehículo inexistente con VEHICULO_NO_DISPONIBLE (RN-2) (245 ms)
+  √ rechaza el kilometraje menor al previo sin corrección (RN-4) (243 ms)
+  √ acepta el kilometraje menor con corrección explícita y la constancia (RN-4) (248 ms)
+  √ el mecánico solo ve en el listado las órdenes que le pertenecen (CA-3) (251 ms)
+  √ el listado acepta filtro de estado y texto (250 ms)
+
+PASS tests/contract/maintenances.contract.test.js
+  √ el listado de mantenimientos sigue la forma del contrato sin datos sensibles (343 ms)
+  √ el alta responde la forma del contrato y el detalle coincide (319 ms)
+  √ el cumplimiento y la cancelación devuelven la forma del contrato (324 ms)
+  √ los errores del catálogo siguen el formato centralizado (321 ms)
+  √ el filtro status=CANCELLED consulta cancelados y por defecto se excluyen (333 ms)
+
+PASS tests/integration/history.test.js
+  √ el historial lista solo terminadas y entregadas en orden cronológico (295 ms)
+  √ el parámetro orden=asc invierte el orden del historial (251 ms)
+  √ un vehículo sin órdenes terminadas devuelve historial vacío sin error (246 ms)
+  √ un vehículo inexistente responde VEHICULO_NO_DISPONIBLE (404) (234 ms)
+  √ el historial está disponible para los tres roles del taller (252 ms)
+  √ sin token el historial responde NO_AUTENTICADO (241 ms)
+
+PASS tests/integration/parts-search.test.js
+  √ la búsqueda q filtra por nombre y por código (374 ms)
+  √ las refacciones inactivas solo las ve el administrador (FR-010) (337 ms)
+  √ el historial de movimientos es solo de administración con autor, fecha y motivo (336 ms)
+  √ una búsqueda sin resultados devuelve lista vacía sin error (321 ms)
+
+PASS tests/integration/parts.test.js
+  √ el alta con stock inicial crea la refacción y registra el movimiento IN (252 ms)
+  √ un código duplicado se rechaza con PART_DUPLICATE (409) (239 ms)
+  √ la edición cambia nombre, mínimo y estado pero nunca el stock directamente (251 ms)
+  √ la inactivación es baja lógica: la refacción sigue consultable y conserva su stock (245 ms)
+  √ una refacción inexistente responde PART_NOT_FOUND (404) (233 ms)
+  √ los endpoints de refacciones son solo de administración (RN-15) (253 ms)
+
+PASS tests/integration/inventory.test.js
+  √ una entrada IN suma al stock de la refacción (203 ms)
+  √ un AJUSTE con signo suma o resta según corresponda (168 ms)
+  √ un AJUSTE que dejaría stock negativo se rechaza sin modificar el stock (Q3, RN-8) (170 ms)
+  √ un movimiento con cantidad 0 se rechaza con MOVEMENT_INVALID (422) (162 ms)
+  √ el movimiento sin motivo se rechaza con DATOS_INVALIDOS (400) (168 ms)
+  √ un tipo de movimiento no admitido públicamente (OUT) se rechaza (167 ms)
+  √ el stock resultante siempre coincide con el acumulado de movimientos (SC-004) (171 ms)
+
+PASS tests/integration/tickets.test.js
+  √ el primer acceso emite el ticket con folio, datos y estado de cobro (escenario 1) (366 ms)
+  √ el ticket reutiliza su folio y refleja el cobro más reciente (escenarios 2 y 3) (339 ms)
+  √ una orden cancelada no admite ticket y la inexistente responde 404 (320 ms)
+  √ el rol mecánico no puede emitir tickets (403, RN-15) y sin token 401 (328 ms)
+
+PASS tests/integration/parts-low-stock.test.js
+  √ stock por encima del mínimo no genera la alerta (185 ms)
+  √ llevar el stock hasta el mínimo activa la alerta en la siguiente consulta (186 ms)
+  √ una salida que cruza el mínimo refleja la alerta en la siguiente consulta (172 ms)
+  √ refacciones sin stock mínimo configurado nunca alertan con stock positivo (159 ms)
+
+PASS tests/integration/auth.test.js
+  √ el login funciona con el nombre de usuario (165 ms)
+  √ el login funciona con el correo electrónico en el mismo campo (RN-16) (160 ms)
+  √ una contraseña incorrecta responde 401 con mensaje genérico (159 ms)
+  √ un usuario inexistente responde igual que una contraseña incorrecta (6 ms)
+  √ un usuario desactivado no puede iniciar sesión (78 ms)
+  √ el cambio de contraseña exige sesión, contraseña actual y política (FR-011) (446 ms)
+  √ un token expirado o inválido responde 401 SESION_EXPIRADA (4 ms)
+
+PASS tests/integration/orders-detail.test.js
+  √ el detalle muestra cliente, vehículo, kilometraje y estado (FR-015) (207 ms)
+  √ las partidas y entradas del detalle cuadran con los totales (181 ms)
+  √ una orden inexistente responde 404 ORDEN_NO_ENCONTRADA (160 ms)
+  √ no se pueden crear órdenes para vehículos de clientes desactivados (RN-2) (169 ms)
+  √ el mecánico no puede ver el detalle de una orden ajena (RN-15) (249 ms)
+
+PASS tests/integration/digital-payments.test.js
+  √ el cobro digital ofrece un enlace y la verificación lo confirma (escenarios 1 y 2) (211 ms)
+  √ solo hay un cobro digital vigente por orden (PAYMENT_DUPLICATE_PENDING) (184 ms)
+  √ la doble confirmación no duplica el importe cobrado (FR-010) (184 ms)
+  √ un cobro digital antiguo pasa a EXPIRED y no cuenta como cobro (FR-009, SC-007) (217 ms)
+  √ un fallo del proveedor responde MP_PROVIDER_ERROR sin registrar pagos (escenario 5) (175 ms)
+
+PASS tests/integration/vehicles.test.js
+  √ registrar un vehículo con propietario funciona de extremo a extremo (CA-3) (189 ms)
+  √ los datos obligatorios son placas, marca, modelo y año (clarificación 2) (168 ms)
+  √ no se permite guardar un vehículo sin propietario (RN-1) (175 ms)
+  √ dos vehículos no pueden compartir placas (VEHICULO_DUPLICADO) (170 ms)
+  √ el rol mecánico no puede gestionar vehículos (403) (152 ms)
+
+PASS tests/integration/payments.test.js
+  √ un pago total en efectivo liquida la orden y queda asociado (escenarios 1 y 6) (210 ms)
+  √ los pagos parciales muestran saldo y la orden se liquida al completarse (escenario 2) (195 ms)
+  √ una orden sin importes no admite pagos absurdos pero se muestra sin saldo (caso límite) (178 ms)
+  √ la orden inexistente responde 404 y sin token 401 (163 ms)
+
+PASS tests/integration/vehicle-owner.test.js
+  √ la ficha del cliente muestra sus vehículos (FR-007) (188 ms)
+  √ el vehículo muestra a su propietario y la reasociación actualiza ambos lados (213 ms)
+  √ la reasociación rechaza un propietario inexistente o inactivo (166 ms)
+  √ un cliente desactivado no aparece en la consulta de clientes activos (FR-015) (201 ms)
+
+PASS tests/integration/dashboard.test.js
+  √ el panel de administración resume órdenes, citas, mantenimientos, stock y cobros (430 ms)
+  √ el panel rechaza a recepción, al mecánico y a las sesiones sin token (RN-15) (326 ms)
+
+PASS tests/integration/clients.test.js
+  √ el recepcionista registra y consulta clientes (nombre y teléfono obligatorios) (191 ms)
+  √ sin nombre o sin teléfono el registro se rechaza con DATOS_INVALIDOS (152 ms)
+  √ un correo con formato inválido se rechaza; un correo correcto es válido (160 ms)
+  √ el rol mecánico no puede gestionar clientes (403) (161 ms)
+
+PASS tests/contract/parts.contract.test.js
+  √ POST /api/parts sigue la forma del contrato (175 ms)
+  √ PUT /api/parts/:id sigue la forma del contrato (166 ms)
+  √ POST /api/parts/:id/movements devuelve stockResult y el error usa el formato centralizado (183 ms)
+  √ el stock insuficiente responde PART_SIN_STOCK con details.stockDisponible (169 ms)
+
+PASS tests/contract/order-parts.contract.test.js
+  √ POST /api/orders/:id/parts y DELETE siguen la forma del contrato (297 ms)
+  √ los errores de refacciones en orden usan el formato centralizado (261 ms)
+
+PASS tests/contract/vehicle-history.contract.test.js
+  √ el historial sigue la forma del contrato y nunca expone datos sensibles (285 ms)
+  √ el mecánico también puede consultar el historial de cualquier vehículo (253 ms)
+
+PASS tests/integration/history-mileage.test.js
+  √ cada servicio del historial muestra el kilometraje registrado en su momento (216 ms)
+  √ el historial conserva la constancia de la corrección explícita de kilometraje (168 ms)
+  √ dos servicios del mismo vehículo permiten comparar sus kilometrajes en orden (177 ms)
+
+PASS tests/contract/payments.contract.test.js
+  √ GET /api/orders/:id/payments sigue la forma del contrato (211 ms)
+  √ POST /api/orders/:id/payments devuelve el pago creado en 201 (payload directo) (177 ms)
+  √ los errores siguen el envoltorio { error: { codigo, mensaje } } (171 ms)
+
+PASS tests/contract/auth.contract.test.js
+  √ POST /api/auth/login devuelve token y usuario sin passwordHash (contrato) (168 ms)
+  √ los errores siguen el formato centralizado { error: { codigo, mensaje } } (contrato) (7 ms)
+  √ POST /api/auth/change-password responde 204 sin cuerpo (contrato) (299 ms)
+
+PASS tests/contract/tickets.contract.test.js
+  √ GET /api/tickets/:orderId sigue la forma del contrato (206 ms)
+  √ los errores del ticket siguen el envoltorio centralizado (175 ms)
+
+PASS tests/contract/users.contract.test.js
+  √ las respuestas de usuarios siguen el contrato y nunca exponen passwordHash (253 ms)
+
+PASS tests/contract/orders-work.contract.test.js
+  √ las respuestas de entradas y partidas siguen el contrato (287 ms)
+
+PASS tests/integration/clients-update.test.js
+  √ editar el teléfono del cliente conserva el dato nuevo y sus vehículos (FR-006) (196 ms)
+  √ una edición con datos inválidos se rechaza y conserva el registro original (167 ms)
+
+PASS tests/contract/orders-status.contract.test.js
+  √ las respuestas de estado siguen el contrato y el error sugiere opciones válidas (278 ms)
+
+PASS tests/contract/orders.contract.test.js
+  √ la creación de órdenes sigue la forma del contrato y no expone datos internos (200 ms)
+
+PASS tests/contract/appointments.contract.test.js
+  √ la creación, el listado y los errores de citas siguen el contrato (204 ms)
+
+PASS tests/contract/dashboard.contract.test.js
+  √ GET /api/dashboard sigue la forma del contrato (187 ms)
+
+PASS tests/contract/orders-detail.contract.test.js
+  √ el detalle de la orden cumple la forma del contrato (209 ms)
+
+PASS tests/contract/orders-assignment.contract.test.js
+  √ la asignación y el listado siguen la forma del contrato (204 ms)
+
+PASS tests/unit/payment-digital.test.js
+  √ el estado de cobro se deriva del total y lo cobrado (FR-004) (2 ms)
+  √ un cobro digital caduca recién después de las 24 horas (FR-009) (1 ms)
+  √ el plazo de caducidad usado por el modelo es de 24 horas
+
+PASS tests/unit/validators/auth-validator.test.js
+  √ la identificación y la contraseña son obligatorias en el login (2 ms)
+  √ un login con identificación y contraseña no vacíos es válido (1 ms)
+  √ el cambio de contraseña exige la contraseña actual
+  √ la contraseña nueva debe cumplir la política mínima (8+, mayúscula, minúscula, número)
+
+PASS tests/unit/maintenance-state.test.js
+  √ diasRestantes devuelve días positivos para una fecha futura (1 ms)
+  √ diasRestantes devuelve 0 el día mismo del umbral (ya vencido)
+  √ diasRestantes devuelve negativo para una fecha pasada
+  √ diasRestantes devuelve null sin umbral de fecha (1 ms)
+  √ kmRestantes devuelve la diferencia hasta el kilometraje objetivo
+  √ kmRestantes devuelve 0 o negativo cuando el kilometraje ya alcanzó el objetivo
+  √ kmRestantes devuelve null sin umbral de kilometraje
+  √ esVencido con solo fecha: vencido cuando la fecha llegó (1 ms)
+  √ esVencido con solo kilometraje: vencido cuando el kilometraje alcanzó el objetivo
+  √ esVencido con ambos umbrales: rige el primero de los dos que se cumpla
+  √ esVencido es false para estados COMPLETED y CANCELLED aunque el umbral se cumpla
+  √ proximidad usa el umbral disponible (fecha o kilometraje)
+  √ proximidad con ambos umbrales devuelve la menor de las dos medidas
+  √ proximidad devuelve null sin umbrales
+
+PASS tests/unit/services/order-state.test.js
+  √ el mecánico dueño avanza en la secuencia de trabajo (2 ms)
+  √ recepción y administración también pueden avanzar los estados de trabajo (1 ms)
+  √ el mecánico no puede operar una orden que no es suya
+  √ la pausa por refacción regresa al estado desde el que se pausó (1 ms)
+  √ los retrocesos permitidos funcionan para el mecánico dueño
+  √ DIAGNOSTICO a RECIBIDO solo lo hace el administrador (1 ms)
+  √ los saltos de secuencia solo los hace el administrador
+  √ la entrega es de recepción y administración, nunca del mecánico
+  √ ENTREGADO y CANCELADA son estados finales sin transiciones
+  √ la cancelación la hacen recepción o administración desde cualquier estado previo
+  √ permanecer en el mismo estado no es una transición válida
+  √ faltan datos obligatorios para validar (1 ms)
+
+PASS tests/unit/validators/order-validator.test.js
+  √ una orden válida no produce errores (2 ms)
+  √ rechaza un payload vacío con mensajes claros (1 ms)
+  √ el kilometraje debe ser un entero mayor o igual a cero (RN-3)
+  √ el motivo es obligatorio y no puede exceder 255 caracteres (1 ms)
+  √ las notas son opcionales pero limitadas a 255 caracteres
+  √ la corrección de kilometraje debe ser booleana si viene
+  √ el mecánico, si viene, debe ser un identificador numérico o null
+
+PASS tests/unit/validators/appointment-validator.test.js
+  √ una cita válida no produce errores (2 ms)
+  √ los campos obligatorios son cliente, vehículo, fecha, hora y motivo (1 ms)
+  √ rechaza una fecha anterior a hoy
+  √ rechaza formatos de fecha u hora inválidos
+  √ la cancelación exige motivo y solo acepta estados válidos
+
+PASS tests/unit/ticket-folio.test.js
+  √ el folio se genera con el formato TCK-AAAA-NNNN (FR-012) (2 ms)
+  √ el folio válido se reconoce y los formatos ajenos se rechazan (1 ms)
+  √ el año del folio se extrae para auditoría por periodo (1 ms)
+
+Test Suites: 49 passed, 49 total
+Tests:       223 passed, 223 total
+Snapshots:   0 total
+Time:        74.813 s, estimated 125 s
+Ran all test suites.

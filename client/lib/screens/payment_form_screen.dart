@@ -18,10 +18,19 @@ class PaymentFormScreen extends StatefulWidget {
   /// Saldo pendiente de la orden, para acotar el monto y prellenarlo.
   final double saldoPendiente;
 
+  /// false = total de la orden incompleto (usos de refacciones sin precio):
+  /// se muestra el aviso ámbar y se bloquea el cobro (005, FR-010, CA-10).
+  final bool totalCompleto;
+
+  /// Cantidad de refacciones sin precio para el aviso (005, FR-010).
+  final int refaccionesSinPrecio;
+
   const PaymentFormScreen({
     super.key,
     required this.orderId,
     required this.saldoPendiente,
+    this.totalCompleto = true,
+    this.refaccionesSinPrecio = 0,
   });
 
   @override
@@ -51,6 +60,7 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
   }
 
   Future<void> _registrar() async {
+    if (!widget.totalCompleto) return; // Defensa: el botón ya viene bloqueado.
     if (!_formKey.currentState!.validate()) return;
     final monto = double.parse(_montoController.text.trim());
 
@@ -108,9 +118,22 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
   Future<void> _crearCobroDigital() async {
     setState(() => _guardando = true);
     final provider = context.read<PaymentsProvider>();
+    var monto = widget.saldoPendiente;
+    // Tras un cobro desfasado (006, FR-008) el saldo cambió: se refrescan los
+    // pagos antes de ofrecer el cobro nuevo y se usa el saldo actual.
+    if (provider.cobroDigital?.estado == 'STALE') {
+      await provider.cargar(widget.orderId);
+      if (!mounted) return;
+      monto = provider.pagos?.saldoPendiente ?? widget.saldoPendiente;
+      if (monto <= 0) {
+        setState(() => _guardando = false);
+        _mostrarError('La orden ya no tiene saldo pendiente por cobrar.');
+        return;
+      }
+    }
     final cobro = await provider.crearCobroDigital(
       widget.orderId,
-      monto: widget.saldoPendiente,
+      monto: monto,
     );
     if (!mounted) return;
     setState(() => _guardando = false);
@@ -148,6 +171,10 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
       case 'EXPIRED':
         _mostrarError(
             'El cobro expiró (más de 24 h sin confirmar); genere uno nuevo.');
+        break;
+      case 'STALE':
+        _mostrarError('El importe del cobro ya no coincide con el saldo '
+            'pendiente; genere un cobro nuevo.');
         break;
       default:
         ScaffoldMessenger.of(context).showSnackBar(
@@ -187,6 +214,39 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                 color: MotorixColores.textoSecundario,
               ),
             ),
+            // 005-precio-venta-refacciones: total incompleto ⇒ aviso y
+            // bloqueo del cobro (FR-010, CA-10); el servidor respondería
+            // TOTAL_INCOMPLETO. Las órdenes liquidadas nunca llegan aquí
+            // con saldo por cobrar (FR-016).
+            if (!widget.totalCompleto) ...[
+              const SizedBox(height: MotorixEspaciados.s),
+              Container(
+                key: const Key('avisoTotalIncompleto'),
+                padding: const EdgeInsets.all(MotorixEspaciados.s),
+                decoration: BoxDecoration(
+                  color: MotorixColores.advertenciaSuave,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: MotorixColores.advertencia),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        color: MotorixColores.advertencia, size: 20),
+                    const SizedBox(width: MotorixEspaciados.s),
+                    Expanded(
+                      child: Text(
+                        'No se puede registrar un cobro porque el total de '
+                        'la orden está incompleto: falta el precio de venta '
+                        'de ${widget.refaccionesSinPrecio} '
+                        '${widget.refaccionesSinPrecio == 1 ? 'refacción usada' : 'refacciones usadas'}. '
+                        'Asigne el precio en el inventario e intente de nuevo.',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: MotorixEspaciados.m),
             Form(
               key: _formKey,
@@ -240,7 +300,8 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                     )
                   : const Icon(Icons.payments_outlined),
               label: Text(_guardando ? 'Registrando…' : 'Registrar cobro'),
-              onPressed: _guardando ? null : _registrar,
+              onPressed:
+                  _guardando || !widget.totalCompleto ? null : _registrar,
             ),
             // --- US2: cobro digital con Mercado Pago (FR-008, FR-017) ---
             if (widget.saldoPendiente > 0) ...[
@@ -268,13 +329,16 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
                   label: Text(
                     'Generar enlace por \$${widget.saldoPendiente.toStringAsFixed(2)}',
                   ),
-                  onPressed: _guardando ? null : _crearCobroDigital,
+                  onPressed:
+                      _guardando || !widget.totalCompleto ? null : _crearCobroDigital,
                 )
               else
                 _TarjetaCobroDigital(
                   cobro: provider.cobroDigital!,
                   verificando: _verificando,
+                  guardando: _guardando,
                   onVerificar: _verificarCobro,
+                  onCobroNuevo: _crearCobroDigital,
                 ),
             ],
           ],
@@ -291,16 +355,21 @@ class _PaymentFormScreenState extends State<PaymentFormScreen> {
 class _TarjetaCobroDigital extends StatelessWidget {
   final CobroDigital cobro;
   final bool verificando;
+  final bool guardando;
   final VoidCallback onVerificar;
+  final VoidCallback onCobroNuevo;
 
   const _TarjetaCobroDigital({
     required this.cobro,
     required this.verificando,
+    required this.guardando,
     required this.onVerificar,
+    required this.onCobroNuevo,
   });
 
   @override
   Widget build(BuildContext context) {
+    final desfasado = cobro.estado == 'STALE';
     final colorEstado = cobro.estado == 'COMPLETED'
         ? MotorixColores.exito
         : cobro.estado == 'EXPIRED'
@@ -319,17 +388,58 @@ class _TarjetaCobroDigital extends StatelessWidget {
                 const Icon(Icons.language,
                     size: 18, color: MotorixColores.acento),
                 const SizedBox(width: MotorixEspaciados.xs),
-                Text(
-                  'Cobro de \$${cobro.monto.toStringAsFixed(2)} — '
-                  '${cobro.nombreEstado}',
-                  style: TextStyle(
-                    color: colorEstado,
-                    fontWeight: FontWeight.w600,
+                Expanded(
+                  child: Text(
+                    desfasado
+                        ? 'Cobro de \$${cobro.monto.toStringAsFixed(2)}'
+                        : 'Cobro de \$${cobro.monto.toStringAsFixed(2)} — '
+                            '${cobro.nombreEstado}',
+                    style: TextStyle(
+                      color: colorEstado,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
+                if (desfasado)
+                  Container(
+                    key: const Key('chipCobroDesfasado'),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: MotorixEspaciados.s, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: MotorixColores.advertenciaSuave,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: MotorixColores.advertencia),
+                    ),
+                    child: Text(
+                      cobro.nombreEstado,
+                      style: const TextStyle(
+                        color: MotorixColores.advertencia,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
               ],
             ),
             const SizedBox(height: MotorixEspaciados.s),
+            if (desfasado) ...[
+              const Text(
+                'El saldo de la orden cambió y este cobro ya no coincide con '
+                'él, por lo que no puede confirmarse. Genere un cobro nuevo '
+                'por el saldo actual.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: MotorixColores.textoSecundario,
+                ),
+              ),
+              const SizedBox(height: MotorixEspaciados.s),
+              ElevatedButton.icon(
+                key: const Key('botonCobroNuevo'),
+                icon: const Icon(Icons.add_link, size: 18),
+                label: const Text('Generar cobro nuevo'),
+                onPressed: guardando ? null : onCobroNuevo,
+              ),
+            ] else ...[
             SelectableText(
               cobro.enlace,
               key: const Key('textoEnlaceDigital'),
@@ -348,6 +458,7 @@ class _TarjetaCobroDigital extends StatelessWidget {
               label: Text(verificando ? 'Verificando…' : 'Verificar pago'),
               onPressed: verificando ? null : onVerificar,
             ),
+            ],
           ],
         ),
       ),

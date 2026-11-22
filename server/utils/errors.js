@@ -109,7 +109,9 @@ export const errores = {
     new AppError(
       409,
       'PAYMENT_NOT_MODIFIABLE',
-      `El pago está ${estado} y no admite cambios; solo los pagos PENDING pueden completarse o expirar.`
+      estado === 'STALE'
+        ? 'El cobro está desfasado: su importe ya no coincide con el saldo pendiente de la orden. No puede confirmarse; genere un cobro nuevo por el saldo actual.'
+        : `El pago está ${estado} y no admite cambios; solo los pagos PENDING pueden completarse o expirar.`
     ),
   pagoExcedeSaldo: (saldoPendiente) =>
     new AppError(
@@ -131,5 +133,30 @@ export const errores = {
       502,
       'MP_PROVIDER_ERROR',
       'No se pudo consultar el proveedor de pago; intente de nuevo. No se registró ningún cambio.'
+    ),
+  // --- 005-precio-venta-refacciones (contracts/api-rest.md) ---
+  parteSinPrecio: (nombre = null) =>
+    new AppError(
+      409,
+      'PART_SIN_PRECIO',
+      nombre
+        ? `La refacción "${nombre}" no tiene precio de venta asignado; pida a administración que registre el precio antes de usarla en una orden.`
+        : 'La refacción no tiene precio de venta asignado; pida a administración que registre el precio antes de usarla en una orden.'
+    ),
+  totalIncompleto: (refaccionesSinPrecio = []) =>
+    new AppError(
+      409,
+      'TOTAL_INCOMPLETO',
+      'El total de la orden está incompleto porque falta el precio de venta de una refacción usada; asigne el precio para poder continuar.',
+      { refaccionesSinPrecio }
+    ),
+  // 006-complemento-precios-compra, T007 (FR-003, CA-2): el total de la orden
+  // no puede rebasar 99,999,999.99 (se evalúa en centavos enteros).
+  totalOrdenExcedeLimite: (limite = 99999999.99) =>
+    new AppError(
+      422,
+      'ORDER_TOTAL_LIMIT_EXCEEDED',
+      `La operación dejaría el total de la orden por encima del máximo permitido (${Number(limite).toFixed(2)}).`,
+      { limite: Number(limite) }
     ),
 };

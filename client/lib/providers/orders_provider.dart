@@ -252,6 +252,10 @@ class OrdersProvider extends ChangeNotifier {
   }
 
   /// Usa una refacción en la orden: salida atómica de inventario (RN-6/RN-7).
+  /// Si la refacción no tiene precio de venta el backend responde
+  /// `PART_SIN_PRECIO` (005, FR-005) y `codigoError` lo expone para avisar;
+  /// al salir bien recarga el detalle con el total que ya suma las
+  /// refacciones (005, FR-007).
   Future<bool> agregarRefaccion(int orderId, int partId, int cantidad) async {
     error = null;
     codigoError = null;

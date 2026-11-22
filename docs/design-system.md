@@ -264,6 +264,8 @@ Nombre de sección, buscador cuando sea útil, notificaciones, usuario actual y 
 
 - Tabla densa con filtros y búsqueda arriba.
 - Estado como chip de color discreto.
+- Estados de pago: Completado (`success`), Pendiente de confirmación (texto secundario), Expirado (`danger`) y **Desfasado** (`warning`, ámbar: fondo `advertenciaSuave` y borde `advertencia`). Un cobro Desfasado no ofrece confirmar y sí "Generar cobro nuevo".
+- Inventario: cada fila muestra la línea `Categoría · Marca` (omite lo que falte), el precio de venta y, **solo para ADMIN**, `Compra: $X` (o `Compra: pendiente`). Los demás roles no ven el precio de compra.
 - Columna de acciones al final.
 - Stock por debajo del mínimo se marca en `danger`.
 - Paginación cuando haya volumen.

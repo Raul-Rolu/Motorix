@@ -1,0 +1,368 @@
+﻿===== PRUEBAS EN ROJO — 005-precio-venta-refacciones, Fase 3 (US1) =====
+
+--- Backend (server, jest): T006-T009 ---
+
+node : (node:26032) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+En línea: 1 Carácter: 1
++ node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runI ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ((node:26032) Ex...nge at any time:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+(Use `node --trace-warnings ...` to show where the warning was created)
+FAIL tests/integration/parts-pending-price.test.js
+  ├ù el filtro pending-price lista solo las refacciones activas sin precio (CA-17) (301 ms)
+  ├ù el filtro devuelve lista vac├¡a cuando todas las activas tienen precio (248 ms)
+  ├ù recepci├│n tambi├⌐n consulta el filtro de pendientes de precio (246 ms)
+
+  ΓùÅ el filtro pending-price lista solo las refacciones activas sin precio (CA-17)
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 2
+
+      Array [
+        138,
+    +   137,
+    +   139,
+      ]
+
+    [0m [90m 80 |[39m   expect(filtrado[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 81 |[39m   [36mconst[39m ids [33m=[39m filtrado[33m.[39mbody[33m.[39mdatos[33m.[39mmap((p) 
+[33m=>[39m p[33m.[39mid)[33m;[39m
+    [31m[1m>[22m[39m[90m 82 |[39m   expect(ids)[33m.[39mtoEqual([pendiente[33m.[39mid])[33m;[39m
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 83 |[39m   expect(ids)[33m.[39mnot[33m.[39mtoContain(conPrecio[33m.[39mid)[33m;[39m
+     [90m 84 |[39m   expect(ids)[33m.[39mnot[33m.[39mtoContain(inactivaSinPrecio[33m.[39mid)[33m;[39m
+     [90m 85 |[39m })[33m;[39m[0m
+
+      at Object.<anonymous> (tests/integration/parts-pending-price.test.js:82:15)
+
+  ΓùÅ el filtro devuelve lista vac├¡a cuando todas las activas tienen precio
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  -  1
+    + Received  + 12
+
+    - Array []
+    + Array [
+    +   Object {
+    +     "code": "COR-PEND",
+    +     "createdAt": "2026-10-18T22:30:36.000Z",
+    +     "id": 140,
+    +     "isActive": true,
+    +     "lowStock": false,
+    +     "minStock": 0,
+    +     "name": "Correa pendiente",
+    +     "stock": 2,
+    +   },
+    + ]
+
+    [0m [90m 105 |[39m     [33m.[39m[36mset[39m([32m'Authorization'[39m[33m,[39m [32m`Bearer 
+${tokens.admin}`[39m)[33m;[39m
+     [90m 106 |[39m   expect(despues[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 107 |[39m   
+expect(despues[33m.[39mbody[33m.[39mdatos)[33m.[39mtoEqual([])[33m;[39m
+     [90m     |[39m                              [31m[1m^[22m[39m
+     [90m 108 |[39m })[33m;[39m
+     [90m 109 |[39m
+     [90m 110 |[39m test([32m'recepci├│n tambi├⌐n consulta el filtro de pendientes de precio'[39m[33m,[39m 
+[36masync[39m () [33m=>[39m {[0m
+
+      at Object.<anonymous> (tests/integration/parts-pending-price.test.js:107:30)
+
+  ΓùÅ recepci├│n tambi├⌐n consulta el filtro de pendientes de precio
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "ACE-PEND",
+    +   "BUJ-PEND",
+      ]
+
+    [0m [90m 121 |[39m   expect(filtrado[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+     [90m 122 |[39m   [36mconst[39m codigos [33m=[39m filtrado[33m.[39mbody[33m.[39mdatos[33m.[39mmap((p) 
+[33m=>[39m p[33m.[39mcode)[33m;[39m
+    [31m[1m>[22m[39m[90m 123 |[39m   expect(codigos)[33m.[39mtoEqual([[32m'ACE-PEND'[39m])[33m;[39m
+     [90m     |[39m                   [31m[1m^[22m[39m
+     [90m 124 |[39m   expect(codigos)[33m.[39mnot[33m.[39mtoContain([32m'BUJ-PEND'[39m)[33m;[39m
+     [90m 125 |[39m   expect(pendiente[33m.[39msalePrice)[33m.[39mtoBe([35m90[39m)[33m;[39m
+     [90m 126 |[39m })[33m;[39m[0m
+
+      at Object.<anonymous> (tests/integration/parts-pending-price.test.js:123:19)
+
+FAIL tests/integration/parts-sale-price.test.js
+  ├ù el alta con salePrice guarda el precio y lo devuelve en la consulta (CA-1) (189 ms)
+  ├ù el alta sin salePrice deja la refacci├│n pendiente de precio (salePrice null) (169 ms)
+  ├ù la edici├│n asigna, cambia y limpia el precio de venta (256 ms)
+  ├ù un salePrice negativo se rechaza con DATOS_INVALIDOS sin crear la refacci├│n (CA-2) (242 ms)
+
+  ΓùÅ el alta con salePrice guarda el precio y lo devuelve en la consulta (CA-1)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 85.5
+    Received: undefined
+
+    [0m [90m 46 |[39m
+     [90m 47 |[39m   expect(alta[33m.[39mstatus)[33m.[39mtoBe([35m201[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 48 |[39m   
+expect(alta[33m.[39mbody[33m.[39msalePrice)[33m.[39mtoBe([35m85.5[39m)[33m;[39m
+     [90m    |[39m                               [31m[1m^[22m[39m
+     [90m 49 |[39m
+     [90m 50 |[39m   [36mconst[39m listado [33m=[39m [36mawait[39m request(app)
+     [90m 51 |[39m     [33m.[39m[36mget[39m([32m'/api/parts'[39m)[0m
+
+      at Object.<anonymous> (tests/integration/parts-sale-price.test.js:48:31)
+
+  ΓùÅ el alta sin salePrice deja la refacci├│n pendiente de precio (salePrice null)
+
+    expect(received).toBeNull()
+
+    Received: undefined
+
+    [0m [90m 64 |[39m
+     [90m 65 |[39m   expect(alta[33m.[39mstatus)[33m.[39mtoBe([35m201[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 66 |[39m   
+expect(alta[33m.[39mbody[33m.[39msalePrice)[33m.[39mtoBeNull()[33m;[39m
+     [90m    |[39m                               [31m[1m^[22m[39m
+     [90m 67 |[39m })[33m;[39m
+     [90m 68 |[39m
+     [90m 69 |[39m test([32m'la edici├│n asigna, cambia y limpia el precio de venta'[39m[33m,[39m 
+[36masync[39m () [33m=>[39m {[0m
+
+      at Object.<anonymous> (tests/integration/parts-sale-price.test.js:66:31)
+
+  ΓùÅ la edici├│n asigna, cambia y limpia el precio de venta
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 90
+    Received: undefined
+
+    [0m [90m 79 |[39m     [33m.[39msend({ salePrice[33m:[39m [35m90[39m })[33m;[39m
+     [90m 80 |[39m   expect(asignacion[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 81 |[39m   
+expect(asignacion[33m.[39mbody[33m.[39msalePrice)[33m.[39mtoBe([35m90[39m)[33m;[39m
+     [90m    |[39m                                     [31m[1m^[22m[39m
+     [90m 82 |[39m
+     [90m 83 |[39m   [36mconst[39m cambio [33m=[39m [36mawait[39m request(app)
+     [90m 84 |[39m     [33m.[39mput([32m`/api/parts/${alta.body.id}`[39m)[0m
+
+      at Object.<anonymous> (tests/integration/parts-sale-price.test.js:81:37)
+
+  ΓùÅ un salePrice negativo se rechaza con DATOS_INVALIDOS sin crear la refacci├│n (CA-2)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 400
+    Received: 201
+
+    [0m [90m 104 |[39m     [33m.[39msend({ name[33m:[39m [32m'Refacci├│n mal precio'[39m[33m,[39m 
+code[33m:[39m [32m'BAD-001'[39m[33m,[39m stock[33m:[39m [35m1[39m[33m,[39m salePrice[33m:[39m 
+[33m-[39m[35m5[39m })[33m;[39m
+     [90m 105 |[39m
+    [31m[1m>[22m[39m[90m 106 |[39m   expect(rechazo[33m.[39mstatus)[33m.[39mtoBe([35m400[39m)[33m;[39m
+     [90m     |[39m                          [31m[1m^[22m[39m
+     [90m 107 |[39m   
+expect(rechazo[33m.[39mbody[33m.[39merror[33m.[39mcodigo)[33m.[39mtoBe([32m'DATOS_INVALIDOS'[39m)[33m;[39m
+     [90m 108 |[39m
+     [90m 109 |[39m   [36mconst[39m listado [33m=[39m [36mawait[39m request(app)[0m
+
+      at Object.<anonymous> (tests/integration/parts-sale-price.test.js:106:26)
+
+FAIL tests/unit/validators/part-validator-part-price.test.js
+  ΓêÜ un salePrice decimal no negativo no produce errores (5 ms)
+  ΓêÜ un salePrice igual a cero es v├ílido (obsequio) (1 ms)
+  ΓêÜ un salePrice nulo deja la refacci├│n pendiente de precio sin errores (1 ms)
+  ΓêÜ un salePrice ausente no produce errores
+  ├ù un salePrice negativo se rechaza con mensaje claro (4 ms)
+  ├ù un salePrice no num├⌐rico se rechaza con mensaje claro (1 ms)
+  ├ù un salePrice con m├ís de dos decimales se rechaza (1 ms)
+
+  ΓùÅ un salePrice negativo se rechaza con mensaje claro
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+    [0m [90m 24 |[39m test([32m'un salePrice negativo se rechaza con mensaje claro'[39m[33m,[39m () 
+[33m=>[39m {
+     [90m 25 |[39m   [36mconst[39m errores [33m=[39m validarParte({ name[33m:[39m [32m'Filtro de 
+aceite'[39m[33m,[39m code[33m:[39m [32m'FLT-001'[39m[33m,[39m salePrice[33m:[39m [33m-[39m[35m5[39m 
+})[33m;[39m
+    [31m[1m>[22m[39m[90m 26 |[39m   expect(errores)[33m.[39mtoHaveLength([35m1[39m)[33m;[39m
+     [90m    |[39m                   [31m[1m^[22m[39m
+     [90m 27 |[39m   expect(errores[[35m0[39m])[33m.[39mtoContain([32m'precio de venta'[39m)[33m;[39m
+     [90m 28 |[39m })[33m;[39m
+     [90m 29 |[39m[0m
+
+      at Object.<anonymous> (tests/unit/validators/part-validator-part-price.test.js:26:19)
+
+  ΓùÅ un salePrice no num├⌐rico se rechaza con mensaje claro
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+    [0m [90m 30 |[39m test([32m'un salePrice no num├⌐rico se rechaza con mensaje claro'[39m[33m,[39m () 
+[33m=>[39m {
+     [90m 31 |[39m   [36mconst[39m errores [33m=[39m validarParte({ name[33m:[39m [32m'Filtro de 
+aceite'[39m[33m,[39m code[33m:[39m [32m'FLT-001'[39m[33m,[39m salePrice[33m:[39m [32m'ochenta'[39m 
+})[33m;[39m
+    [31m[1m>[22m[39m[90m 32 |[39m   expect(errores)[33m.[39mtoHaveLength([35m1[39m)[33m;[39m
+     [90m    |[39m                   [31m[1m^[22m[39m
+     [90m 33 |[39m   expect(errores[[35m0[39m])[33m.[39mtoContain([32m'precio de venta'[39m)[33m;[39m
+     [90m 34 |[39m })[33m;[39m
+     [90m 35 |[39m[0m
+
+      at Object.<anonymous> (tests/unit/validators/part-validator-part-price.test.js:32:19)
+
+  ΓùÅ un salePrice con m├ís de dos decimales se rechaza
+
+    expect(received).toHaveLength(expected)
+
+    Expected length: 1
+    Received length: 0
+    Received array:  []
+
+    [0m [90m 36 |[39m test([32m'un salePrice con m├ís de dos decimales se rechaza'[39m[33m,[39m () [33m=>[39m 
+{
+     [90m 37 |[39m   [36mconst[39m errores [33m=[39m validarParte({ name[33m:[39m [32m'Filtro de 
+aceite'[39m[33m,[39m code[33m:[39m [32m'FLT-001'[39m[33m,[39m salePrice[33m:[39m [35m85.555[39m 
+})[33m;[39m
+    [31m[1m>[22m[39m[90m 38 |[39m   expect(errores)[33m.[39mtoHaveLength([35m1[39m)[33m;[39m
+     [90m    |[39m                   [31m[1m^[22m[39m
+     [90m 39 |[39m   expect(errores[[35m0[39m])[33m.[39mtoContain([32m'precio de venta'[39m)[33m;[39m
+     [90m 40 |[39m })[33m;[39m
+     [90m 41 |[39m[0m
+
+      at Object.<anonymous> (tests/unit/validators/part-validator-part-price.test.js:38:19)
+
+FAIL tests/contract/parts.contract.test.js
+  ΓêÜ POST /api/parts sigue la forma del contrato (285 ms)
+  ΓêÜ PUT /api/parts/:id sigue la forma del contrato (266 ms)
+  ΓêÜ POST /api/parts/:id/movements devuelve stockResult y el error usa el formato centralizado (276 ms)
+  ΓêÜ el stock insuficiente responde PART_SIN_STOCK con details.stockDisponible (266 ms)
+  ├ù la refacci├│n incluye salePrice en alta, consulta y edici├│n (FR-001) (245 ms)
+  ├ù el alta y la edici├│n de precios son solo de administraci├│n (FR-002, CA-16) (590 ms)
+
+  ΓùÅ la refacci├│n incluye salePrice en alta, consulta y edici├│n (FR-001)
+
+    expect(received).toMatchObject(expected)
+
+    - Expected  - 1
+    + Received  + 0
+
+      Object {
+        "code": "CTP-PREC",
+        "id": Any<Number>,
+        "isActive": true,
+        "name": "Contrato precio",
+    -   "salePrice": 85.5,
+      }
+
+    [0m [90m 150 |[39m
+     [90m 151 |[39m   expect(alta[33m.[39mstatus)[33m.[39mtoBe([35m201[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 152 |[39m   expect(alta[33m.[39mbody)[33m.[39mtoMatchObject({
+     [90m     |[39m                     [31m[1m^[22m[39m
+     [90m 153 |[39m     id[33m:[39m expect[33m.[39many([33mNumber[39m)[33m,[39m
+     [90m 154 |[39m     name[33m:[39m [32m'Contrato precio'[39m[33m,[39m
+     [90m 155 |[39m     code[33m:[39m [32m'CTP-PREC'[39m[33m,[39m[0m
+
+      at Object.<anonymous> (tests/contract/parts.contract.test.js:152:21)
+
+  ΓùÅ el alta y la edici├│n de precios son solo de administraci├│n (FR-002, CA-16)
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 110
+    Received: undefined
+
+    [0m [90m 215 |[39m     [33m.[39msend({ salePrice[33m:[39m [35m110[39m })[33m;[39m
+     [90m 216 |[39m   expect(edicionAdmin[33m.[39mstatus)[33m.[39mtoBe([35m200[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 217 |[39m   
+expect(edicionAdmin[33m.[39mbody[33m.[39msalePrice)[33m.[39mtoBe([35m110[39m)[33m;[39m
+     [90m     |[39m                                       [31m[1m^[22m[39m
+     [90m 218 |[39m })[33m;[39m
+     [90m 219 |[39m[0m
+
+      at Object.<anonymous> (tests/contract/parts.contract.test.js:217:39)
+
+PASS tests/contract/order-parts.contract.test.js
+  ΓêÜ POST /api/orders/:id/parts y DELETE siguen la forma del contrato (483 ms)
+  ΓêÜ los errores de refacciones en orden usan el formato centralizado (413 ms)
+
+Test Suites: 4 failed, 1 passed, 5 total
+Tests:       12 failed, 10 passed, 22 total
+Snapshots:   0 total
+Time:        7.693 s
+Ran all test suites matching /(part-validator-part-price|parts-sale-price|parts-pending-price|parts\.contract)/i.
+
+--- Frontend (client, flutter test): T010 ---
+
+00:00 +0: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/part_price_test.dart
+flutter : test/part_price_test.dart:55:7: Error: No named parameter with the name 'salePrice'.
+En línea: 1 Carácter: 1
++ flutter test test\part_price_test.dart 2>&1 | Tee-Object -FilePath .. ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (test/part_price...me 'salePrice'.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+      salePrice: 85.5,
+      ^^^^^^^^^
+lib/models/part.dart:16:9: Context: Found this candidate, but the arguments don't match.
+  const Part({
+        ^^^^
+test/part_price_test.dart:21:18: Error: The getter 'salePrice' isn't defined for the type 'Part'.
+ - 'Part' is from 'package:motorix_client/models/part.dart' ('lib/models/part.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'salePrice'.
+    expect(parte.salePrice, 85.5);
+                 ^^^^^^^^^
+test/part_price_test.dart:36:18: Error: The getter 'salePrice' isn't defined for the type 'Part'.
+ - 'Part' is from 'package:motorix_client/models/part.dart' ('lib/models/part.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'salePrice'.
+    expect(parte.salePrice, isNull);
+                 ^^^^^^^^^
+test/part_price_test.dart:48:18: Error: The getter 'salePrice' isn't defined for the type 'Part'.
+ - 'Part' is from 'package:motorix_client/models/part.dart' ('lib/models/part.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'salePrice'.
+    expect(parte.salePrice, isNull);
+                 ^^^^^^^^^
+00:00 +0 -1: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/part_price_test.dart [E]
+  Failed to load "C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/part_price_test.dart":
+  Compilation failed for testPath=C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/part_price_test.dart: test/part_price_test.dart:55:7: Error: No named parameter with the name 'salePrice'.
+        salePrice: 85.5,
+        ^^^^^^^^^
+  lib/models/part.dart:16:9: Context: Found this candidate, but the arguments don't match.
+    const Part({
+          ^^^^
+  test/part_price_test.dart:21:18: Error: The getter 'salePrice' isn't defined for the type 'Part'.
+   - 'Part' is from 'package:motorix_client/models/part.dart' ('lib/models/part.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'salePrice'.
+      expect(parte.salePrice, 85.5);
+                   ^^^^^^^^^
+  test/part_price_test.dart:36:18: Error: The getter 'salePrice' isn't defined for the type 'Part'.
+   - 'Part' is from 'package:motorix_client/models/part.dart' ('lib/models/part.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'salePrice'.
+      expect(parte.salePrice, isNull);
+                   ^^^^^^^^^
+  test/part_price_test.dart:48:18: Error: The getter 'salePrice' isn't defined for the type 'Part'.
+   - 'Part' is from 'package:motorix_client/models/part.dart' ('lib/models/part.dart').
+  Try correcting the name to the name of an existing getter, or defining a getter or field named 'salePrice'.
+      expect(parte.salePrice, isNull);
+                   ^^^^^^^^^
+  .
+00:00 +0 -1: Some tests failed.
+
+Failing tests:
+  C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/part_price_test.dart: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/part_price_test.dart

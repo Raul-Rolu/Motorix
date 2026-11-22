@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../config/theme.dart';
 import '../models/part.dart';
+import '../providers/auth_provider.dart';
 import '../providers/parts_provider.dart';
 import 'part_form_screen.dart';
 
@@ -75,6 +76,28 @@ class _PartsScreenState extends State<PartsScreen> {
             },
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: MotorixEspaciados.m),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FilterChip(
+              label: const Text('Solo sin precio de venta'),
+              avatar: Icon(
+                Icons.sell_outlined,
+                size: 18,
+                color: provider.soloPendientesPrecio
+                    ? MotorixColores.superficie
+                    : MotorixColores.advertencia,
+              ),
+              selected: provider.soloPendientesPrecio,
+              selectedColor: MotorixColores.advertencia,
+              onSelected: (valor) {
+                provider.soloPendientesPrecio = valor;
+                provider.recargar();
+              },
+            ),
+          ),
+        ),
         const SizedBox(height: MotorixEspaciados.s),
         if (provider.error != null)
           Padding(
@@ -127,6 +150,9 @@ class _TarjetaParte extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorStock =
         parte.lowStock ? MotorixColores.error : MotorixColores.exito;
+    // El precio de compra es un dato financiero exclusivo del administrador
+    // (006, FR-005): los demás roles no lo ven (el backend ni siquiera lo envía).
+    final esAdmin = context.watch<AuthProvider>().esAdmin;
 
     return Card(
       margin: const EdgeInsets.only(bottom: MotorixEspaciados.s),
@@ -136,14 +162,46 @@ class _TarjetaParte extends StatelessWidget {
           color: colorStock,
         ),
         title: Text(parte.name),
-        subtitle: Text(
-          'Código: ${parte.code}'
-          '${parte.isActive ? '' : ' · Inactiva'}',
-          style: TextStyle(
-            color: parte.isActive
-                ? MotorixColores.textoSecundario
-                : MotorixColores.error,
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Código: ${parte.code}'
+              '${parte.isActive ? '' : ' · Inactiva'}',
+              style: TextStyle(
+                color: parte.isActive
+                    ? MotorixColores.textoSecundario
+                    : MotorixColores.error,
+              ),
+            ),
+            // Categoría y marca (006, FR-014): siempre visibles; sin dato, un guion.
+            Text(
+              'Categoría: ${parte.nombreCategoria.isEmpty ? '—' : parte.nombreCategoria}'
+              ' · Marca: ${(parte.brand ?? '').isEmpty ? '—' : parte.brand}',
+              style: const TextStyle(color: MotorixColores.textoSecundario),
+            ),
+            // Precio de venta (005, FR-001): sin precio se marca en ámbar.
+            Text(
+              parte.salePrice == null
+                  ? 'Sin precio de venta'
+                  : 'Precio: \$${parte.salePrice!.toStringAsFixed(2)}',
+              style: TextStyle(
+                color: parte.salePrice == null
+                    ? MotorixColores.advertencia
+                    : MotorixColores.textoSecundario,
+                fontWeight: parte.salePrice == null
+                    ? FontWeight.w700
+                    : FontWeight.w400,
+              ),
+            ),
+            if (esAdmin)
+              Text(
+                parte.purchasePrice == null
+                    ? 'Compra: pendiente'
+                    : 'Compra: \$${parte.purchasePrice!.toStringAsFixed(2)}',
+                style: const TextStyle(color: MotorixColores.textoSecundario),
+              ),
+          ],
         ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,

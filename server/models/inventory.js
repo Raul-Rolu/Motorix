@@ -29,7 +29,7 @@ export async function conTransaccion(fn) {
 /** Bloquea la fila de la refacción para escritura (FOR UPDATE). */
 export async function bloquearParte(conexion, partId) {
   const [filas] = await conexion.query(
-    'SELECT id, stock, is_active FROM parts WHERE id = ? FOR UPDATE',
+    'SELECT id, name, stock, is_active, sale_price FROM parts WHERE id = ? FOR UPDATE',
     [partId]
   );
   if (filas.length === 0) {
@@ -37,8 +37,14 @@ export async function bloquearParte(conexion, partId) {
   }
   return {
     id: filas[0].id,
+    name: filas[0].name,
     stock: Number(filas[0].stock),
     isActive: Boolean(filas[0].is_active),
+    // Precio de venta vigente (005, FR-004): null = pendiente de precio.
+    salePrice:
+      filas[0].sale_price === null || filas[0].sale_price === undefined
+        ? null
+        : Number(filas[0].sale_price),
   };
 }
 
