@@ -19,6 +19,10 @@ class PartsProvider extends ChangeNotifier {
   String? error;
   String? codigoError;
 
+  /// Advertencia no bloqueante del último guardado (006, FR-004): precio de
+  /// venta menor al de compra; null si no hubo.
+  String? advertencia;
+
   /// Búsqueda activa por nombre o código (FR-009, US6).
   String textoFiltro = '';
 
@@ -61,6 +65,9 @@ class PartsProvider extends ChangeNotifier {
     int stock = 0,
     int minStock = 0,
     double? salePrice,
+    String? category,
+    String? brand,
+    double? purchasePrice,
   }) async {
     return _guardar({
       'name': name,
@@ -68,6 +75,9 @@ class PartsProvider extends ChangeNotifier {
       if (stock > 0) 'stock': stock,
       if (minStock > 0) 'minStock': minStock,
       if (salePrice != null) 'salePrice': salePrice,
+      if (category != null) 'category': category,
+      if (brand != null) 'brand': brand,
+      if (purchasePrice != null) 'purchasePrice': purchasePrice,
     });
   }
 
@@ -79,6 +89,10 @@ class PartsProvider extends ChangeNotifier {
     required String code,
     int minStock = 0,
     double? salePrice,
+    String? category,
+    String? brand,
+    double? purchasePrice,
+    bool enviarPrecioCompra = false,
     bool isActive = true,
   }) async {
     return _guardar(
@@ -87,6 +101,11 @@ class PartsProvider extends ChangeNotifier {
         'code': code,
         'minStock': minStock,
         'salePrice': salePrice,
+        // null limpia la categoría o la marca (006).
+        'category': category,
+        'brand': brand,
+        // Solo el administrador envía el precio de compra (null lo limpia).
+        if (enviarPrecioCompra) 'purchasePrice': purchasePrice,
         'isActive': isActive,
       },
       id: id,
@@ -96,10 +115,12 @@ class PartsProvider extends ChangeNotifier {
   Future<Part?> _guardar(Map<String, dynamic> cuerpo, {int? id}) async {
     error = null;
     codigoError = null;
+    advertencia = null;
     try {
       final respuesta = id == null
           ? await api.post('/parts', cuerpo)
           : await api.put('/parts/$id', cuerpo);
+      advertencia = respuesta['advertencia'] as String?;
       await recargar();
       return Part.desdeJson(respuesta);
     } on ExcepcionApi catch (excepcion) {

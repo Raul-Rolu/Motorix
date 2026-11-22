@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 
 import '../config/theme.dart';
 import '../models/part.dart';
+import '../providers/auth_provider.dart';
 import '../providers/parts_provider.dart';
 
 class PartFormScreen extends StatefulWidget {
@@ -30,11 +31,16 @@ class _PartFormScreenState extends State<PartFormScreen> {
   final _stockController = TextEditingController();
   final _minimoController = TextEditingController();
   final _precioController = TextEditingController();
+  final _marcaController = TextEditingController();
+  final _precioCompraController = TextEditingController();
   final _entradaCantidadController = TextEditingController();
   final _entradaMotivoController = TextEditingController();
 
   bool _activo = true;
   bool _guardando = false;
+
+  /// Categoría del catálogo fijo; null = sin clasificar (006, FR-002).
+  String? _categoria;
 
   bool get _esAlta => widget.parte == null;
 
@@ -50,7 +56,29 @@ class _PartFormScreenState extends State<PartFormScreen> {
         _precioController.text = parte.salePrice!.toStringAsFixed(2);
       }
       _activo = parte.isActive;
+      _categoria = parte.category;
+      _marcaController.text = parte.brand ?? '';
+      if (parte.purchasePrice != null) {
+        _precioCompraController.text = parte.purchasePrice!.toStringAsFixed(2);
+      }
     }
+  }
+
+  /// Valida un importe opcional: vacío es válido; si no, número ≥ 0 con
+  /// hasta 2 decimales (mismo criterio que el precio de venta).
+  String? _validarImporteOpcional(String? valor, String etiqueta) {
+    final texto = valor?.trim() ?? '';
+    if (texto.isEmpty) return null;
+    final numero = double.tryParse(texto);
+    if (numero == null || numero < 0) {
+      return 'Ingrese un $etiqueta mayor o igual a cero.';
+    }
+    final dosDecimales =
+        (numero * 100).roundToDouble().compareTo(numero * 100) == 0;
+    if (!dosDecimales) {
+      return 'Máximo 2 decimales.';
+    }
+    return null;
   }
 
   @override
@@ -60,6 +88,8 @@ class _PartFormScreenState extends State<PartFormScreen> {
     _stockController.dispose();
     _minimoController.dispose();
     _precioController.dispose();
+    _marcaController.dispose();
+    _precioCompraController.dispose();
     _entradaCantidadController.dispose();
     _entradaMotivoController.dispose();
     super.dispose();
@@ -72,6 +102,11 @@ class _PartFormScreenState extends State<PartFormScreen> {
     final provider = context.read<PartsProvider>();
     // Vacío = sin precio (pendiente, 005 FR-001).
     final precioVenta = double.tryParse(_precioController.text.trim());
+    final marca = _marcaController.text.trim();
+    // El precio de compra es exclusivo del administrador (006, FR-005): los
+    // demás roles ni lo ven ni lo envían (el backend también lo valida).
+    final esAdmin = context.read<AuthProvider>().esAdmin;
+    final precioCompra = double.tryParse(_precioCompraController.text.trim());
     final Part? guardada;
     if (_esAlta) {
       guardada = await provider.crear(
@@ -80,6 +115,9 @@ class _PartFormScreenState extends State<PartFormScreen> {
         stock: int.tryParse(_stockController.text.trim()) ?? 0,
         minStock: int.tryParse(_minimoController.text.trim()) ?? 0,
         salePrice: precioVenta,
+        category: _categoria,
+        brand: marca.isEmpty ? null : marca,
+        purchasePrice: esAdmin ? precioCompra : null,
       );
     } else {
       guardada = await provider.editar(
@@ -88,6 +126,10 @@ class _PartFormScreenState extends State<PartFormScreen> {
         code: _codigoController.text.trim(),
         minStock: int.tryParse(_minimoController.text.trim()) ?? 0,
         salePrice: precioVenta,
+        category: _categoria,
+        brand: marca.isEmpty ? null : marca,
+        purchasePrice: precioCompra,
+        enviarPrecioCompra: esAdmin,
         isActive: _activo,
       );
     }
@@ -95,7 +137,19 @@ class _PartFormScreenState extends State<PartFormScreen> {
     if (!mounted) return;
     setState(() => _guardando = false);
     if (guardada != null) {
+      // Advertencia no bloqueante (006, FR-004): el guardado ya se hizo; el
+      // aviso se muestra en el mensajero raíz para que sobreviva al cierre.
+      final advertencia = provider.advertencia;
+      final mensajero = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
+      if (advertencia != null) {
+        mensajero.showSnackBar(
+          SnackBar(
+            content: Text(advertencia),
+            backgroundColor: MotorixColores.advertencia,
+          ),
+        );
+      }
     } else {
       _mostrarError(provider.error ?? 'No se pudo guardar la refacción.');
     }
@@ -176,6 +230,38 @@ class _PartFormScreenState extends State<PartFormScreen> {
                         : null,
                   ),
                   const SizedBox(height: MotorixEspaciados.m),
+                  // Categoría de lista fija y marca libre, ambas opcionales (006).
+                  DropdownButtonFormField<String?>(
+                    key: const Key('campoCategoria'),
+                    initialValue: _categoria,
+                    decoration: const InputDecoration(
+                      labelText: 'Categoría',
+                      hintText: 'Opcional',
+                    ),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('Sin categoría'),
+                      ),
+                      for (final entrada in kCategoriasRefaccion.entries)
+                        DropdownMenuItem<String?>(
+                          value: entrada.key,
+                          child: Text(entrada.value),
+                        ),
+                    ],
+                    onChanged: (valor) => setState(() => _categoria = valor),
+                  ),
+                  const SizedBox(height: MotorixEspaciados.m),
+                  TextFormField(
+                    key: const Key('campoMarca'),
+                    controller: _marcaController,
+                    maxLength: 50,
+                    decoration: const InputDecoration(
+                      labelText: 'Marca',
+                      hintText: 'Opcional (máximo 50 caracteres)',
+                    ),
+                  ),
+                  const SizedBox(height: MotorixEspaciados.m),
                   TextFormField(
                     controller: _precioController,
                     keyboardType:
@@ -202,6 +288,23 @@ class _PartFormScreenState extends State<PartFormScreen> {
                       return null;
                     },
                   ),
+                  // Precio de compra: dato financiero visible solo para ADMIN (006).
+                  if (context.watch<AuthProvider>().esAdmin) ...[
+                    const SizedBox(height: MotorixEspaciados.m),
+                    TextFormField(
+                      key: const Key('campoPrecioCompra'),
+                      controller: _precioCompraController,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Precio de compra',
+                        hintText: 'Opcional (solo administración)',
+                        prefixText: '\$ ',
+                      ),
+                      validator: (valor) =>
+                          _validarImporteOpcional(valor, 'precio de compra'),
+                    ),
+                  ],
                   const SizedBox(height: MotorixEspaciados.m),
                   if (_esAlta)
                     TextFormField(

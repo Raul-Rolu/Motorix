@@ -170,6 +170,12 @@ class _TarjetaParte extends StatelessWidget {
                     : MotorixColores.error,
               ),
             ),
+            // Categoría y marca (006, FR-014): siempre visibles; sin dato, un guion.
+            Text(
+              'Categoría: ${parte.nombreCategoria.isEmpty ? '—' : parte.nombreCategoria}'
+              ' · Marca: ${(parte.brand ?? '').isEmpty ? '—' : parte.brand}',
+              style: const TextStyle(color: MotorixColores.textoSecundario),
+            ),
             // Precio de venta (005, FR-001): sin precio se marca en ámbar.
             Text(
               parte.salePrice == null

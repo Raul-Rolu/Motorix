@@ -6,6 +6,31 @@
  * MOVEMENT_INVALID (422, T030); aquí solo lo estructural.
  */
 import { esTextoNoVacio } from './validation-helpers.js';
+import { esImporteValido } from '../utils/money.js';
+
+/**
+ * Catálogo fijo de categorías de refacción (006, FR-002; research D3). Lista
+ * del sistema, no administrable; `null` = sin clasificar.
+ */
+export const CATEGORIAS_REFACCION = [
+  'FRENOS',
+  'MOTOR',
+  'SUSPENSION',
+  'ELECTRICO',
+  'TRANSMISION',
+  'CLIMA',
+  'NEUMATICOS',
+  'LUBRICANTES',
+  'OTRO',
+];
+
+/** Longitud máxima de la marca (006, FR-002). */
+export const LONGITUD_MAXIMA_MARCA = 50;
+
+/** true si el campo opcional viene informado (ni ausente, ni null, ni vacío). */
+function vieneInformado(valor) {
+  return valor !== undefined && valor !== null && valor !== '';
+}
 
 /** Entero estricto mayor o igual que cero. */
 function esEnteroNoNegativo(valor) {
@@ -54,6 +79,27 @@ export function validarParte(body, { esEdicion = false } = {}) {
       errores.push(
         'El precio de venta debe ser un número mayor o igual a cero con hasta 2 decimales.'
       );
+    }
+  }
+
+  // Precio de compra (006, FR-001): opcional; numérico, no negativo y con
+  // hasta 2 decimales. El límite máximo se valida junto con los demás
+  // precios (US2, CA-2).
+  if (vieneInformado(datos.purchasePrice) && !esImporteValido(datos.purchasePrice)) {
+    errores.push(
+      'El precio de compra debe ser un número mayor o igual a cero con hasta 2 decimales.'
+    );
+  }
+  // Categoría (006, FR-002): opcional y de la lista fija del sistema.
+  if (vieneInformado(datos.category) && !CATEGORIAS_REFACCION.includes(datos.category)) {
+    errores.push(
+      `La categoría debe ser una de: ${CATEGORIAS_REFACCION.join(', ')}.`
+    );
+  }
+  // Marca (006, FR-002): opcional, texto libre de hasta 50 caracteres.
+  if (vieneInformado(datos.brand)) {
+    if (typeof datos.brand !== 'string' || datos.brand.trim().length > LONGITUD_MAXIMA_MARCA) {
+      errores.push(`La marca no puede superar los ${LONGITUD_MAXIMA_MARCA} caracteres.`);
     }
   }
 

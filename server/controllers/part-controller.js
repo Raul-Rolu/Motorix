@@ -31,7 +31,7 @@ export const editar = asyncHandler(async (req, res) => {
   if (erroresDeValidacion.length > 0) {
     return error(res, 400, 'DATOS_INVALIDOS', erroresDeValidacion.join(' '));
   }
-  const parte = await partService.editar(Number(req.params.id), req.body);
+  const parte = await partService.editar(Number(req.params.id), req.body, req.user);
   return ok(res, parte);
 });
 

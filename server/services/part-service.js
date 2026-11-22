@@ -10,6 +10,47 @@ import * as partModel from '../models/part.js';
 import * as inventoryModel from '../models/inventory.js';
 import { errores } from '../utils/errors.js';
 
+/** Mensaje no bloqueante cuando el precio de venta es menor al de compra (006, FR-004). */
+const ADVERTENCIA_VENTA_MENOR_COMPRA = 'El precio de venta es menor al precio de compra.';
+
+/** El precio de compra solo se entrega a ADMIN (006, FR-005; research D4). */
+function esAdmin(usuario) {
+  return usuario?.role === 'ADMIN';
+}
+
+/** Texto opcional: vacío o ausente se guarda como null (categoría y marca). */
+function textoOpcional(valor) {
+  if (valor === undefined) {
+    return undefined;
+  }
+  return valor === null || String(valor).trim() === '' ? null : String(valor).trim();
+}
+
+/** Importe opcional: `undefined` conserva, vacío/null limpia, otro valor se convierte. */
+function importeOpcional(valor) {
+  if (valor === undefined) {
+    return undefined;
+  }
+  return valor === null || valor === '' ? null : Number(valor);
+}
+
+/**
+ * Agrega la advertencia no bloqueante (FR-004) cuando se guardó un precio y
+ * el de venta quedó por debajo del de compra; no impide el guardado.
+ */
+function conAdvertencia(parte, datos) {
+  const tocoPrecios = datos.salePrice !== undefined || datos.purchasePrice !== undefined;
+  if (
+    tocoPrecios &&
+    parte.purchasePrice != null &&
+    parte.salePrice != null &&
+    parte.salePrice < parte.purchasePrice
+  ) {
+    return { ...parte, advertencia: ADVERTENCIA_VENTA_MENOR_COMPRA };
+  }
+  return parte;
+}
+
 /**
  * Listado con búsqueda `q` (FR-009). Solo el administrador ve las
  * refacciones inactivas (US6); recepción y mecánico ven las activas.
@@ -19,6 +60,7 @@ export async function listar(filtros = {}, usuario) {
     q: filtros.q || null,
     soloActivas: usuario.role !== 'ADMIN',
     pendientesPrecio: Boolean(filtros.pendientesPrecio),
+    incluirPrecioCompra: esAdmin(usuario),
   });
 }
 
@@ -55,6 +97,10 @@ export async function crear(datos, usuario) {
         salePrice: datos.salePrice !== undefined && datos.salePrice !== ''
           ? Number(datos.salePrice)
           : null,
+        // Categoría, marca y precio de compra opcionales (006, FR-001/FR-002).
+        category: textoOpcional(datos.category) ?? null,
+        brand: textoOpcional(datos.brand) ?? null,
+        purchasePrice: importeOpcional(datos.purchasePrice) ?? null,
       },
       conexion
     );
@@ -69,12 +115,15 @@ export async function crear(datos, usuario) {
     }
     // Se relee con la MISMA conexión para devolver el stock ya actualizado
     // antes del commit (con el pool general leería el estado previo).
-    return partModel.findById(parte.id, conexion);
+    const creada = await partModel.findById(parte.id, conexion, {
+      incluirPrecioCompra: esAdmin(usuario),
+    });
+    return conAdvertencia(creada, datos);
   });
 }
 
 /** Edición de metadatos; el stock solo cambia vía movimientos (FR-013). */
-export async function editar(id, datos) {
+export async function editar(id, datos, usuario) {
   const parte = await partModel.findById(id);
   if (!parte) {
     throw errores.parteNoEncontrada();
@@ -105,6 +154,11 @@ export async function editar(id, datos) {
         : datos.salePrice === null || datos.salePrice === ''
           ? null
           : Number(datos.salePrice),
+    // Categoría, marca y precio de compra (006): undefined conserva, null limpia.
+    category: textoOpcional(datos.category),
+    brand: textoOpcional(datos.brand),
+    purchasePrice: importeOpcional(datos.purchasePrice),
+    incluirPrecioCompra: esAdmin(usuario),
   });
 
   // Adopción (005, FR-011, CA-11/CA-19): al asignar o cambiar el precio se
@@ -113,7 +167,7 @@ export async function editar(id, datos) {
   if (resultado.salePrice !== null && resultado.salePrice !== undefined) {
     await partModel.adoptarPrecios(parte.id, resultado.salePrice);
   }
-  return resultado;
+  return conAdvertencia(resultado, datos);
 }
 
 /**

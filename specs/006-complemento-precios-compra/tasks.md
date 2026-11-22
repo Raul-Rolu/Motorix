@@ -46,7 +46,7 @@ description: "Lista de tareas para la feature 006-complemento-precios-compra"
 **⚠️ CRÍTICO**: ninguna historia empieza hasta terminar esta fase. Los seeds ya modificados (US5) también necesitan la migración 017 aplicada, porque escriben `category`, `brand` y `purchase_price`.
 
 - [X] T003 Antes de crear la migración, consultar en la base local `SELECT MIN(sale_price), MAX(sale_price) FROM parts` y confirmar que ningún valor viola los `CHECK` nuevos (≥ 0 y ≤ 999,999.99); si alguno los viola, corregir el dato a mano o detenerse y avisar. Luego crear `database/migrations/017_part_purchase_price_stale.sql`, solo sobre `parts` y `payments`: en `parts` agregar `category ENUM('FRENOS','MOTOR','SUSPENSION','ELECTRICO','TRANSMISION','CLIMA','NEUMATICOS','LUBRICANTES','OTRO') NULL`, `brand VARCHAR(50) NULL`, `purchase_price DECIMAL(10,2) NULL` con `CHECK (purchase_price >= 0 AND purchase_price <= 999999.99)` y `CHECK (sale_price <= 999999.99)`; en `payments` ampliar `status` a `ENUM('PENDING','COMPLETED','EXPIRED','STALE')` con `STALE` al final. Sin tocar `order_services`, `order_labor` ni `order_entries`; sin borrados [FR-001][FR-002][FR-003][FR-008][CA-1][CA-2][CA-6]
-- [ ] T004 Aplicar `node database/scripts/apply-migrations.mjs` sobre `motorix_test` y sobre la base local; comprobar que 017 queda registrada, que las filas existentes de `parts` y `payments` no cambian y que una segunda corrida no la repite (depende de T003) [CA-8]
+- [X] T004 Aplicar `node database/scripts/apply-migrations.mjs` sobre `motorix_test` y sobre la base local; comprobar que 017 queda registrada, que las filas existentes de `parts` y `payments` no cambian y que una segunda corrida no la repite (depende de T003) [CA-8]
 - [X] T005 [P] Escribir `server/tests/unit/money-cents.test.js` (casos: `aCentavos(0.1 + 0.2)` = 30, `aCentavos(1234.56)` = 123456, `deCentavos`, `esImporteValido` con negativos, NaN y 3 decimales, límites `LIMITE_PRECIO_CENTAVOS` = 99 999 999 y `LIMITE_TOTAL_CENTAVOS` = 9 999 999 999); debe fallar antes de T006 [CA-5]
 - [X] T006 Crear `server/utils/money.js` con `aCentavos()`, `deCentavos()`, `esImporteValido()` y los dos límites en centavos, y hacer pasar T005 (depende de T005) [FR-007][CA-5]
 - [X] T007 [P] Agregar el código `ORDER_TOTAL_LIMIT_EXCEEDED` (422) al catálogo de `server/utils/errors.js`; no se agrega ningún código de línea duplicada [FR-003][CA-2]
@@ -63,18 +63,18 @@ description: "Lista de tareas para la feature 006-complemento-precios-compra"
 
 ### Pruebas de la Historia 1 (escribirlas primero; deben fallar) ⚠️
 
-- [ ] T008 [P] [US1] Crear `server/tests/integration/parts-purchase-price.test.js`: alta y edición con los tres datos, persistencia en la siguiente consulta, categoría inválida → 400 `DATOS_INVALIDOS`, marca de 51 caracteres → 400 y de 50 → 201/200, refacción sin categoría ni marca aceptada, venta < compra guardada con `"advertencia"` en la respuesta [FR-001][FR-002][FR-004][CA-1]
-- [ ] T009 [P] [US1] Crear `client/test/parts_category_brand_test.dart`: el listado de inventario muestra las columnas fijas de categoría y marca (vacías si no hay dato, sin ocultar la fila) y el formulario ofrece el selector de categoría de lista fija, la marca (≤ 50) y el precio de compra para ADMIN [FR-014][CA-1]
+- [X] T008 [P] [US1] Crear `server/tests/integration/parts-purchase-price.test.js`: alta y edición con los tres datos, persistencia en la siguiente consulta, categoría inválida → 400 `DATOS_INVALIDOS`, marca de 51 caracteres → 400 y de 50 → 201/200, refacción sin categoría ni marca aceptada, venta < compra guardada con `"advertencia"` en la respuesta [FR-001][FR-002][FR-004][CA-1]
+- [X] T009 [P] [US1] Crear `client/test/parts_category_brand_test.dart`: el listado de inventario muestra las columnas fijas de categoría y marca (vacías si no hay dato, sin ocultar la fila) y el formulario ofrece el selector de categoría de lista fija, la marca (≤ 50) y el precio de compra para ADMIN [FR-014][CA-1]
 
 ### Implementación de la Historia 1
 
-- [ ] T010 [US1] Extender `server/validators/part-validator.js` con `category` (catálogo fijo, nullable), `brand` (≤ 50, nullable) y `purchasePrice` (numérico, ≥ 0, ≤ 2 decimales), con mensajes en español [FR-001][FR-002][CA-1]
-- [ ] T011 [US1] Actualizar `server/models/part.js` (`aObjeto`, `create`, `update`) para leer y escribir `category`, `brand` y `purchase_price` [FR-001][CA-1]
-- [ ] T012 [US1] Actualizar `server/services/part-service.js` y `server/controllers/part-controller.js`: guardar los tres datos y devolver `"advertencia": "El precio de venta es menor al precio de compra."` cuando `salePrice < purchasePrice`, sin impedir el guardado (depende de T010, T011) [FR-004][CA-1]
-- [ ] T013 [P] [US1] Actualizar `client/lib/models/part.dart` con `category`, `brand` y `purchasePrice` (opcional) y el catálogo de etiquetas en español [FR-001][CA-1]
-- [ ] T014 [US1] Agregar las columnas fijas de categoría y marca en `client/lib/screens/parts_screen.dart`, sin filtros nuevos (depende de T013) [FR-014][CA-1]
-- [ ] T015 [US1] Agregar selector de categoría, marca y precio de compra, y mostrar la advertencia de venta < compra, en `client/lib/screens/part_form_screen.dart` (depende de T013) [FR-001][FR-004][CA-1]
-- [ ] T016 [US1] Ejecutar T008 y T009 hasta verlas pasar, y repetir `npx jest parts` en `server/` para confirmar que las suites previas de refacciones siguen verdes [CA-1][CA-10]
+- [X] T010 [US1] Extender `server/validators/part-validator.js` con `category` (catálogo fijo, nullable), `brand` (≤ 50, nullable) y `purchasePrice` (numérico, ≥ 0, ≤ 2 decimales), con mensajes en español [FR-001][FR-002][CA-1]
+- [X] T011 [US1] Actualizar `server/models/part.js` (`aObjeto`, `create`, `update`) para leer y escribir `category`, `brand` y `purchase_price` [FR-001][CA-1]
+- [X] T012 [US1] Actualizar `server/services/part-service.js` y `server/controllers/part-controller.js`: guardar los tres datos y devolver `"advertencia": "El precio de venta es menor al precio de compra."` cuando `salePrice < purchasePrice`, sin impedir el guardado (depende de T010, T011) [FR-004][CA-1]
+- [X] T013 [P] [US1] Actualizar `client/lib/models/part.dart` con `category`, `brand` y `purchasePrice` (opcional) y el catálogo de etiquetas en español [FR-001][CA-1]
+- [X] T014 [US1] Agregar las columnas fijas de categoría y marca en `client/lib/screens/parts_screen.dart`, sin filtros nuevos (depende de T013) [FR-014][CA-1]
+- [X] T015 [US1] Agregar selector de categoría, marca y precio de compra, y mostrar la advertencia de venta < compra, en `client/lib/screens/part_form_screen.dart` (depende de T013) [FR-001][FR-004][CA-1]
+- [X] T016 [US1] Ejecutar T008 y T009 hasta verlas pasar, y repetir `npx jest parts` en `server/` para confirmar que las suites previas de refacciones siguen verdes [CA-1][CA-10]
 
 **Punto de control**: US1 funciona sola y es demostrable (MVP).
 

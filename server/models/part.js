@@ -5,16 +5,27 @@
  */
 import { getPool } from '../config/db.js';
 
-export function aObjeto(fila) {
+/**
+ * Convierte una fila de `parts` al objeto de la API.
+ *
+ * Falla cerrada (006, research D4): `purchasePrice` (dato financiero exclusivo
+ * de ADMIN) se OMITE por defecto —la clave ni siquiera existe— y solo se
+ * incluye si quien llama lo pide explícitamente con `incluirPrecioCompra`.
+ * Así, ninguna consulta nueva que use `aObjeto` puede exponerlo por descuido.
+ */
+export function aObjeto(fila, { incluirPrecioCompra = false } = {}) {
   if (!fila) {
     return null;
   }
   const stock = Number(fila.stock);
   const minStock = Number(fila.min_stock);
-  return {
+  const objeto = {
     id: fila.id,
     name: fila.name,
     code: fila.code,
+    // Categoría (lista fija) y marca (006, FR-002): null = sin dato.
+    category: fila.category ?? null,
+    brand: fila.brand ?? null,
     stock,
     minStock,
     // Precio de venta (005, FR-001): null = pendiente de precio (D1).
@@ -26,6 +37,13 @@ export function aObjeto(fila) {
     lowStock: stock <= minStock,
     createdAt: fila.created_at,
   };
+  if (incluirPrecioCompra) {
+    // Precio de compra (006, FR-001): null = pendiente de captura.
+    objeto.purchasePrice = fila.purchase_price === null || fila.purchase_price === undefined
+      ? null
+      : Number(fila.purchase_price);
+  }
+  return objeto;
 }
 
 /**
@@ -37,6 +55,7 @@ export async function findAll({
   q = null,
   soloActivas = false,
   pendientesPrecio = false,
+  incluirPrecioCompra = false,
 } = {}) {
   const condiciones = [];
   const parametros = [];
@@ -60,13 +79,14 @@ export async function findAll({
     `SELECT * FROM parts ${where} ORDER BY name ASC`,
     parametros
   );
-  return filas.map(aObjeto);
+  // Función flecha: `map` pasaría el índice como segundo argumento.
+  return filas.map((fila) => aObjeto(fila, { incluirPrecioCompra }));
 }
 
-export async function findById(id, conexion = null) {
+export async function findById(id, conexion = null, opciones = {}) {
   const db = conexion ?? getPool();
   const [filas] = await db.query('SELECT * FROM parts WHERE id = ?', [id]);
-  return aObjeto(filas[0]);
+  return aObjeto(filas[0], opciones);
 }
 
 export async function findByCode(code) {
@@ -80,11 +100,16 @@ export async function findByCode(code) {
  * Acepta la conexión de la transacción para que la lectura posterior (del
  * servicio) vea el stock actualizado antes del commit (T064).
  */
-export async function create({ name, code, minStock, salePrice = null }, conexion = null) {
+export async function create(
+  { name, code, minStock, salePrice = null, category = null, brand = null, purchasePrice = null },
+  conexion = null
+) {
   const db = conexion ?? getPool();
   const [resultado] = await db.query(
-    'INSERT INTO parts (name, code, stock, min_stock, is_active, sale_price) VALUES (?, ?, 0, ?, 1, ?)',
-    [name, code, minStock ?? 0, salePrice ?? null]
+    `INSERT INTO parts
+       (name, code, stock, min_stock, is_active, sale_price, category, brand, purchase_price)
+     VALUES (?, ?, 0, ?, 1, ?, ?, ?, ?)`,
+    [name, code, minStock ?? 0, salePrice ?? null, category ?? null, brand ?? null, purchasePrice ?? null]
   );
   return { id: resultado.insertId };
 }
@@ -94,7 +119,18 @@ export async function create({ name, code, minStock, salePrice = null }, conexio
  * distinto de `undefined` se persiste aunque sea `null` (volver a dejar la
  * refacción pendiente de precio, 005 FR-001); `undefined` lo conserva.
  */
-export async function update({ id, name, code, minStock, isActive, salePrice }) {
+export async function update({
+  id,
+  name,
+  code,
+  minStock,
+  isActive,
+  salePrice,
+  category,
+  brand,
+  purchasePrice,
+  incluirPrecioCompra = false,
+}) {
   await getPool().query(
     `UPDATE parts
      SET name = COALESCE(?, name),
@@ -110,7 +146,15 @@ export async function update({ id, name, code, minStock, isActive, salePrice }) 
       id,
     ]);
   }
-  return findById(id);
+  // Categoría, marca y precio de compra (006): `undefined` conserva el valor
+  // guardado; `null` lo deja vacío.
+  const nuevos = { category, brand, purchase_price: purchasePrice };
+  for (const [columna, valor] of Object.entries(nuevos)) {
+    if (valor !== undefined) {
+      await getPool().query(`UPDATE parts SET ${columna} = ? WHERE id = ?`, [valor ?? null, id]);
+    }
+  }
+  return findById(id, null, { incluirPrecioCompra });
 }
 
 /**
