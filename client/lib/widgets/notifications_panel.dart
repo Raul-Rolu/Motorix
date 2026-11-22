@@ -143,6 +143,14 @@ class PanelAvisos extends StatelessWidget {
 /// secundario, según la sección 5 del sistema de diseño).
 (IconData, Color) _estiloDe(Aviso aviso) => switch (aviso.grupo) {
       GrupoAviso.mantenimientoVencido => (Icons.build_circle_outlined, MotorixColores.error),
+      // Stock: bajo en ámbar (`warning`) y agotado en rojo (`danger`).
+      GrupoAviso.stock => (
+          Icons.inventory_2_outlined,
+          aviso.estado == 'AGOTADO' ? MotorixColores.error : MotorixColores.advertencia,
+        ),
+      // Próximo = «próximo» en ámbar (`warning`); la cita del día es informativa.
+      GrupoAviso.mantenimientoProximo => (Icons.build_circle_outlined, MotorixColores.advertencia),
+      GrupoAviso.citaDelDia => (Icons.event_available_outlined, MotorixColores.textoSecundario),
       _ => (Icons.notifications_outlined, MotorixColores.textoSecundario),
     };
 

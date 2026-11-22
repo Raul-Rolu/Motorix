@@ -26,6 +26,44 @@ function aObjeto(fila) {
   };
 }
 
+/**
+ * Citas PROGRAMADAS de una fecha (`YYYY-MM-DD`) con cliente (id, nombre y
+ * teléfono), vehículo (placas, marca y modelo), hora y motivo, ordenadas por
+ * hora (007-notificaciones-internas, T026; FR-011). Las canceladas y las
+ * completadas no se incluyen. No modifica la consulta del listado.
+ */
+export async function findProgramadasPorFecha(fecha) {
+  const [filas] = await getPool().query(
+    `SELECT a.id, a.appointment_date, a.appointment_time, a.reason,
+            a.client_id, a.vehicle_id,
+            c.full_name AS client_name, c.phone AS client_phone,
+            v.plates, v.brand, v.model
+     FROM appointments a
+     JOIN clients c ON c.id = a.client_id
+     JOIN vehicles v ON v.id = a.vehicle_id
+     WHERE a.appointment_date = ? AND a.status = 'PROGRAMADA'
+     ORDER BY a.appointment_time ASC, a.id ASC`,
+    [fecha]
+  );
+  return filas.map((fila) => ({
+    id: fila.id,
+    appointmentDate: fecha,
+    appointmentTime: fila.appointment_time,
+    reason: fila.reason,
+    cliente: {
+      id: fila.client_id,
+      nombreCompleto: fila.client_name,
+      telefono: fila.client_phone,
+    },
+    vehiculo: {
+      id: fila.vehicle_id,
+      placas: fila.plates,
+      marca: fila.brand,
+      modelo: fila.model,
+    },
+  }));
+}
+
 /** Fila de listado enriquecida con cliente y vehículo. */
 function aObjetoDeListado(fila) {
   if (!fila) {

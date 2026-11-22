@@ -105,16 +105,16 @@ description: "Lista de tareas para la feature 007-notificaciones-internas"
 
 ### Pruebas de la Historia 2 (escribirlas primero; deben fallar) ⚠️
 
-- [ ] T023 [US2] Agregar a `server/tests/integration/notifications-calculo.test.js` (depende de T012): mantenimiento próximo por fecha (≤ 30 días) y por kilometraje (≤ 1,000 km) genera `MANTENIMIENTO:<id>:PROXIMO`; uno lejano no genera aviso; cancelado o completado no genera; cita de hoy `PROGRAMADA` genera `CITA:<id>:HOY` con hora, cliente, placas y motivo; citas `CANCELADA`, `COMPLETADA` y de otro día no generan; los próximos del centro son un subconjunto de `mantenimientos.proximos` del panel [FR-002][FR-011][FR-012][CA-3][CA-5]
-- [ ] T024 [US2] Agregar a `server/tests/contract/notifications-roles.test.js` (depende de T013): RECEPTIONIST recibe mantenimientos, citas y órdenes detenidas y **ninguna** clave `STOCK:` aunque existan refacciones en alerta [FR-004][CA-4]
-- [ ] T025 [P] [US2] Crear `client/test/notifications_panel_test.dart`: grupos de próximos (`warning`) y de citas de hoy (texto secundario) con sus títulos, íconos y orden de presentación (vencidos, órdenes detenidas, stock, próximos, citas) y estados cargando/vacío/error del panel [FR-001][FR-009][CA-1][CA-9]
+- [X] T023 [US2] Agregar a `server/tests/integration/notifications-calculo.test.js` (depende de T012): mantenimiento próximo por fecha (≤ 30 días) y por kilometraje (≤ 1,000 km) genera `MANTENIMIENTO:<id>:PROXIMO`; uno lejano no genera aviso; cancelado o completado no genera; cita de hoy `PROGRAMADA` genera `CITA:<id>:HOY` con hora, cliente, placas y motivo; citas `CANCELADA`, `COMPLETADA` y de otro día no generan; los próximos del centro son un subconjunto de `mantenimientos.proximos` del panel [FR-002][FR-011][FR-012][CA-3][CA-5]
+- [X] T024 [US2] Agregar a `server/tests/contract/notifications-roles.test.js` (depende de T013): RECEPTIONIST recibe mantenimientos, citas y órdenes detenidas y **ninguna** clave `STOCK:` aunque existan refacciones en alerta [FR-004][CA-4]
+- [X] T025 [P] [US2] Crear `client/test/notifications_panel_test.dart`: grupos de próximos (`warning`) y de citas de hoy (texto secundario) con sus títulos, íconos y orden de presentación (vencidos, órdenes detenidas, stock, próximos, citas) y estados cargando/vacío/error del panel [FR-001][FR-009][CA-1][CA-9]
 
 ### Implementación de la Historia 2
 
-- [ ] T026 [US2] Agregar a `server/models/appointment.js` `findProgramadasPorFecha(fecha)` (citas `PROGRAMADA` de una fecha) que devuelve **cliente (id, nombre y teléfono)**, vehículo (placas, marca y modelo), hora y motivo, sin modificar las funciones existentes ni la consulta `CONSULTA_CON_RELACIONES` actual [FR-011]
-- [ ] T027 [US2] Ampliar `server/services/notification-service.js` con los avisos de mantenimiento próximo (`esProximo`) y de cita del día (hoy con `hoyLocal()`), y con el filtro por rol de RECEPTIONIST (sin cálculo de stock) (depende de T011, T016, T026) [FR-002][FR-004][FR-011][FR-012][CA-3][CA-4]
-- [ ] T028 [US2] Ajustar `client/lib/widgets/notifications_panel.dart` con título, ícono y color de los grupos «Mantenimientos próximos» y «Citas de hoy» (depende de T020) [FR-001][CA-1]
-- [ ] T029 [US2] Ejecutar T023 a T025 hasta verlas pasar y repetir `npx jest appointments` en `server/` [CA-3][CA-4][CA-13]
+- [X] T026 [US2] Agregar a `server/models/appointment.js` `findProgramadasPorFecha(fecha)` (citas `PROGRAMADA` de una fecha) que devuelve **cliente (id, nombre y teléfono)**, vehículo (placas, marca y modelo), hora y motivo, sin modificar las funciones existentes ni la consulta `CONSULTA_CON_RELACIONES` actual [FR-011]
+- [X] T027 [US2] Ampliar `server/services/notification-service.js` con los avisos de mantenimiento próximo (`esProximo`) y de cita del día (hoy con `hoyLocal()`), y con el filtro por rol de RECEPTIONIST (sin cálculo de stock) (depende de T011, T016, T026) [FR-002][FR-004][FR-011][FR-012][CA-3][CA-4]
+- [X] T028 [US2] Ajustar `client/lib/widgets/notifications_panel.dart` con título, ícono y color de los grupos «Mantenimientos próximos» y «Citas de hoy» (depende de T020) [FR-001][CA-1]
+- [X] T029 [US2] Ejecutar T023 a T025 hasta verlas pasar y repetir `npx jest appointments` en `server/` [CA-3][CA-4][CA-13]
 
 **Punto de control**: US2 verificable; la recepción ve sus tres tipos de aviso.
 
@@ -128,16 +128,16 @@ description: "Lista de tareas para la feature 007-notificaciones-internas"
 
 ### Pruebas de la Historia 3 (escribirlas primero; deben fallar) ⚠️
 
-- [ ] T030 [US3] Agregar a `server/tests/integration/notifications-calculo.test.js` (depende de T023): `STOCK:<id>:BAJO` (0 < stock ≤ mínimo) y `STOCK:<id>:AGOTADO` (stock 0); refacción inactiva o con stock por encima del mínimo no genera; la suma de ambos coincide con `GET /api/dashboard` (`inventario.stockBajo`) y con las refacciones activas con `lowStock` de `GET /api/parts`; al reponer el stock el aviso desaparece y al pasar de bajo a agotado la clave cambia [FR-002][FR-005][CA-3][CA-5]
-- [ ] T031 [P] [US3] Crear `client/test/dashboard_alerts_compat_test.dart`: la tarjeta `alertasPanel` del panel de control sigue mostrando mantenimientos vencidos, stock bajo y cobros digitales pendientes sin cambios, y sus cifras (vencidos y stock) coinciden con las del centro de notificaciones; no existe ni se agrega ninguna insignia en la sección Inventario [FR-008][CA-8]
+- [X] T030 [US3] Agregar a `server/tests/integration/notifications-calculo.test.js` (depende de T023): `STOCK:<id>:BAJO` (0 < stock ≤ mínimo) y `STOCK:<id>:AGOTADO` (stock 0); refacción inactiva o con stock por encima del mínimo no genera; la suma de ambos coincide con `GET /api/dashboard` (`inventario.stockBajo`) y con las refacciones activas con `lowStock` de `GET /api/parts`; al reponer el stock el aviso desaparece y al pasar de bajo a agotado la clave cambia [FR-002][FR-005][CA-3][CA-5]
+- [X] T031 [P] [US3] Crear `client/test/dashboard_alerts_compat_test.dart`: la tarjeta `alertasPanel` del panel de control sigue mostrando mantenimientos vencidos, stock bajo y cobros digitales pendientes sin cambios, y sus cifras (vencidos y stock) coinciden con las del centro de notificaciones; no existe ni se agrega ninguna insignia en la sección Inventario [FR-008][CA-8]
 
 ### Implementación de la Historia 3
 
-- [ ] T032 [US3] Exportar desde `server/models/part.js` la constante `CONDICION_STOCK_EN_ALERTA` (`is_active = 1 AND stock <= min_stock`) y agregar `findEnAlerta()` que devuelve las refacciones en alerta con su stock y mínimo [FR-005][CA-5]
-- [ ] T033 [US3] Hacer que `contarStockBajo` de `server/models/dashboard.js` use `CONDICION_STOCK_EN_ALERTA` (cambio de una línea: mismo resultado y mismo comportamiento) y confirmar que `dashboard.test.js` sigue en verde sin editarse (depende de T032) [FR-005][CA-5]
-- [ ] T034 [US3] Ampliar `server/services/notification-service.js` con los avisos de stock bajo y agotado solo para ADMIN (RECEPTIONIST y MECHANIC nunca ejecutan la consulta) (depende de T027, T032) [FR-002][FR-004][CA-3][CA-4]
-- [ ] T035 [US3] Ajustar `client/lib/widgets/notifications_panel.dart` con el grupo «Stock bajo o agotado» (`warning` para bajo, `danger` para agotado, `Icons.inventory_2_outlined`) (depende de T028) [FR-001][CA-1]
-- [ ] T036 [US3] Ejecutar T030 y T031 hasta verlas pasar y repetir `npx jest dashboard parts` en `server/` [CA-3][CA-5][CA-8][CA-13]
+- [X] T032 [US3] Exportar desde `server/models/part.js` la constante `CONDICION_STOCK_EN_ALERTA` (`is_active = 1 AND stock <= min_stock`) y agregar `findEnAlerta()` que devuelve las refacciones en alerta con su stock y mínimo [FR-005][CA-5]
+- [X] T033 [US3] Hacer que `contarStockBajo` de `server/models/dashboard.js` use `CONDICION_STOCK_EN_ALERTA` (cambio de una línea: mismo resultado y mismo comportamiento) y confirmar que `dashboard.test.js` sigue en verde sin editarse (depende de T032) [FR-005][CA-5]
+- [X] T034 [US3] Ampliar `server/services/notification-service.js` con los avisos de stock bajo y agotado solo para ADMIN (RECEPTIONIST y MECHANIC nunca ejecutan la consulta) (depende de T027, T032) [FR-002][FR-004][CA-3][CA-4]
+- [X] T035 [US3] Ajustar `client/lib/widgets/notifications_panel.dart` con el grupo «Stock bajo o agotado» (`warning` para bajo, `danger` para agotado, `Icons.inventory_2_outlined`) (depende de T028) [FR-001][CA-1]
+- [X] T036 [US3] Ejecutar T030 y T031 hasta verlas pasar y repetir `npx jest dashboard parts` en `server/` [CA-3][CA-5][CA-8][CA-13]
 
 **Punto de control**: US3 verificable; las cifras de stock coinciden entre pantallas y `alertasPanel` no cambia.
 

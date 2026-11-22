@@ -6,6 +6,7 @@
  * Los cobros vienen del modelo de pagos (solo COMPLETED, FR-007 del spec).
  */
 import { getPool } from '../config/db.js';
+import { CONDICION_STOCK_EN_ALERTA } from './part.js';
 
 /** Todos los estados posibles de una orden, con cero por defecto. */
 const ESTADOS_ORDEN = [
@@ -83,7 +84,8 @@ export async function findPendientes() {
 /** Refacciones activas con stock bajo (stock <= mínimo, FR-015 del Sprint 3). */
 export async function contarStockBajo() {
   const [filas] = await getPool().query(
-    'SELECT COUNT(*) AS total FROM parts WHERE is_active = 1 AND stock <= min_stock'
+    // Misma condición que los avisos de stock (007, CA-5): una sola definición.
+    `SELECT COUNT(*) AS total FROM parts WHERE ${CONDICION_STOCK_EN_ALERTA}`
   );
   return Number(filas[0].total);
 }

@@ -3,6 +3,7 @@
 // por rol y que el rol se toma SOLO del token. Las historias siguientes agregan
 // bloques para recepción, órdenes detenidas, mecánico y clientes por avisar.
 // Corre contra `motorix_test`.
+import { jest } from '@jest/globals';
 import request from 'supertest';
 import bcrypt from 'bcrypt';
 import { crearApp } from '../../app.js';
@@ -113,6 +114,145 @@ describe('forma de la respuesta por rol', () => {
 
     expect(respuesta.status).toBe(200);
     expect(respuesta.body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+});
+
+// --- US2 (T024): recepción recibe mantenimientos y citas, nunca stock -------
+
+/** Un vencido, un próximo, una cita de hoy y una refacción en alerta de stock. */
+async function sembrarAvisosDeRecepcion() {
+  const pool = getPool();
+  const fecha = new Date();
+  const local = (dias) => {
+    const f = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate() + dias);
+    return `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`;
+  };
+  const [[cliente]] = await pool.query('SELECT id FROM clients LIMIT 1');
+  const [[vehiculo]] = await pool.query('SELECT id FROM vehicles LIMIT 1');
+  const [proximo] = await pool.query(
+    "INSERT INTO maintenance_plans (vehicle_id, description, target_date, status) VALUES (?, 'Mantenimiento próximo', ?, 'PENDING')",
+    [vehiculo.id, local(10)]
+  );
+  const [cita] = await pool.query(
+    "INSERT INTO appointments (client_id, vehicle_id, appointment_date, appointment_time, reason) VALUES (?, ?, ?, '11:00:00', 'Revisión')",
+    [cliente.id, vehiculo.id, local(0)]
+  );
+  // Refacción activa con stock por debajo del mínimo: solo ADMIN debe enterarse.
+  await pool.query(
+    "INSERT INTO parts (name, code, stock, min_stock, is_active) VALUES ('Pastillas', 'ROL-PAS-001', 1, 5, 1)"
+  );
+  return { proximoId: proximo.insertId, citaId: cita.insertId };
+}
+
+describe('recepción: mantenimientos y citas, nunca stock (CA-4)', () => {
+  test('RECEPTIONIST recibe vencido, próximo y cita del día', async () => {
+    const { tokens, mantenimientoId } = await prepararEntorno();
+    const { proximoId, citaId } = await sembrarAvisosDeRecepcion();
+
+    const respuesta = await consultar(tokens.recepcion);
+
+    expect(respuesta.status).toBe(200);
+    expect(respuesta.body.datos.map((aviso) => aviso.clave)).toEqual([
+      `MANTENIMIENTO:${mantenimientoId}:VENCIDO`,
+      `MANTENIMIENTO:${proximoId}:PROXIMO`,
+      `CITA:${citaId}:HOY`,
+    ]);
+  });
+
+  test('RECEPTIONIST no recibe ninguna clave STOCK: aunque existan refacciones en alerta', async () => {
+    const { tokens } = await prepararEntorno();
+    await sembrarAvisosDeRecepcion();
+
+    const respuesta = await consultar(tokens.recepcion);
+
+    expect(respuesta.body.datos.some((aviso) => aviso.grupo === 'STOCK')).toBe(false);
+    expect(JSON.stringify(respuesta.body)).not.toContain('STOCK:');
+  });
+
+  test('ADMIN recibe los mismos mantenimientos y citas que recepción', async () => {
+    const { tokens, mantenimientoId } = await prepararEntorno();
+    const { proximoId, citaId } = await sembrarAvisosDeRecepcion();
+
+    const respuesta = await consultar(tokens.admin);
+    const claves = respuesta.body.datos.map((aviso) => aviso.clave);
+
+    expect(claves).toEqual(
+      expect.arrayContaining([
+        `MANTENIMIENTO:${mantenimientoId}:VENCIDO`,
+        `MANTENIMIENTO:${proximoId}:PROXIMO`,
+        `CITA:${citaId}:HOY`,
+      ])
+    );
+  });
+
+  test('el mecánico no recibe mantenimientos ni citas', async () => {
+    const { tokens } = await prepararEntorno();
+    await sembrarAvisosDeRecepcion();
+
+    const respuesta = await consultar(tokens.mecanico);
+
+    expect(respuesta.body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+});
+
+// --- US3 (T030): el stock es solo de administración (CA-4) ------------------
+
+describe('stock: ADMIN lo ve; RECEPTIONIST y MECHANIC no lo reciben ni se calcula para ellos (CA-4)', () => {
+  /** Refacciones en alerta: una baja y una agotada, más una con stock suficiente. */
+  async function sembrarStock() {
+    const pool = getPool();
+    const [baja] = await pool.query(
+      "INSERT INTO parts (name, code, stock, min_stock, is_active) VALUES ('Pastillas', 'STK-BAJA', 1, 5, 1)"
+    );
+    const [agotada] = await pool.query(
+      "INSERT INTO parts (name, code, stock, min_stock, is_active) VALUES ('Batería', 'STK-AGOT', 0, 2, 1)"
+    );
+    await pool.query(
+      "INSERT INTO parts (name, code, stock, min_stock, is_active) VALUES ('Filtro', 'STK-OK', 30, 5, 1)"
+    );
+    return { bajaId: baja.insertId, agotadaId: agotada.insertId };
+  }
+
+  test('ADMIN recibe los avisos de stock bajo y agotado', async () => {
+    const { tokens } = await prepararEntorno();
+    const { bajaId, agotadaId } = await sembrarStock();
+
+    const respuesta = await consultar(tokens.admin);
+
+    expect(respuesta.status).toBe(200);
+    const stock = respuesta.body.datos.filter((aviso) => aviso.grupo === 'STOCK').map((aviso) => aviso.clave);
+    expect(stock).toEqual([`STOCK:${agotadaId}:AGOTADO`, `STOCK:${bajaId}:BAJO`]);
+  });
+
+  test.each(['recepcion', 'mecanico'])('%s no recibe ningún aviso de stock', async (usuario) => {
+    const { tokens } = await prepararEntorno();
+    await sembrarStock();
+
+    const respuesta = await consultar(tokens[usuario]);
+
+    expect(respuesta.status).toBe(200);
+    expect(respuesta.body.datos.some((aviso) => aviso.grupo === 'STOCK')).toBe(false);
+    expect(JSON.stringify(respuesta.body)).not.toMatch(/STOCK:|Stock bajo|Stock agotado|STK-/);
+  });
+
+  test('para RECEPTIONIST y MECHANIC ni siquiera se consulta la tabla de refacciones', async () => {
+    const { tokens } = await prepararEntorno();
+    await sembrarStock();
+    const pool = getPool();
+    const espia = jest.spyOn(pool, 'query');
+    const consultasAParts = () =>
+      espia.mock.calls.filter(([sql]) => /\bFROM\s+parts\b/i.test(String(sql?.sql ?? sql))).length;
+
+    try {
+      await consultar(tokens.recepcion);
+      await consultar(tokens.mecanico);
+      expect(consultasAParts()).toBe(0);
+
+      await consultar(tokens.admin);
+      expect(consultasAParts()).toBeGreaterThan(0);
+    } finally {
+      espia.mockRestore();
+    }
   });
 });
 

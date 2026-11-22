@@ -275,3 +275,379 @@ describe('los avisos se derivan al consultar y no se copian a otra tabla (CA-2)'
     expect((await avisos(tokens.admin)).body).toEqual({ total: 0, noLeidos: 0, datos: [] });
   });
 });
+
+// --- US2 (T023): mantenimientos próximos y citas del día -------------------
+
+async function crearCita({
+  clienteId,
+  vehiculoId,
+  fecha,
+  hora = '10:00:00',
+  motivo = 'Revisión de frenos delanteros',
+  estado = 'PROGRAMADA',
+}) {
+  const [resultado] = await getPool().query(
+    'INSERT INTO appointments (client_id, vehicle_id, appointment_date, appointment_time, reason, status) VALUES (?, ?, ?, ?, ?, ?)',
+    [clienteId, vehiculoId, fecha, hora, motivo, estado]
+  );
+  return resultado.insertId;
+}
+
+const clavesDe = (respuesta, grupo) =>
+  respuesta.body.datos.filter((aviso) => aviso.grupo === grupo).map((aviso) => aviso.clave);
+
+describe('mantenimiento próximo (FR-012, CA-3)', () => {
+  test('a 30 días del umbral de fecha es próximo, con el texto del contrato', async () => {
+    const { tokens } = await prepararEntorno();
+    const { vehiculoId } = await crearVehiculo('PRX-001-A');
+    const id = await crearMantenimiento({
+      vehiculoId,
+      descripcion: 'Cambio de filtros',
+      fechaObjetivo: fechaLocal(30),
+    });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body.datos).toEqual([
+      {
+        clave: `MANTENIMIENTO:${id}:PROXIMO`,
+        grupo: 'MANTENIMIENTO_PROXIMO',
+        estado: 'PROXIMO',
+        titulo: 'Mantenimiento próximo',
+        detalle: 'Cambio de filtros · PRX-001-A · faltan 30 día(s)',
+        leido: false,
+        destino: { pantalla: 'VEHICULO', id: vehiculoId },
+      },
+    ]);
+  });
+
+  test('a 31 días del umbral de fecha todavía no es próximo', async () => {
+    const { tokens } = await prepararEntorno();
+    const { vehiculoId } = await crearVehiculo('PRX-002-B');
+    await crearMantenimiento({ vehiculoId, descripcion: 'Lejano', fechaObjetivo: fechaLocal(31) });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+
+  test('a 1,000 km del umbral de kilometraje es próximo y a 1,001 km no', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('PRX-003-C');
+    await registrarKilometraje(clienteId, vehiculoId, 50000);
+    const cerca = await crearMantenimiento({ vehiculoId, descripcion: 'Cerca', kilometrajeObjetivo: 51000 });
+    await crearMantenimiento({ vehiculoId, descripcion: 'Lejos', kilometrajeObjetivo: 51001 });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(clavesDe(respuesta, 'MANTENIMIENTO_PROXIMO')).toEqual([`MANTENIMIENTO:${cerca}:PROXIMO`]);
+    expect(respuesta.body.datos[0].detalle).toBe('Cerca · PRX-003-C · faltan 1000 km');
+  });
+
+  test('con ambos umbrales dentro del margen el detalle los menciona a los dos', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('PRX-004-D');
+    await registrarKilometraje(clienteId, vehiculoId, 50000);
+    await crearMantenimiento({
+      vehiculoId,
+      descripcion: 'Doble umbral',
+      fechaObjetivo: fechaLocal(10),
+      kilometrajeObjetivo: 50400,
+    });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body.datos[0].detalle).toBe('Doble umbral · PRX-004-D · faltan 10 día(s) o 400 km');
+  });
+
+  test('un mantenimiento vencido es aviso de vencido y no de próximo', async () => {
+    const { tokens } = await prepararEntorno();
+    const { vehiculoId } = await crearVehiculo('PRX-005-E');
+    await crearMantenimiento({ vehiculoId, descripcion: 'Vencido', fechaObjetivo: fechaLocal(-3) });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(clavesDe(respuesta, 'MANTENIMIENTO_PROXIMO')).toEqual([]);
+    expect(clavesDe(respuesta, 'MANTENIMIENTO_VENCIDO')).toHaveLength(1);
+  });
+
+  test.each(['CANCELLED', 'COMPLETED'])('un mantenimiento %s cercano no genera aviso', async (estado) => {
+    const { tokens } = await prepararEntorno();
+    const { vehiculoId } = await crearVehiculo('PRX-006-F');
+    await crearMantenimiento({ vehiculoId, descripcion: 'Cercano', fechaObjetivo: fechaLocal(5), estado });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+
+  test('los próximos del centro son un subconjunto de mantenimientos.proximos del panel', async () => {
+    const { tokens } = await prepararEntorno();
+    const { vehiculoId } = await crearVehiculo('PRX-007-G');
+    const cercano = await crearMantenimiento({ vehiculoId, descripcion: 'Cercano', fechaObjetivo: fechaLocal(12) });
+    await crearMantenimiento({ vehiculoId, descripcion: 'Lejano', fechaObjetivo: fechaLocal(300) });
+    await crearMantenimiento({ vehiculoId, descripcion: 'Vencido', fechaObjetivo: fechaLocal(-1) });
+
+    const centro = await avisos(tokens.admin);
+    const panel = await request(app).get('/api/dashboard').set('Authorization', `Bearer ${tokens.admin}`);
+    const lista = await request(app).get('/api/maintenances').set('Authorization', `Bearer ${tokens.admin}`);
+
+    const proximosDelCentro = clavesDe(centro, 'MANTENIMIENTO_PROXIMO');
+    const pendientesNoVencidos = lista.body.datos
+      .filter((m) => m.status === 'PENDING' && !m.isOverdue)
+      .map((m) => `MANTENIMIENTO:${m.id}:PROXIMO`);
+    // El panel cuenta todo pendiente no vencido (2); el centro solo los que entran en el margen (1).
+    expect(panel.body.mantenimientos.proximos).toBe(2);
+    expect(proximosDelCentro).toEqual([`MANTENIMIENTO:${cercano}:PROXIMO`]);
+    expect(proximosDelCentro.length).toBeLessThan(panel.body.mantenimientos.proximos);
+    for (const clave of proximosDelCentro) {
+      expect(pendientesNoVencidos).toContain(clave);
+    }
+    // Los vencidos siguen coincidiendo al 100 % con el panel.
+    expect(clavesDe(centro, 'MANTENIMIENTO_VENCIDO')).toHaveLength(panel.body.mantenimientos.vencidos);
+  });
+
+  test('dentro del grupo el más cercano va primero', async () => {
+    const { tokens } = await prepararEntorno();
+    const { vehiculoId } = await crearVehiculo('PRX-008-H');
+    const lejos = await crearMantenimiento({ vehiculoId, descripcion: 'A 25 días', fechaObjetivo: fechaLocal(25) });
+    const cerca = await crearMantenimiento({ vehiculoId, descripcion: 'A 3 días', fechaObjetivo: fechaLocal(3) });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(clavesDe(respuesta, 'MANTENIMIENTO_PROXIMO')).toEqual([
+      `MANTENIMIENTO:${cerca}:PROXIMO`,
+      `MANTENIMIENTO:${lejos}:PROXIMO`,
+    ]);
+  });
+});
+
+describe('cita del día (FR-011, CA-3)', () => {
+  test('una cita de hoy PROGRAMADA genera CITA:<id>:HOY con hora, cliente, placas y motivo', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('CIT-001-A');
+    const id = await crearCita({ clienteId, vehiculoId, fecha: fechaLocal(0), hora: '10:00:00' });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body.datos).toEqual([
+      {
+        clave: `CITA:${id}:HOY`,
+        grupo: 'CITA_DEL_DIA',
+        estado: 'HOY',
+        titulo: 'Cita de hoy',
+        detalle: '10:00 · Cliente CIT-001-A · CIT-001-A · Revisión de frenos delanteros',
+        leido: false,
+        destino: { pantalla: 'CITAS', id },
+      },
+    ]);
+  });
+
+  test.each(['CANCELADA', 'COMPLETADA'])('una cita de hoy %s no genera aviso', async (estado) => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('CIT-002-B');
+    await crearCita({ clienteId, vehiculoId, fecha: fechaLocal(0), estado });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+
+  test('las citas de otro día (ayer o mañana) no generan aviso de cita del día', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('CIT-003-C');
+    await crearCita({ clienteId, vehiculoId, fecha: fechaLocal(-1), hora: '09:00:00' });
+    await crearCita({ clienteId, vehiculoId, fecha: fechaLocal(1), hora: '09:00:00' });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+
+  test('las citas del día van ordenadas por hora', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('CIT-004-D');
+    const tarde = await crearCita({ clienteId, vehiculoId, fecha: fechaLocal(0), hora: '16:30:00' });
+    const manana = await crearCita({ clienteId, vehiculoId, fecha: fechaLocal(0), hora: '08:15:00' });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(clavesDe(respuesta, 'CITA_DEL_DIA')).toEqual([`CITA:${manana}:HOY`, `CITA:${tarde}:HOY`]);
+    expect(respuesta.body.datos[0].detalle).toMatch(/^08:15 · /);
+  });
+});
+
+describe('orden de presentación entre grupos', () => {
+  test('vencidos, próximos y citas aparecen en ese orden', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('GRP-001-A');
+    await crearCita({ clienteId, vehiculoId, fecha: fechaLocal(0) });
+    await crearMantenimiento({ vehiculoId, descripcion: 'Próximo', fechaObjetivo: fechaLocal(7) });
+    await crearMantenimiento({ vehiculoId, descripcion: 'Vencido', fechaObjetivo: fechaLocal(-7) });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body.datos.map((aviso) => aviso.grupo)).toEqual([
+      'MANTENIMIENTO_VENCIDO',
+      'MANTENIMIENTO_PROXIMO',
+      'CITA_DEL_DIA',
+    ]);
+    expect(respuesta.body.total).toBe(3);
+  });
+});
+
+// --- US3 (T030): stock bajo o agotado ---------------------------------------
+
+async function crearRefaccion({
+  nombre = 'Pastillas de freno delanteras',
+  codigo,
+  stock,
+  minimo,
+  activa = 1,
+}) {
+  const [resultado] = await getPool().query(
+    'INSERT INTO parts (name, code, stock, min_stock, is_active) VALUES (?, ?, ?, ?, ?)',
+    [nombre, codigo, stock, minimo, activa]
+  );
+  return resultado.insertId;
+}
+
+describe('stock bajo o agotado (FR-002, CA-3)', () => {
+  test('0 < stock <= mínimo genera STOCK:<id>:BAJO con el texto del contrato', async () => {
+    const { tokens } = await prepararEntorno();
+    const id = await crearRefaccion({ codigo: 'FRN-PAS-220', stock: 2, minimo: 5 });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body.datos).toEqual([
+      {
+        clave: `STOCK:${id}:BAJO`,
+        grupo: 'STOCK',
+        estado: 'BAJO',
+        titulo: 'Stock bajo',
+        detalle: 'Pastillas de freno delanteras (FRN-PAS-220) · quedan 2, mínimo 5',
+        leido: false,
+        destino: { pantalla: 'INVENTARIO', id },
+      },
+    ]);
+  });
+
+  test('stock igual al mínimo ya es stock bajo', async () => {
+    const { tokens } = await prepararEntorno();
+    const id = await crearRefaccion({ nombre: 'Bujía de iridio', codigo: 'BUJ-IR-001', stock: 8, minimo: 8 });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(clavesDe(respuesta, 'STOCK')).toEqual([`STOCK:${id}:BAJO`]);
+  });
+
+  test('stock 0 genera STOCK:<id>:AGOTADO', async () => {
+    const { tokens } = await prepararEntorno();
+    const id = await crearRefaccion({ nombre: 'Batería 12V', codigo: 'BAT-12V-60', stock: 0, minimo: 2 });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body.datos).toEqual([
+      {
+        clave: `STOCK:${id}:AGOTADO`,
+        grupo: 'STOCK',
+        estado: 'AGOTADO',
+        titulo: 'Stock agotado',
+        detalle: 'Batería 12V (BAT-12V-60) · sin existencias',
+        leido: false,
+        destino: { pantalla: 'INVENTARIO', id },
+      },
+    ]);
+  });
+
+  test('una refacción inactiva o con stock por encima del mínimo no genera aviso', async () => {
+    const { tokens } = await prepararEntorno();
+    await crearRefaccion({ codigo: 'INA-001', stock: 1, minimo: 5, activa: 0 });
+    await crearRefaccion({ codigo: 'INA-002', stock: 0, minimo: 5, activa: 0 });
+    await crearRefaccion({ codigo: 'OK-001', stock: 6, minimo: 5 });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+
+  test('los agotados van primero y después los de menos existencias', async () => {
+    const { tokens } = await prepararEntorno();
+    const poco = await crearRefaccion({ codigo: 'ORD-POCO', stock: 1, minimo: 5 });
+    const mas = await crearRefaccion({ codigo: 'ORD-MAS', stock: 4, minimo: 5 });
+    const agotado = await crearRefaccion({ codigo: 'ORD-CERO', stock: 0, minimo: 5 });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(clavesDe(respuesta, 'STOCK')).toEqual([
+      `STOCK:${agotado}:AGOTADO`,
+      `STOCK:${poco}:BAJO`,
+      `STOCK:${mas}:BAJO`,
+    ]);
+  });
+
+  test('al reponer el stock por encima del mínimo el aviso desaparece', async () => {
+    const { tokens } = await prepararEntorno();
+    const id = await crearRefaccion({ codigo: 'REP-001', stock: 2, minimo: 5 });
+    expect(clavesDe(await avisos(tokens.admin), 'STOCK')).toEqual([`STOCK:${id}:BAJO`]);
+
+    await getPool().query('UPDATE parts SET stock = 10 WHERE id = ?', [id]);
+
+    expect((await avisos(tokens.admin)).body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+
+  test('al pasar de bajo a agotado la clave cambia (vuelve como no leído)', async () => {
+    const { tokens } = await prepararEntorno();
+    const id = await crearRefaccion({ codigo: 'CAM-001', stock: 2, minimo: 5 });
+    const antes = clavesDe(await avisos(tokens.admin), 'STOCK');
+
+    await getPool().query('UPDATE parts SET stock = 0 WHERE id = ?', [id]);
+    const despues = clavesDe(await avisos(tokens.admin), 'STOCK');
+
+    expect(antes).toEqual([`STOCK:${id}:BAJO`]);
+    expect(despues).toEqual([`STOCK:${id}:AGOTADO`]);
+    expect(despues).not.toEqual(antes);
+  });
+
+  test('el stock va entre los vencidos y los próximos en el orden de presentación', async () => {
+    const { tokens } = await prepararEntorno();
+    const { vehiculoId } = await crearVehiculo('STK-001-A');
+    await crearRefaccion({ codigo: 'GRP-001', stock: 1, minimo: 5 });
+    await crearMantenimiento({ vehiculoId, descripcion: 'Próximo', fechaObjetivo: fechaLocal(7) });
+    await crearMantenimiento({ vehiculoId, descripcion: 'Vencido', fechaObjetivo: fechaLocal(-7) });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body.datos.map((aviso) => aviso.grupo)).toEqual([
+      'MANTENIMIENTO_VENCIDO',
+      'STOCK',
+      'MANTENIMIENTO_PROXIMO',
+    ]);
+  });
+});
+
+describe('coincidencia del stock con el panel de control y con el inventario (CA-5)', () => {
+  test('bajo + agotado = inventario.stockBajo del panel = refacciones activas con lowStock de GET /api/parts', async () => {
+    const { tokens } = await prepararEntorno();
+    // En alerta: dos bajas (una igual al mínimo) y una agotada.
+    await crearRefaccion({ codigo: 'COI-001', stock: 2, minimo: 5 });
+    await crearRefaccion({ codigo: 'COI-002', stock: 8, minimo: 8 });
+    await crearRefaccion({ codigo: 'COI-003', stock: 0, minimo: 3 });
+    // No cuentan: stock suficiente e inactivas (aunque estén bajo el mínimo).
+    await crearRefaccion({ codigo: 'COI-004', stock: 34, minimo: 10 });
+    await crearRefaccion({ codigo: 'COI-005', stock: 0, minimo: 1, activa: 0 });
+    await crearRefaccion({ codigo: 'COI-006', stock: 1, minimo: 2, activa: 0 });
+
+    const centro = await avisos(tokens.admin);
+    const panel = await request(app).get('/api/dashboard').set('Authorization', `Bearer ${tokens.admin}`);
+    const inventario = await request(app).get('/api/parts').set('Authorization', `Bearer ${tokens.admin}`);
+
+    const delCentro = clavesDe(centro, 'STOCK');
+    const enAlertaDelInventario = inventario.body.datos.filter((parte) => parte.isActive && parte.lowStock);
+    expect(delCentro).toHaveLength(3);
+    expect(delCentro).toHaveLength(panel.body.inventario.stockBajo);
+    expect(delCentro).toHaveLength(enAlertaDelInventario.length);
+    const ids = enAlertaDelInventario.map((parte) => parte.id).sort((a, b) => a - b);
+    expect(delCentro.map((clave) => Number(clave.split(':')[1])).sort((a, b) => a - b)).toEqual(ids);
+  });
+});

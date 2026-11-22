@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:motorix_client/config/theme.dart';
+import 'package:motorix_client/models/user.dart';
 import 'package:motorix_client/providers/auth_provider.dart';
 import 'package:motorix_client/providers/notifications_provider.dart';
 import 'package:motorix_client/services/api_client.dart';
@@ -117,6 +118,16 @@ class ClienteAvisosFalso extends Fake implements http.Client {
 
   @override
   void close() {}
+}
+
+/// Cliente de la API sobre el cliente HTTP falso.
+ApiClient apiDe(ClienteAvisosFalso cliente) => ApiClient(httpClient: cliente);
+
+/// Sesión ya iniciada como administrador (sin pasar por el login).
+AuthProvider authComoAdmin(ApiClient api) {
+  final auth = AuthProvider(api);
+  auth.usuario = Usuario.desdeJson(usuarioJson(1, 'ADMIN', 'admin'));
+  return auth;
 }
 
 /// Proveedores reales montados con el cliente falso.

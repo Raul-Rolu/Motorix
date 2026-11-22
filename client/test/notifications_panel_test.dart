@@ -1,0 +1,175 @@
+// 007-notificaciones-internas, T025 (US2; FR-001, FR-009, CA-1, CA-9): el panel
+// de avisos muestra los grupos de mantenimientos próximos (`warning`) y de
+// citas de hoy (texto secundario) con su título, ícono y color, respeta el
+// orden de presentación y maneja los estados cargando, vacío y error.
+// Las historias siguientes amplían este archivo (stock, órdenes detenidas,
+// mecánico, marcar como leído y navegación).
+//
+// Sin red: un cliente HTTP falso responde con el formato del contrato.
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:motorix_client/config/theme.dart';
+
+import 'helpers/avisos_falsos.dart';
+
+Future<void> abrirPanel(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('campanaAvisos')));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
+}
+
+/// Ícono de la fila de un aviso (el de `leading`).
+Icon iconoDe(WidgetTester tester, String clave, IconData icono) => tester.widget<Icon>(
+      find.descendant(of: find.byKey(Key('aviso-$clave')), matching: find.byIcon(icono)),
+    );
+
+final _vencido = avisoJson(clave: 'MANTENIMIENTO:1:VENCIDO');
+final _proximo = avisoJson(
+  clave: 'MANTENIMIENTO:2:PROXIMO',
+  grupo: 'MANTENIMIENTO_PROXIMO',
+  estado: 'PROXIMO',
+  titulo: 'Mantenimiento próximo',
+  detalle: 'Cambio de filtros · PRX-001-A · faltan 10 día(s)',
+);
+final _cita = avisoJson(
+  clave: 'CITA:5:HOY',
+  grupo: 'CITA_DEL_DIA',
+  estado: 'HOY',
+  titulo: 'Cita de hoy',
+  detalle: '10:00 · María López Hernández · ABC-123-A · Revisión de frenos',
+  pantalla: 'CITAS',
+  id: 5,
+);
+final _stock = avisoJson(
+  clave: 'STOCK:7:BAJO',
+  grupo: 'STOCK',
+  estado: 'BAJO',
+  titulo: 'Stock bajo',
+  detalle: 'Pastillas (FRN-PAS-220) · quedan 2, mínimo 5',
+  pantalla: 'INVENTARIO',
+  id: 7,
+);
+
+void main() {
+  group('grupos de próximos y de citas de hoy', () {
+    probarAvisos('muestra los títulos, el ícono y el color de cada grupo', (tester) async {
+      final cliente = ClienteAvisosFalso()..resumenPorToken['t-1'] = resumenJson([_proximo, _cita]);
+
+      await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      expect(find.text('Mantenimientos próximos'), findsOneWidget);
+      expect(find.text('Mantenimiento próximo'), findsOneWidget);
+      expect(find.text('Cambio de filtros · PRX-001-A · faltan 10 día(s)'), findsOneWidget);
+      expect(find.text('Citas de hoy'), findsOneWidget);
+      expect(find.text('Cita de hoy'), findsOneWidget);
+      expect(find.text('10:00 · María López Hernández · ABC-123-A · Revisión de frenos'), findsOneWidget);
+
+      // Próximo: ámbar (`warning`); cita del día: texto secundario.
+      final iconoProximo = iconoDe(tester, 'MANTENIMIENTO:2:PROXIMO', Icons.build_circle_outlined);
+      expect(iconoProximo.color, MotorixColores.advertencia);
+      final iconoCita = iconoDe(tester, 'CITA:5:HOY', Icons.event_available_outlined);
+      expect(iconoCita.color, MotorixColores.textoSecundario);
+    });
+
+    probarAvisos('los avisos leídos pierden el color y quedan en texto secundario', (tester) async {
+      final proximoLeido = avisoJson(
+        clave: 'MANTENIMIENTO:2:PROXIMO',
+        grupo: 'MANTENIMIENTO_PROXIMO',
+        estado: 'PROXIMO',
+        titulo: 'Mantenimiento próximo',
+        leido: true,
+      );
+      final cliente = ClienteAvisosFalso()..resumenPorToken['t-1'] = resumenJson([proximoLeido]);
+
+      await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      final icono = iconoDe(tester, 'MANTENIMIENTO:2:PROXIMO', Icons.build_circle_outlined);
+      expect(icono.color, MotorixColores.textoSecundario);
+    });
+  });
+
+  group('grupo de stock bajo o agotado (US3)', () {
+    probarAvisos('el stock bajo va en ámbar y el agotado en rojo, con el ícono de inventario', (tester) async {
+      final agotado = avisoJson(
+        clave: 'STOCK:9:AGOTADO',
+        grupo: 'STOCK',
+        estado: 'AGOTADO',
+        titulo: 'Stock agotado',
+        detalle: 'Batería 12V (BAT-12V-60) · sin existencias',
+        pantalla: 'INVENTARIO',
+        id: 9,
+      );
+      final cliente = ClienteAvisosFalso()..resumenPorToken['t-1'] = resumenJson([agotado, _stock]);
+
+      await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      expect(find.text('Stock bajo o agotado'), findsOneWidget);
+      expect(find.text('Stock bajo'), findsOneWidget);
+      expect(find.text('Stock agotado'), findsOneWidget);
+      expect(find.text('Pastillas (FRN-PAS-220) · quedan 2, mínimo 5'), findsOneWidget);
+      expect(find.text('Batería 12V (BAT-12V-60) · sin existencias'), findsOneWidget);
+      expect(iconoDe(tester, 'STOCK:7:BAJO', Icons.inventory_2_outlined).color, MotorixColores.advertencia);
+      expect(iconoDe(tester, 'STOCK:9:AGOTADO', Icons.inventory_2_outlined).color, MotorixColores.error);
+    });
+  });
+
+  group('orden de presentación de los grupos', () {
+    probarAvisos('vencidos, stock, próximos y citas aparecen en ese orden (y sin grupos vacíos)', (tester) async {
+      // Ventana alta: la lista del panel es perezosa y solo construye lo visible.
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final cliente = ClienteAvisosFalso()
+        ..resumenPorToken['t-1'] = resumenJson([_cita, _proximo, _stock, _vencido]);
+
+      await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      final titulos = [
+        'Mantenimientos vencidos',
+        'Stock bajo o agotado',
+        'Mantenimientos próximos',
+        'Citas de hoy',
+      ];
+      final posiciones = [for (final t in titulos) tester.getTopLeft(find.text(t)).dy];
+      expect(posiciones, orderedEquals([...posiciones]..sort()));
+      // No hay órdenes detenidas: su encabezado no aparece.
+      expect(find.text('Órdenes detenidas'), findsNothing);
+    });
+  });
+
+  group('estados del panel', () {
+    probarAvisos('cargando: indicador discreto mientras llega la respuesta', (tester) async {
+      final cliente = ClienteAvisosFalso()..puerta = Completer<void>();
+
+      await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      expect(find.byKey(const Key('avisosCargando')), findsOneWidget);
+    });
+
+    probarAvisos('vacío: mensaje útil', (tester) async {
+      final cliente = ClienteAvisosFalso();
+
+      await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      expect(find.text('No tienes avisos pendientes.'), findsOneWidget);
+    });
+
+    probarAvisos('error: mensaje en español con «Reintentar»', (tester) async {
+      final cliente = ClienteAvisosFalso()..statusAvisos = 500;
+
+      await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      expect(find.text('No se pudieron cargar los avisos.'), findsOneWidget);
+      expect(find.byKey(const Key('botonReintentarAvisos')), findsOneWidget);
+    });
+  });
+}
