@@ -101,6 +101,9 @@ export async function limpiarTablas() {
   // Sprint 4: pagos y tickets, antes de sus referenciadas.
   await pool.query('DELETE FROM payments');
   await pool.query('DELETE FROM tickets');
+  // Sprint 6: lecturas de avisos y avisos a clientes, antes de users y clients.
+  await pool.query('DELETE FROM notification_reads');
+  await pool.query('DELETE FROM client_notices');
   await pool.query('DELETE FROM service_orders');
   await pool.query('DELETE FROM appointments');
   await pool.query('DELETE FROM vehicles');
