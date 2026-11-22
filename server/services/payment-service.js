@@ -102,11 +102,15 @@ export async function listar(orderId) {
   await obtenerOrdenParaCobro(orderId);
   // Expiración perezosa: los cobros digitales viejos pasan a EXPIRED (FR-009).
   await paymentModel.expireStaleDigital(orderId);
-  const [pagos, totales, cobrado] = await Promise.all([
-    paymentModel.findByOrder(orderId),
+  const [totales, cobrado] = await Promise.all([
     orderService.obtenerTotalesOrden(orderId),
     paymentModel.sumCompletedByOrder(orderId),
   ]);
+  // Desfase perezoso (006, FR-008): los cobros digitales PENDING cuyo importe
+  // ya no coincide con el saldo pendiente pasan a STALE. Solo aquí y en
+  // `verificarCobro`; nunca al crear el cobro.
+  await paymentModel.markStaleMismatchedDigital(orderId, saldoEnCentavos(totales.grand, cobrado));
+  const pagos = await paymentModel.findByOrder(orderId);
   const total = totales.grand;
   const saldoPendiente = deCentavos(Math.max(saldoEnCentavos(total, cobrado), 0));
   return {
@@ -207,7 +211,8 @@ export async function crearCobroDigital(orderId, datos, usuario) {
 /**
  * Verifica un cobro digital con el proveedor bajo demanda (decisión Q1; no
  * hay notificaciones entrantes). La caducidad (>24 h) tiene prioridad: el
- * cobro deja de verificarse y pasa a EXPIRED (FR-009). La confirmación usa
+ * cobro deja de verificarse y pasa a EXPIRED (FR-009); un importe que ya no
+ * coincide con el saldo pendiente lo deja STALE (006). La confirmación usa
  * la transición única PENDING → COMPLETED, de modo que los reintentos del
  * proveedor jamás duplican el importe (FR-010).
  */
@@ -222,6 +227,18 @@ export async function verificarCobro(paymentId) {
 
   if (debeCaducar(pago.createdAt)) {
     await paymentModel.transitionFromPending(pago.id, 'EXPIRED');
+    return aPresentacion(await paymentModel.findById(pago.id));
+  }
+
+  // Desfase (006, FR-008/FR-009): si el importe ya no coincide con el saldo
+  // pendiente, el cobro pasa a STALE y se devuelve sin consultar al proveedor
+  // ni confirmarlo. La transición única evita duplicar el cambio al reintentar.
+  const [totales, cobrado] = await Promise.all([
+    orderService.obtenerTotalesOrden(pago.orderId),
+    paymentModel.sumCompletedByOrder(pago.orderId),
+  ]);
+  if (aCentavos(pago.amount) !== saldoEnCentavos(totales.grand, cobrado)) {
+    await paymentModel.transitionFromPending(pago.id, 'STALE');
     return aPresentacion(await paymentModel.findById(pago.id));
   }
 

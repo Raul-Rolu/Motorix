@@ -110,6 +110,17 @@ class PaymentsProvider extends ChangeNotifier {
     } on ExcepcionApi catch (excepcion) {
       error = excepcion.mensaje;
       codigoError = excepcion.codigo;
+      // 409 PAYMENT_NOT_MODIFIABLE: el servidor ya había marcado el cobro como
+      // desfasado (006); se recarga para reflejar su estado real y el saldo.
+      if (excepcion.codigo == 'PAYMENT_NOT_MODIFIABLE') {
+        await cargar(orderId);
+        final actual = pagos?.pagos.where((p) => p.id == paymentId).firstOrNull;
+        if (actual != null) {
+          cobroDigital = cobroDigital?.copiarCon(estado: actual.estado);
+        }
+        error = excepcion.mensaje;
+        codigoError = excepcion.codigo;
+      }
       notifyListeners();
       return null;
     }

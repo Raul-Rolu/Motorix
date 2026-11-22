@@ -109,7 +109,9 @@ export const errores = {
     new AppError(
       409,
       'PAYMENT_NOT_MODIFIABLE',
-      `El pago está ${estado} y no admite cambios; solo los pagos PENDING pueden completarse o expirar.`
+      estado === 'STALE'
+        ? 'El cobro está desfasado: su importe ya no coincide con el saldo pendiente de la orden. No puede confirmarse; genere un cobro nuevo por el saldo actual.'
+        : `El pago está ${estado} y no admite cambios; solo los pagos PENDING pueden completarse o expirar.`
     ),
   pagoExcedeSaldo: (saldoPendiente) =>
     new AppError(

@@ -68,7 +68,8 @@ class Pago {
   final String metodo;
   final double monto;
 
-  /// COMPLETED | PENDING | EXPIRED (solo los COMPLETED cuentan, FR-009).
+  /// COMPLETED | PENDING | EXPIRED | STALE (solo los COMPLETED cuentan, FR-009;
+  /// STALE = cobro digital desfasado respecto del saldo, 006 FR-008).
   final String estado;
   final String? externalReference;
   final String? registradoPor;
@@ -119,6 +120,8 @@ class Pago {
         return 'Pendiente';
       case 'EXPIRED':
         return 'Expirado';
+      case 'STALE':
+        return 'Desfasado';
       default:
         return estado;
     }
@@ -132,7 +135,7 @@ class Pago {
 class CobroDigital {
   final int id;
 
-  /// PENDING | COMPLETED | EXPIRED.
+  /// PENDING | COMPLETED | EXPIRED | STALE.
   final String estado;
   final double monto;
   final String enlace;
@@ -164,6 +167,8 @@ class CobroDigital {
         return 'Confirmado';
       case 'EXPIRED':
         return 'Expirado';
+      case 'STALE':
+        return 'Desfasado';
       default:
         return 'Pendiente de confirmación';
     }
