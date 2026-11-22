@@ -192,3 +192,43 @@ test('el mismo cambio de precio sí eleva el importe al agregar la refacción a 
   expect(detalleNueva.body.totals.parts).toBe(200);
   expect(detalleNueva.body.totals.grand).toBe(200); // sin partidas de servicio
 });
+
+// 006-complemento-precios-compra, T018 (US2, FR-007, CA-5): los totales se
+// calculan en centavos enteros y se presentan con 2 decimales exactos.
+test('los totales no arrastran error de coma flotante: 0.10 + 0.20 es exactamente 0.30 (CA-5)', async () => {
+  const { tokens, mecanicoId, vehiculoId } = await prepararEntorno();
+  const orden = await crearOrden(tokens.admin, vehiculoId, mecanicoId);
+  await prepararPartidas(orden.id, { services: 0.1, labor: 0.2 });
+
+  const detalle = await request(app)
+    .get(`/api/orders/${orden.id}`)
+    .set('Authorization', `Bearer ${tokens.admin}`);
+
+  expect(detalle.status).toBe(200);
+  expect(detalle.body.totals.services).toBe(0.1);
+  expect(detalle.body.totals.labor).toBe(0.2);
+  // En coma flotante 0.1 + 0.2 = 0.30000000000000004; en centavos, 0.30.
+  expect(detalle.body.totals.grand).toBe(0.3);
+});
+
+test('el importe de una refacción con decimales es exacto: 1.15 × 3 = 3.45 (CA-5)', async () => {
+  const { tokens, mecanicoId, vehiculoId } = await prepararEntorno();
+  const parte = await crearParteConPrecio(tokens.admin, 1.15, 'CEN-001');
+  const orden = await crearOrden(tokens.admin, vehiculoId, mecanicoId);
+  await prepararPartidas(orden.id, { services: 0.1, labor: 0.2 });
+
+  const alta = await request(app)
+    .post(`/api/orders/${orden.id}/parts`)
+    .set('Authorization', `Bearer ${tokens.admin}`)
+    .send({ partId: parte.id, quantity: 3 });
+  expect(alta.status).toBe(201);
+  // 1.15 × 3 = 3.4499999999999997 en coma flotante; en centavos, 3.45.
+  expect(alta.body.amount).toBe(3.45);
+
+  const detalle = await request(app)
+    .get(`/api/orders/${orden.id}`)
+    .set('Authorization', `Bearer ${tokens.admin}`);
+  expect(detalle.body.refacciones[0].amount).toBe(3.45);
+  expect(detalle.body.totals.parts).toBe(3.45);
+  expect(detalle.body.totals.grand).toBe(3.75);
+});

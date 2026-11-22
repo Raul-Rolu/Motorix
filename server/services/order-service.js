@@ -10,6 +10,7 @@ import * as clientModel from '../models/client.js';
 import * as userModel from '../models/user.js';
 import * as inventoryModel from '../models/inventory.js';
 import { errores } from '../utils/errors.js';
+import { aCentavos, deCentavos, LIMITE_TOTAL_CENTAVOS } from '../utils/money.js';
 import {
   transicionValida,
   estadosSiguientes,
@@ -123,8 +124,22 @@ export async function agregarEntrada(id, datos, usuario) {
 }
 
 /**
+ * Exige que el total de la orden, sumando `incrementoCentavos`, no rebase
+ * 99,999,999.99 (006, FR-003, CA-2). La comparación es en centavos enteros.
+ * Se llama ANTES de escribir nada para que la orden y el stock no cambien.
+ */
+async function exigirTopeDeTotal(orderId, incrementoCentavos) {
+  const totales = await orderModel.findTotals(orderId);
+  if (aCentavos(totales.grand) + incrementoCentavos > LIMITE_TOTAL_CENTAVOS) {
+    throw errores.totalOrdenExcedeLimite(deCentavos(LIMITE_TOTAL_CENTAVOS));
+  }
+}
+
+/**
  * Agrega una partida de servicio o mano de obra; requiere haber avanzado a
- * DIAGNOSTICO (FR-011). Los importes son informativos (sin pagos).
+ * DIAGNOSTICO (FR-011). Los importes son informativos (sin pagos). Dos
+ * partidas idénticas pueden coexistir (no hay restricción de unicidad); el
+ * total de la orden no puede rebasar el tope (006, CA-2).
  */
 export async function agregarPartida(id, datos, usuario) {
   const orden = await obtenerOrdenOperable(id, usuario);
@@ -133,6 +148,7 @@ export async function agregarPartida(id, datos, usuario) {
       'La orden debe haber avanzado a DIAGNOSTICO antes de registrar servicios o mano de obra (FR-011).'
     );
   }
+  await exigirTopeDeTotal(id, aCentavos(datos.amount));
   return orderModel.createPart({
     orderId: id,
     description: datos.description.trim(),
@@ -323,9 +339,9 @@ export async function obtenerPorId(id, usuario) {
 }
 
 /**
- * Total a cobrar de la orden (Sprint 4, T009, FR-003): reutiliza el cálculo
- * existente de servicios + mano de obra sin duplicar importes (research D2).
- * Desde 005 el total también suma las refacciones usadas (005, FR-007).
+ * Total a cobrar de la orden (Sprint 4, T009, FR-003): servicios + mano de
+ * obra + refacciones usadas con su precio congelado (005, FR-007), sumado en
+ * centavos enteros (006, FR-007) y con tope de 99,999,999.99 (006, FR-003).
  */
 export async function obtenerTotalOrden(orderId) {
   const totales = await orderModel.findTotals(orderId);
@@ -371,7 +387,7 @@ export async function historialVehiculo(vehicleId, { order = 'desc' } = {}) {
         amount:
           refaccion.unit_price === null || refaccion.unit_price === undefined
             ? null
-            : Number(refaccion.unit_price) * refaccion.quantity,
+            : orderModel.importeDeLinea(refaccion.unit_price, refaccion.quantity),
       }));
     const manoDeObra = Number(fila.labor_total);
     const servicios = Number(fila.services_total);
@@ -392,7 +408,7 @@ export async function historialVehiculo(vehicleId, { order = 'desc' } = {}) {
         servicios: fila.services_count,
         manoObra: fila.labor_count,
         refacciones: fila.parts_count,
-        total: servicios + manoDeObra + refacciones,
+        total: deCentavos(aCentavos(servicios) + aCentavos(manoDeObra) + aCentavos(refacciones)),
       },
       refacciones: refaccionesDeLaOrden,
     };
@@ -461,6 +477,8 @@ export async function agregarRefaccionOrden(orderId, datos, usuario) {
     if (parte.salePrice === null) {
       throw errores.parteSinPrecio(parte.name);
     }
+    // Tope de total (006, CA-2): antes de descontar stock o crear la línea.
+    await exigirTopeDeTotal(orden.id, aCentavos(parte.salePrice) * cantidad);
     const { stockResult } = await inventoryModel.aplicarMovimiento(conexion, {
       partId,
       movementType: 'OUT',

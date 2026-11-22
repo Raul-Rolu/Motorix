@@ -2,6 +2,7 @@
 // RN-3: mileageEntry obligatorio y entero >= 0. RN-4: mileageCorrection booleano.
 // RN-2: vehicleId obligatorio. reason obligatorio (máx. 255), notes opcional.
 import { esTextoNoVacio } from './validation-helpers.js';
+import { esImporteValido, aCentavos, LIMITE_PRECIO_CENTAVOS } from '../utils/money.js';
 
 export function validarCreacionOrden(payload) {
   const errores = [];
@@ -80,9 +81,14 @@ export function validarPartida(payload) {
   if (!esTextoNoVacio(payload?.description, 255)) {
     errores.push('La descripción de la partida (description) es obligatoria (máximo 255 caracteres).');
   }
-  const monto = Number(payload?.amount);
-  if (payload?.amount == null || !Number.isFinite(monto) || monto < 0) {
-    errores.push('El importe (amount) debe ser un número mayor o igual a cero.');
+  // Importe (006, FR-003, CA-2): numérico, ≥ 0, hasta 2 decimales y
+  // ≤ 999,999.99 por partida.
+  if (payload?.amount == null || !esImporteValido(payload.amount)) {
+    errores.push(
+      'El importe (amount) debe ser un número mayor o igual a cero con hasta 2 decimales.'
+    );
+  } else if (aCentavos(payload.amount) > LIMITE_PRECIO_CENTAVOS) {
+    errores.push('El importe (amount) no puede superar 999,999.99.');
   }
   if (!['SERVICE', 'LABOR'].includes(payload?.kind)) {
     errores.push('El tipo de partida (kind) debe ser SERVICE o LABOR.');

@@ -4,6 +4,7 @@
  * users) y el historial de partidas y entradas.
  */
 import { getPool } from '../config/db.js';
+import { aCentavos, deCentavos } from '../utils/money.js';
 
 export function aObjeto(fila) {
   if (!fila) {
@@ -186,6 +187,9 @@ export async function findLabor(orderId) {
  * `partsTotal` es la suma de `unit_price × quantity` de las líneas con
  * precio; `refaccionesSinPrecio` cuenta los usos con `unit_price` nulo, que
  * marcan el total como incompleto.
+ *
+ * 006 (FR-007, CA-5): la suma se hace en centavos enteros y solo se vuelve a
+ * decimales al presentar, así 0.10 + 0.20 es exactamente 0.30.
  */
 export function calcularTotales({
   services = 0,
@@ -193,11 +197,14 @@ export function calcularTotales({
   partsTotal = 0,
   refaccionesSinPrecio = 0,
 } = {}) {
+  const serviciosCentavos = aCentavos(services);
+  const manoDeObraCentavos = aCentavos(labor);
+  const refaccionesCentavos = aCentavos(partsTotal);
   return {
-    services,
-    labor,
-    parts: partsTotal,
-    grand: services + labor + partsTotal,
+    services: deCentavos(serviciosCentavos),
+    labor: deCentavos(manoDeObraCentavos),
+    parts: deCentavos(refaccionesCentavos),
+    grand: deCentavos(serviciosCentavos + manoDeObraCentavos + refaccionesCentavos),
     totalCompleto: refaccionesSinPrecio === 0,
     refaccionesSinPrecio,
   };
@@ -348,6 +355,11 @@ export async function findPartsByOrders(orderIds) {
   return filas;
 }
 
+/** Importe de una línea (precio × cantidad) calculado en centavos enteros (006, CA-5). */
+export function importeDeLinea(precioUnitario, cantidad) {
+  return deCentavos(aCentavos(precioUnitario) * Number(cantidad));
+}
+
 /** Refacciones usadas por una orden (Sprint 3, US7; detalle GET /api/orders/:id). */
 export async function findOrderParts(orderId) {
   const [filas] = await getPool().query(
@@ -371,7 +383,7 @@ export async function findOrderParts(orderId) {
     amount:
       fila.unit_price === null || fila.unit_price === undefined
         ? null
-        : Number(fila.unit_price) * fila.quantity,
+        : importeDeLinea(fila.unit_price, fila.quantity),
   }));
 }
 
@@ -424,7 +436,7 @@ export async function createOrderPart(
     partId,
     quantity,
     unitPrice: unitPrice === null ? null : Number(unitPrice),
-    amount: unitPrice === null ? null : Number(unitPrice) * quantity,
+    amount: unitPrice === null ? null : importeDeLinea(unitPrice, quantity),
   };
 }
 

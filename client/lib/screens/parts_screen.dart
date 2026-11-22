@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../config/theme.dart';
 import '../models/part.dart';
+import '../providers/auth_provider.dart';
 import '../providers/parts_provider.dart';
 import 'part_form_screen.dart';
 
@@ -149,6 +150,9 @@ class _TarjetaParte extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorStock =
         parte.lowStock ? MotorixColores.error : MotorixColores.exito;
+    // El precio de compra es un dato financiero exclusivo del administrador
+    // (006, FR-005): los demás roles no lo ven (el backend ni siquiera lo envía).
+    final esAdmin = context.watch<AuthProvider>().esAdmin;
 
     return Card(
       margin: const EdgeInsets.only(bottom: MotorixEspaciados.s),
@@ -190,6 +194,13 @@ class _TarjetaParte extends StatelessWidget {
                     : FontWeight.w400,
               ),
             ),
+            if (esAdmin)
+              Text(
+                parte.purchasePrice == null
+                    ? 'Compra: pendiente'
+                    : 'Compra: \$${parte.purchasePrice!.toStringAsFixed(2)}',
+                style: const TextStyle(color: MotorixColores.textoSecundario),
+              ),
           ],
         ),
         trailing: Column(

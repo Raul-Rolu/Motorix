@@ -11,11 +11,15 @@ import * as orderModel from '../models/order.js';
 import * as orderService from './order-service.js';
 import * as paymentGateway from './payment-gateway.js';
 import { errores } from '../utils/errors.js';
+import { aCentavos, deCentavos } from '../utils/money.js';
 import { randomUUID } from 'node:crypto';
 
-/** Redondeo a centavos para comparar importes sin error de coma flotante. */
-function redondear(valor) {
-  return Math.round(valor * 100) / 100;
+/**
+ * Saldo pendiente en centavos enteros (006, FR-007, CA-5): total − cobrado,
+ * sin error de coma flotante. Puede ser negativo si lo cobrado supera el total.
+ */
+function saldoEnCentavos(total, cobrado) {
+  return aCentavos(total) - aCentavos(cobrado);
 }
 
 /**
@@ -44,13 +48,15 @@ export function aPresentacion(pago) {
 
 /** Estado de cobro derivado: una orden sin importes se muestra liquidada (caso límite del spec). */
 export function estadoCobroDe(total, cobrado) {
-  if (total <= 0) {
+  const totalCentavos = aCentavos(total);
+  const cobradoCentavos = aCentavos(cobrado);
+  if (totalCentavos <= 0) {
     return 'LIQUIDADA';
   }
-  if (cobrado <= 0) {
+  if (cobradoCentavos <= 0) {
     return 'PENDIENTE';
   }
-  return cobrado >= total ? 'LIQUIDADA' : 'PARCIAL';
+  return cobradoCentavos >= totalCentavos ? 'LIQUIDADA' : 'PARCIAL';
 }
 
 /** Orden existente y no cancelada para operaciones de cobro (FR-020). */
@@ -102,12 +108,12 @@ export async function listar(orderId) {
     paymentModel.sumCompletedByOrder(orderId),
   ]);
   const total = totales.grand;
-  const saldoPendiente = redondear(Math.max(total - cobrado, 0));
+  const saldoPendiente = deCentavos(Math.max(saldoEnCentavos(total, cobrado), 0));
   return {
-    total: redondear(total),
+    total: deCentavos(aCentavos(total)),
     totalCompleto: totales.totalCompleto,
     refaccionesSinPrecio: totales.refaccionesSinPrecio,
-    cobrado: redondear(cobrado),
+    cobrado: deCentavos(aCentavos(cobrado)),
     saldoPendiente,
     estadoCobro: estadoCobroDe(total, cobrado),
     datos: pagos.map(aPresentacion),
@@ -123,10 +129,11 @@ export async function registrar(orderId, datos, usuario) {
   await obtenerOrdenParaCobro(orderId);
   const totales = await exigirTotalCompleto(orderId);
   const cobrado = await paymentModel.sumCompletedByOrder(orderId);
-  const saldoPendiente = redondear(totales.grand - cobrado);
-  const monto = redondear(Number(datos.monto));
-  if (monto > saldoPendiente) {
-    throw errores.pagoExcedeSaldo(Math.max(saldoPendiente, 0));
+  const saldoCentavos = saldoEnCentavos(totales.grand, cobrado);
+  const montoCentavos = aCentavos(datos.monto);
+  const monto = deCentavos(montoCentavos);
+  if (montoCentavos > saldoCentavos) {
+    throw errores.pagoExcedeSaldo(deCentavos(Math.max(saldoCentavos, 0)));
   }
   const pago = await paymentModel.create({
     orderId,
@@ -165,10 +172,11 @@ export async function crearCobroDigital(orderId, datos, usuario) {
   // crear la preferencia ante el proveedor (005, FR-009, CA-10).
   const totales = await exigirTotalCompleto(orderId);
   const cobrado = await paymentModel.sumCompletedByOrder(orderId);
-  const saldoPendiente = redondear(totales.grand - cobrado);
-  const monto = redondear(Number(datos.monto));
-  if (monto > saldoPendiente) {
-    throw errores.pagoExcedeSaldo(Math.max(saldoPendiente, 0));
+  const saldoCentavos = saldoEnCentavos(totales.grand, cobrado);
+  const montoCentavos = aCentavos(datos.monto);
+  const monto = deCentavos(montoCentavos);
+  if (montoCentavos > saldoCentavos) {
+    throw errores.pagoExcedeSaldo(deCentavos(Math.max(saldoCentavos, 0)));
   }
 
   const referencia = `MP-${randomUUID().replace(/-/g, '').slice(0, 10).toUpperCase()}`;

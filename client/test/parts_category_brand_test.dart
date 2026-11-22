@@ -278,4 +278,54 @@ void main() {
     expect(find.byKey(const Key('campoCategoria')), findsOneWidget);
     expect(find.byKey(const Key('campoMarca')), findsOneWidget);
   });
+
+  // 006, T027 (US3, CA-3): el precio de compra solo se muestra al
+  // administrador. El cliente falso devuelve `purchasePrice` aunque el rol no
+  // sea ADMIN para comprobar que la interfaz tampoco lo muestra (la
+  // protección real es la del backend, que ni siquiera lo envía).
+  testWidgets('el listado muestra el precio de compra al administrador (CA-3)',
+      (tester) async {
+    final api = ApiClient(httpClient: _ClienteFalso());
+
+    await tester.pumpWidget(_envolver(
+        PartsProvider(api), _authComo('ADMIN', api), const PartsScreen()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Compra: \$95.50'), findsOneWidget);
+    // Pendiente de captura: se avisa solo a quien puede capturarlo.
+    expect(find.text('Compra: pendiente'), findsOneWidget);
+  });
+
+  for (final rol in ['RECEPTIONIST', 'MECHANIC']) {
+    testWidgets('el listado no muestra el precio de compra con rol $rol (CA-3)',
+        (tester) async {
+      final api = ApiClient(httpClient: _ClienteFalso());
+
+      await tester.pumpWidget(_envolver(
+          PartsProvider(api), _authComo(rol, api), const PartsScreen()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pastillas de freno'), findsOneWidget);
+      expect(find.textContaining('Compra'), findsNothing);
+      expect(find.textContaining('95.50'), findsNothing);
+    });
+
+    testWidgets(
+        'el formulario de edición con rol $rol no muestra ni precarga el precio de compra (CA-3)',
+        (tester) async {
+      final api = ApiClient(httpClient: _ClienteFalso());
+      const parte = Part(
+        id: 1,
+        name: 'Pastillas de freno',
+        code: 'FRN-PAS-220',
+        purchasePrice: 95.5,
+      );
+
+      await tester.pumpWidget(_envolver(PartsProvider(api),
+          _authComo(rol, api), const PartFormScreen(parte: parte)));
+
+      expect(find.byKey(const Key('campoPrecioCompra')), findsNothing);
+      expect(find.text('95.50'), findsNothing);
+    });
+  }
 }

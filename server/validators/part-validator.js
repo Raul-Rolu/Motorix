@@ -6,7 +6,7 @@
  * MOVEMENT_INVALID (422, T030); aquí solo lo estructural.
  */
 import { esTextoNoVacio } from './validation-helpers.js';
-import { esImporteValido } from '../utils/money.js';
+import { aCentavos, LIMITE_PRECIO_CENTAVOS } from '../utils/money.js';
 
 /**
  * Catálogo fijo de categorías de refacción (006, FR-002; research D3). Lista
@@ -26,6 +26,32 @@ export const CATEGORIAS_REFACCION = [
 
 /** Longitud máxima de la marca (006, FR-002). */
 export const LONGITUD_MAXIMA_MARCA = 50;
+
+/**
+ * Valida un precio capturable (006, FR-003, CA-2) y devuelve su mensaje de
+ * error o null. Mensajes separados: no numérico, negativo, más de 2
+ * decimales y límite máximo de 999,999.99.
+ */
+function validarPrecio(valor, etiqueta) {
+  const numero = typeof valor === 'string' ? Number(valor.trim()) : Number(valor);
+  if (typeof valor !== 'number' && typeof valor !== 'string') {
+    return `El ${etiqueta} debe ser un número.`;
+  }
+  if (!Number.isFinite(numero)) {
+    return `El ${etiqueta} debe ser un número.`;
+  }
+  if (numero < 0) {
+    return `El ${etiqueta} no puede ser negativo (debe ser mayor o igual a cero).`;
+  }
+  const centavos = numero * 100;
+  if (Math.abs(centavos - Math.round(centavos)) >= 1e-6) {
+    return `El ${etiqueta} admite como máximo 2 decimales.`;
+  }
+  if (aCentavos(numero) > LIMITE_PRECIO_CENTAVOS) {
+    return `El ${etiqueta} no puede superar 999,999.99.`;
+  }
+  return null;
+}
 
 /** true si el campo opcional viene informado (ni ausente, ni null, ni vacío). */
 function vieneInformado(valor) {
@@ -66,29 +92,19 @@ export function validarParte(body, { esEdicion = false } = {}) {
   if (datos.isActive !== undefined && typeof datos.isActive !== 'boolean') {
     errores.push('El estado (isActive) debe ser verdadero o falso.');
   }
-  // Precio de venta (005, FR-001): opcional; null = pendiente de precio.
-  // Válido si es numérico, no negativo y con hasta 2 decimales (CA-2).
-  if (
-    datos.salePrice !== undefined &&
-    datos.salePrice !== null &&
-    datos.salePrice !== ''
-  ) {
-    const precio = Number(datos.salePrice);
-    const dosDecimales = Math.abs(precio * 100 - Math.round(precio * 100)) < 1e-6;
-    if (!Number.isFinite(precio) || precio < 0 || !dosDecimales) {
-      errores.push(
-        'El precio de venta debe ser un número mayor o igual a cero con hasta 2 decimales.'
-      );
+  // Precio de venta (005, FR-001) y de compra (006, FR-001): opcionales;
+  // null = pendiente. Numéricos, no negativos, hasta 2 decimales y
+  // ≤ 999,999.99 (CA-2).
+  for (const [campo, etiqueta] of [
+    ['salePrice', 'precio de venta'],
+    ['purchasePrice', 'precio de compra'],
+  ]) {
+    if (vieneInformado(datos[campo])) {
+      const mensaje = validarPrecio(datos[campo], etiqueta);
+      if (mensaje) {
+        errores.push(mensaje);
+      }
     }
-  }
-
-  // Precio de compra (006, FR-001): opcional; numérico, no negativo y con
-  // hasta 2 decimales. El límite máximo se valida junto con los demás
-  // precios (US2, CA-2).
-  if (vieneInformado(datos.purchasePrice) && !esImporteValido(datos.purchasePrice)) {
-    errores.push(
-      'El precio de compra debe ser un número mayor o igual a cero con hasta 2 decimales.'
-    );
   }
   // Categoría (006, FR-002): opcional y de la lista fija del sistema.
   if (vieneInformado(datos.category) && !CATEGORIAS_REFACCION.includes(datos.category)) {

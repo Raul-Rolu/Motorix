@@ -180,3 +180,53 @@ test('la orden inexistente responde 404 y sin token 401', async () => {
   const sinToken = await request(app).get('/api/orders/1/payments');
   expect(sinToken.status).toBe(401);
 });
+
+// 006-complemento-precios-compra, T019 (US2, FR-007, CA-5): saldo y pagos en
+// centavos enteros, con diferencia de $0 tras varios pagos con decimales.
+test('varios pagos con decimales liquidan la orden con saldo exactamente $0 (CA-5)', async () => {
+  const { token, vehiculoId } = await prepararEntorno();
+  const orderId = await crearOrdenConTotal(token, vehiculoId, { servicios: 0.1, labor: 0.2 });
+
+  for (const monto of [0.1, 0.1, 0.1]) {
+    const pago = await request(app)
+      .post(`/api/orders/${orderId}/payments`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ metodo: 'CASH', monto });
+    expect(pago.status).toBe(201);
+  }
+
+  const resumen = await request(app)
+    .get(`/api/orders/${orderId}/payments`)
+    .set('Authorization', `Bearer ${token}`);
+  expect(resumen.body.total).toBe(0.3);
+  expect(resumen.body.cobrado).toBe(0.3);
+  expect(resumen.body.saldoPendiente).toBe(0);
+  expect(resumen.body.estadoCobro).toBe('LIQUIDADA');
+
+  // Un centavo más ya excede el saldo.
+  const exceso = await request(app)
+    .post(`/api/orders/${orderId}/payments`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ metodo: 'CASH', monto: 0.01 });
+  expect(exceso.status).toBe(409);
+  expect(exceso.body.error.codigo).toBe('PAYMENT_EXCEEDS_BALANCE');
+});
+
+test('un saldo con decimales se calcula en centavos: 1000.10 − 333.33 = 666.77 (CA-5)', async () => {
+  const { token, vehiculoId } = await prepararEntorno();
+  const orderId = await crearOrdenConTotal(token, vehiculoId, { servicios: 1000.1 });
+
+  const pago = await request(app)
+    .post(`/api/orders/${orderId}/payments`)
+    .set('Authorization', `Bearer ${token}`)
+    .send({ metodo: 'TRANSFER', monto: 333.33 });
+  expect(pago.status).toBe(201);
+
+  const resumen = await request(app)
+    .get(`/api/orders/${orderId}/payments`)
+    .set('Authorization', `Bearer ${token}`);
+  expect(resumen.body.total).toBe(1000.1);
+  expect(resumen.body.cobrado).toBe(333.33);
+  expect(resumen.body.saldoPendiente).toBe(666.77);
+  expect(resumen.body.estadoCobro).toBe('PARCIAL');
+});
