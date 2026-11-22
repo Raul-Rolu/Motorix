@@ -48,9 +48,11 @@ Extiende el contrato base y los previos (`specs/003-historial-inventario/contrac
 - **Cuerpo**: sin cambios. **Nueva respuesta de error**: `422 ORDER_TOTAL_LIMIT_EXCEEDED` si agregar la refacción (cantidad × precio de venta vigente) dejaría el total de la orden por encima de 99,999,999.99; la orden y el stock no cambian.
 - La respuesta de este endpoint y la de `DELETE /api/orders/:id/parts/:partId` **nunca** incluyen `purchasePrice` (solo se proyectan nombre, código, cantidad y precio unitario).
 
-### `POST /api/orders/:id/services` y `POST /api/orders/:id/labor` (CA-2)
+### `POST /api/orders/:id/services` (servicios y mano de obra, CA-2)
 
-- **Cuerpo**: sin cambios (`{ "description": "...", "amount": 450.0 }`). No hay restricción de unicidad: dos líneas idénticas (misma orden, descripción e importe) pueden coexistir.
+> **Nota:** no existe `POST /api/orders/:id/labor`. La mano de obra se agrega con este mismo endpoint indicando `kind: "LABOR"` (los servicios usan `kind: "SERVICE"`).
+
+- **Cuerpo**: sin cambios (`{ "kind": "SERVICE" | "LABOR", "description": "...", "amount": 450.0 }`). No hay restricción de unicidad: dos líneas idénticas (misma orden, descripción e importe) pueden coexistir.
 - **Nuevas respuestas de error**:
   - `422 ORDER_TOTAL_LIMIT_EXCEEDED` si el total resultante supera 99,999,999.99.
   - `400 DATOS_INVALIDOS` si `amount` no es un importe válido (numérico, ≥ 0, ≤ 2 decimales, ≤ 999,999.99).
