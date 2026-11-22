@@ -48,3 +48,31 @@ export async function findOrdenesDetenidas({ dias, mechanicId = null }) {
     diasSinCambio: Number(fila.dias_sin_cambio),
   }));
 }
+
+/**
+ * Claves (de entre `claves`) que el usuario ya marcó como leídas (T052; US6).
+ * La lectura es por usuario: la clave `TIPO:ID:ESTADO` incluye el estado, así
+ * que un aviso que cambia de estado deja de coincidir y vuelve como no leído.
+ */
+export async function findLecturas(userId, claves) {
+  if (claves.length === 0) {
+    return new Set();
+  }
+  const [filas] = await getPool().query(
+    'SELECT notification_key FROM notification_reads WHERE user_id = ? AND notification_key IN (?)',
+    [userId, claves]
+  );
+  return new Set(filas.map((fila) => fila.notification_key));
+}
+
+/**
+ * Guarda la lectura de un aviso para un usuario. Es idempotente: la restricción
+ * única (user_id, notification_key) evita duplicados y marcar dos veces no falla.
+ */
+export async function marcarLeido(userId, clave) {
+  await getPool().query(
+    `INSERT INTO notification_reads (user_id, notification_key) VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE read_at = read_at`,
+    [userId, clave]
+  );
+}

@@ -454,6 +454,73 @@ describe('mecánico: solo órdenes detenidas asignadas a él (CA-4)', () => {
   });
 });
 
+// --- US7 (T059): clientes por avisar, solo ADMIN y RECEPTIONIST (CA-10) ----------
+
+describe('clientes por avisar: MECHANIC recibe 403 validado en el backend (CA-10)', () => {
+  const cuerpoDeAviso = { tipo: 'ORDEN_TERMINADA', hechoId: 1 };
+
+  test('sin token responde 401 en ambas rutas', async () => {
+    const lista = await request(app).get('/api/client-notices/pending');
+    const alta = await request(app).post('/api/client-notices').send(cuerpoDeAviso);
+
+    expect(lista.status).toBe(401);
+    expect(alta.status).toBe(401);
+  });
+
+  test('MECHANIC recibe 403 NO_AUTORIZADO al listar y al marcar, y no se registra nada', async () => {
+    const { tokens } = await prepararEntorno();
+
+    const lista = await request(app)
+      .get('/api/client-notices/pending')
+      .set('Authorization', `Bearer ${tokens.mecanico}`);
+    const alta = await request(app)
+      .post('/api/client-notices')
+      .set('Authorization', `Bearer ${tokens.mecanico}`)
+      .send(cuerpoDeAviso);
+
+    expect(lista.status).toBe(403);
+    expect(lista.body.error.codigo).toBe('NO_AUTORIZADO');
+    expect(alta.status).toBe(403);
+    expect(alta.body.error.codigo).toBe('NO_AUTORIZADO');
+    const [[{ total }]] = await getPool().query('SELECT COUNT(*) AS total FROM client_notices');
+    expect(Number(total)).toBe(0);
+  });
+
+  test.each(['admin', 'recepcion'])('%s está autorizado a listar', async (usuario) => {
+    const { tokens } = await prepararEntorno();
+
+    const lista = await request(app)
+      .get('/api/client-notices/pending')
+      .set('Authorization', `Bearer ${tokens[usuario]}`);
+
+    expect(lista.status).toBe(200);
+    expect(Array.isArray(lista.body.datos)).toBe(true);
+  });
+
+  test.each(['admin', 'recepcion'])('%s está autorizado a marcar (un hecho inexistente responde 409, no 403)', async (usuario) => {
+    const { tokens } = await prepararEntorno();
+
+    const alta = await request(app)
+      .post('/api/client-notices')
+      .set('Authorization', `Bearer ${tokens[usuario]}`)
+      .send({ tipo: 'ORDEN_TERMINADA', hechoId: 987654 });
+
+    expect(alta.status).toBe(409);
+    expect(alta.body.error.codigo).toBe('CLIENT_NOTICE_NOT_PENDING');
+  });
+
+  test('el rol sale solo del token: un rol en la petición no abre la ruta al mecánico', async () => {
+    const { tokens } = await prepararEntorno();
+
+    const respuesta = await request(app)
+      .get('/api/client-notices/pending?rol=ADMIN&role=ADMIN')
+      .set('Authorization', `Bearer ${tokens.mecanico}`)
+      .set('X-Role', 'ADMIN');
+
+    expect(respuesta.status).toBe(403);
+  });
+});
+
 describe('el rol y el usuario se toman solo del token (nada de la petición los cambia)', () => {
   test.each(ROLES)('%s recibe lo mismo con parámetros, cabeceras o cuerpo que pretenden otro rol', async (usuario) => {
     const { tokens } = await prepararEntorno();

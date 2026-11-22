@@ -19,3 +19,10 @@ notificationRoutes.get(
   requireRole('ADMIN', 'RECEPTIONIST', 'MECHANIC'),
   notificationController.listar
 );
+// US6: los tres roles marcan SUS avisos como leídos; el servicio valida que la
+// clave sea un aviso vigente del propio usuario.
+notificationRoutes.post(
+  '/reads',
+  requireRole('ADMIN', 'RECEPTIONIST', 'MECHANIC'),
+  notificationController.marcarLeido
+);

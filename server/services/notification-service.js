@@ -29,6 +29,8 @@ import {
   proximidad,
 } from './maintenance-state.js';
 import { construirClave } from '../utils/notification-keys.js';
+import { errores } from '../utils/errors.js';
+import { fechaCorta } from '../utils/fechas.js';
 import { nombreEstadoOrden } from '../utils/notification-text.js';
 
 /** Días sin cambio de estado a partir de los cuales una orden está detenida (el Sprint 7 podrá volverla configurable). */
@@ -51,13 +53,6 @@ const ROL_CON_STOCK = 'ADMIN';
 
 /** El mecánico solo recibe avisos de las órdenes asignadas a él (CA-4). */
 const ROL_MECANICO = 'MECHANIC';
-
-/** Fecha local `YYYY-MM-DD` (la misma que usa `hoyLocal()` para «hoy»). */
-function fechaCorta(fecha) {
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  return `${fecha.getFullYear()}-${mes}-${dia}`;
-}
 
 /** Texto del motivo del vencimiento: por fecha, por kilometraje o por ambos. */
 function detalleDeVencimiento(mantenimiento, kmActual) {
@@ -240,9 +235,38 @@ export async function obtenerAvisos(usuario) {
   const avisos = (await Promise.all(calculos)).flat();
   avisos.sort(compararAvisos);
   const datos = avisos.map(({ urgencia, desempate, ...aviso }) => aviso);
+
+  // Lectura por usuario (US6): la clave incluye el estado, así que un aviso que
+  // cambió de estado no coincide con ninguna lectura guardada y vuelve como no leído.
+  const leidas = await notificationModel.findLecturas(
+    usuario.id,
+    datos.map((aviso) => aviso.clave)
+  );
+  for (const aviso of datos) {
+    aviso.leido = leidas.has(aviso.clave);
+  }
+
   return {
     total: datos.length,
     noLeidos: datos.filter((aviso) => !aviso.leido).length,
     datos,
   };
+}
+
+/**
+ * Marca un aviso como leído para el usuario autenticado (US6; FR-006, CA-6).
+ * La clave debe ser un aviso VIGENTE del propio usuario: si no existe, ya no
+ * aplica o su rol no puede verlo responde NOTIFICATION_NOT_FOUND sin guardar
+ * nada. Es idempotente. No borra lecturas de avisos que desaparecen: si la
+ * condición vuelve con el mismo estado, sigue leído.
+ */
+export async function marcarLeido(usuario, clave) {
+  const { datos } = await obtenerAvisos(usuario);
+  const aviso = datos.find((candidato) => candidato.clave === clave);
+  if (!aviso) {
+    throw errores.avisoNoEncontrado();
+  }
+  await notificationModel.marcarLeido(usuario.id, clave);
+  const noLeidos = datos.filter((candidato) => candidato.clave !== clave && !candidato.leido).length;
+  return { clave, leido: true, noLeidos };
 }

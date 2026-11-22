@@ -5,12 +5,15 @@
 /// estados de carga, vacío y error, y un solo set de íconos (Material).
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../config/theme.dart';
 import '../models/notification.dart';
 import '../providers/notifications_provider.dart';
+import '../providers/shell_navigation_provider.dart';
 
 class PanelAvisos extends StatelessWidget {
   const PanelAvisos({super.key});
@@ -155,6 +158,45 @@ class PanelAvisos extends StatelessWidget {
       GrupoAviso.citaDelDia => (Icons.event_available_outlined, MotorixColores.textoSecundario),
     };
 
+/// Abre el aviso (US6; FR-007, CA-7): lo marca como leído, cierra el panel y
+/// lleva a la pantalla relacionada. Orden y vehículo se abren como pantallas
+/// completas (rutas con nombre registradas en `main.dart`); inventario y citas
+/// son secciones del shell y se piden al `ShellNavigationProvider`.
+Future<void> _abrirAviso(BuildContext context, Aviso aviso) async {
+  final proveedor = context.read<NotificationsProvider>();
+  final shell = context.read<ShellNavigationProvider>();
+  final navegador = Navigator.of(context);
+  final mensajes = ScaffoldMessenger.of(context);
+  Scaffold.of(context).closeEndDrawer();
+
+  // Abrir un aviso ya leído no vuelve a marcarlo.
+  if (!aviso.leido) {
+    unawaited(proveedor.marcarLeido(aviso.clave));
+  }
+
+  final destino = aviso.destino;
+  switch (destino.pantalla) {
+    case 'ORDEN':
+      if (destino.id != null) {
+        navegador.pushNamed('/avisos/orden', arguments: destino.id);
+      }
+    case 'VEHICULO':
+      if (destino.id == null) return;
+      final vehiculo = await proveedor.cargarVehiculo(destino.id!);
+      if (vehiculo != null) {
+        navegador.pushNamed('/avisos/vehiculo', arguments: vehiculo);
+      } else {
+        mensajes.showSnackBar(
+          const SnackBar(content: Text('No se pudo abrir el vehículo del aviso.')),
+        );
+      }
+    case 'INVENTARIO':
+      shell.solicitar(SeccionShell.inventario);
+    case 'CITAS':
+      shell.solicitar(SeccionShell.citas);
+  }
+}
+
 class _FilaAviso extends StatelessWidget {
   final Aviso aviso;
 
@@ -165,6 +207,7 @@ class _FilaAviso extends StatelessWidget {
     final (icono, color) = _estiloDe(aviso);
     return ListTile(
       key: Key('aviso-${aviso.clave}'),
+      onTap: () => _abrirAviso(context, aviso),
       leading: Icon(icono, color: aviso.leido ? MotorixColores.textoSecundario : color),
       title: Text(
         aviso.titulo,
@@ -176,10 +219,21 @@ class _FilaAviso extends StatelessWidget {
       subtitle: Text(aviso.detalle),
       trailing: aviso.leido
           ? null
-          : Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                ),
+                IconButton(
+                  key: Key('marcarLeido-${aviso.clave}'),
+                  tooltip: 'Marcar como leído',
+                  icon: const Icon(Icons.done, size: 20),
+                  onPressed: () => context.read<NotificationsProvider>().marcarLeido(aviso.clave),
+                ),
+              ],
             ),
     );
   }

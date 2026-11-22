@@ -11,6 +11,7 @@ import 'package:motorix_client/config/theme.dart';
 import 'package:motorix_client/models/user.dart';
 import 'package:motorix_client/providers/auth_provider.dart';
 import 'package:motorix_client/providers/notifications_provider.dart';
+import 'package:motorix_client/providers/shell_navigation_provider.dart';
 import 'package:motorix_client/services/api_client.dart';
 import 'package:motorix_client/widgets/notification_bell.dart';
 import 'package:motorix_client/widgets/notifications_panel.dart';
@@ -71,6 +72,15 @@ class ClienteAvisosFalso extends Fake implements http.Client {
   int statusAvisos = 200;
   Completer<void>? puerta;
 
+  /// Estado de la respuesta de `POST /notifications/reads` (200, 404, 500…).
+  int statusLectura = 200;
+
+  /// Claves enviadas a `POST /notifications/reads`, en orden.
+  final List<String> lecturas = [];
+
+  int get consultasDeVehiculo =>
+      peticiones.where((p) => p.method == 'GET' && RegExp(r'/vehicles/\d+$').hasMatch(p.url.path)).length;
+
   int get consultasAvisos => peticiones
       .where((p) => p.method == 'GET' && p.url.path.endsWith('/notifications'))
       .length;
@@ -91,6 +101,33 @@ class ClienteAvisosFalso extends Fake implements http.Client {
       } else {
         cuerpo = {'token': 't-${usuario['id']}', 'usuario': usuario};
       }
+    } else if (request.method == 'POST' && ruta.endsWith('/notifications/reads')) {
+      final datos = jsonDecode((request as http.Request).body) as Map<String, dynamic>;
+      status = statusLectura;
+      if (status == 200) {
+        lecturas.add(datos['clave'] as String);
+        final token = (request.headers['Authorization'] ?? '').replaceFirst('Bearer ', '');
+        final base = (resumenPorToken[token]?['noLeidos'] as int?) ?? 0;
+        cuerpo = {
+          'clave': datos['clave'],
+          'leido': true,
+          'noLeidos': (base - lecturas.length).clamp(0, 9999),
+        };
+      } else if (status == 404) {
+        cuerpo = {'error': {'codigo': 'NOTIFICATION_NOT_FOUND', 'mensaje': 'El aviso indicado no existe, ya no está vigente o no le corresponde.'}};
+      } else {
+        cuerpo = {'error': {'codigo': 'ERROR_INTERNO', 'mensaje': 'Error del servidor.'}};
+      }
+    } else if (request.method == 'GET' && RegExp(r'/vehicles/\d+$').hasMatch(ruta)) {
+      final id = int.parse(ruta.split('/').last);
+      cuerpo = {
+        'id': id,
+        'clientId': 1,
+        'plates': 'GHI-789-C',
+        'brand': 'Chevrolet',
+        'model': 'Aveo',
+        'year': 2017,
+      };
     } else if (request.method == 'GET' && ruta.endsWith('/notifications')) {
       final espera = puerta;
       if (espera != null) {
@@ -136,6 +173,10 @@ class EntornoAvisos {
   late final ApiClient api;
   late final AuthProvider auth;
   late final NotificationsProvider proveedor;
+  final ShellNavigationProvider shell = ShellNavigationProvider();
+
+  /// Rutas con nombre que el panel pidió abrir (`/avisos/orden`, `/avisos/vehiculo`…).
+  final List<RouteSettings> rutas = [];
 
   EntornoAvisos(this.cliente);
 }
@@ -181,6 +222,7 @@ Future<EntornoAvisos> montarAvisos(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthProvider>.value(value: entorno.auth),
+        ChangeNotifierProvider<ShellNavigationProvider>.value(value: entorno.shell),
         // Con `create` el árbol libera el proveedor (y su temporizador) al desmontarse.
         ChangeNotifierProvider<NotificationsProvider>(
           lazy: false,
@@ -189,6 +231,15 @@ Future<EntornoAvisos> montarAvisos(
       ],
       child: MaterialApp(
         theme: temaMotorix(),
+        // Las pantallas de destino reales necesitan muchos proveedores: aquí solo
+        // se registra a qué ruta con nombre se pidió ir.
+        onGenerateRoute: (ajustes) {
+          entorno.rutas.add(ajustes);
+          return MaterialPageRoute<void>(
+            settings: ajustes,
+            builder: (_) => Scaffold(body: Text('Destino ${ajustes.name}')),
+          );
+        },
         home: Scaffold(
           appBar: AppBar(title: const Text('Prueba'), actions: const [CampanaAvisos()]),
           endDrawer: const PanelAvisos(),

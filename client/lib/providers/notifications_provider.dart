@@ -14,6 +14,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../models/notification.dart';
+import '../models/vehicle.dart';
 import '../services/api_client.dart';
 import 'auth_provider.dart';
 
@@ -136,6 +137,55 @@ class NotificationsProvider extends ChangeNotifier {
         _consultando = false;
         notifyListeners();
       }
+    }
+  }
+
+  /// Marca un aviso como leído para el usuario (US6; FR-006, CA-6).
+  ///
+  /// El efecto es inmediato (optimista): la fila se atenúa y el contador baja.
+  /// Si el servidor falla se revierte; si responde 404 (el aviso ya no existe o
+  /// ya no es vigente) se recarga la lista para reflejar la realidad. Se ignora
+  /// la respuesta si mientras tanto cambió la sesión (otro usuario).
+  Future<void> marcarLeido(String clave) async {
+    final indice = avisos.indexWhere((aviso) => aviso.clave == clave);
+    if (_liberado || indice < 0 || avisos[indice].leido) return;
+
+    final generacion = _generacion;
+    _cambiarLeido(clave, true);
+    try {
+      final respuesta = await api.post('/notifications/reads', {'clave': clave});
+      if (generacion != _generacion) return;
+      noLeidos = (respuesta['noLeidos'] as num?)?.toInt() ?? noLeidos;
+      notifyListeners();
+    } on ExcepcionApi catch (excepcion) {
+      if (generacion != _generacion) return;
+      if (excepcion.status == 404) {
+        await cargar(silencioso: true);
+      } else if (excepcion.status != 401) {
+        _cambiarLeido(clave, false);
+      }
+    } catch (_) {
+      if (generacion != _generacion) return;
+      _cambiarLeido(clave, false);
+    }
+  }
+
+  /// Cambia la marca de leído de un aviso y ajusta el contador.
+  void _cambiarLeido(String clave, bool leido) {
+    avisos = [
+      for (final aviso in avisos)
+        aviso.clave == clave ? aviso.copiarCon(leido: leido) : aviso,
+    ];
+    noLeidos = avisos.where((aviso) => !aviso.leido).length;
+    notifyListeners();
+  }
+
+  /// Vehículo de un aviso de mantenimiento (para abrir su historial); null si falla.
+  Future<Vehiculo?> cargarVehiculo(int id) async {
+    try {
+      return Vehiculo.desdeJson(await api.get('/vehicles/$id'));
+    } on ExcepcionApi {
+      return null;
     }
   }
 

@@ -95,6 +95,61 @@ class Aviso {
       );
 }
 
+/// Un hecho pendiente de avisar a un cliente (007, US7): orden terminada sin
+/// entregar, cita de mañana o mantenimiento próximo o vencido.
+class ClientePorAvisar {
+  /// `ORDEN_TERMINADA | CITA_MANANA | MANTENIMIENTO`.
+  final String tipo;
+  final int hechoId;
+  final String motivo;
+  final int clienteId;
+  final String nombreCompleto;
+  final String telefono;
+  final int vehiculoId;
+  final String placas;
+  final String marca;
+  final String modelo;
+  final String? fechaReferencia;
+
+  const ClientePorAvisar({
+    required this.tipo,
+    required this.hechoId,
+    required this.motivo,
+    required this.clienteId,
+    required this.nombreCompleto,
+    required this.telefono,
+    required this.vehiculoId,
+    required this.placas,
+    required this.marca,
+    required this.modelo,
+    this.fechaReferencia,
+  });
+
+  factory ClientePorAvisar.desdeJson(Map<String, dynamic> json) {
+    final cliente = json['cliente'] as Map<String, dynamic>? ?? const {};
+    final vehiculo = json['vehiculo'] as Map<String, dynamic>? ?? const {};
+    return ClientePorAvisar(
+      tipo: json['tipo'] as String? ?? '',
+      hechoId: (json['hechoId'] as num?)?.toInt() ?? 0,
+      motivo: json['motivo'] as String? ?? '',
+      clienteId: (cliente['id'] as num?)?.toInt() ?? 0,
+      nombreCompleto: cliente['nombreCompleto'] as String? ?? '',
+      telefono: cliente['telefono'] as String? ?? '',
+      vehiculoId: (vehiculo['id'] as num?)?.toInt() ?? 0,
+      placas: vehiculo['placas'] as String? ?? '',
+      marca: vehiculo['marca'] as String? ?? '',
+      modelo: vehiculo['modelo'] as String? ?? '',
+      fechaReferencia: json['fechaReferencia'] as String?,
+    );
+  }
+
+  /// Identidad del hecho (tipo y número): no se avisa dos veces.
+  String get clave => '$tipo-$hechoId';
+
+  /// «PLACAS · Marca Modelo».
+  String get vehiculoTexto => '$placas · $marca $modelo';
+}
+
 /// Respuesta completa de `GET /api/notifications`.
 class ResumenAvisos {
   final int total;

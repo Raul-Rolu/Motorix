@@ -11,6 +11,12 @@
 /** Longitud máxima de una clave: coincide con `notification_reads.notification_key`. */
 export const LONGITUD_MAXIMA_CLAVE = 80;
 
+/**
+ * Tipos de hecho que se avisan al cliente (007, US7). Coinciden con el ENUM
+ * `client_notices.notice_type` de la migración 018.
+ */
+export const TIPOS_DE_HECHO = Object.freeze(['ORDEN_TERMINADA', 'CITA_MANANA', 'MANTENIMIENTO']);
+
 /** Identificador máximo: las claves primarias son INT UNSIGNED. */
 const ID_MAXIMO = 4294967295;
 

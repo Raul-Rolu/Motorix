@@ -11,6 +11,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motorix_client/config/theme.dart';
+import 'package:motorix_client/models/vehicle.dart';
+import 'package:motorix_client/providers/shell_navigation_provider.dart';
 
 import 'helpers/avisos_falsos.dart';
 
@@ -89,6 +91,158 @@ void main() {
 
       final icono = iconoDe(tester, 'MANTENIMIENTO:2:PROXIMO', Icons.build_circle_outlined);
       expect(icono.color, MotorixColores.textoSecundario);
+    });
+  });
+
+  group('marcar como leído y abrir el aviso (US6)', () {
+    final dos = [
+      avisoJson(clave: 'MANTENIMIENTO:1:VENCIDO'),
+      avisoJson(clave: 'MANTENIMIENTO:2:VENCIDO'),
+    ];
+
+    String contador(WidgetTester tester) => tester
+        .widget<Text>(find.descendant(of: find.byType(Badge), matching: find.byType(Text)))
+        .data!;
+
+    probarAvisos('«Marcar como leído» baja el contador, atenúa la fila y registra la lectura', (tester) async {
+      final cliente = ClienteAvisosFalso()..resumenPorToken['t-1'] = resumenJson(dos);
+      final entorno = await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+      expect(contador(tester), '2');
+      expect(iconoDe(tester, 'MANTENIMIENTO:1:VENCIDO', Icons.build_circle_outlined).color, MotorixColores.error);
+
+      await tester.tap(find.byKey(const Key('marcarLeido-MANTENIMIENTO:1:VENCIDO')));
+      await tester.pump();
+
+      // Efecto inmediato (optimista) y luego la lectura queda guardada en el servidor.
+      await asentar(tester);
+      expect(cliente.lecturas, ['MANTENIMIENTO:1:VENCIDO']);
+      expect(contador(tester), '1');
+      expect(entorno.proveedor.noLeidos, 1);
+      expect(iconoDe(tester, 'MANTENIMIENTO:1:VENCIDO', Icons.build_circle_outlined).color,
+          MotorixColores.textoSecundario);
+      // El aviso leído ya no ofrece el botón; el otro sí.
+      expect(find.byKey(const Key('marcarLeido-MANTENIMIENTO:1:VENCIDO')), findsNothing);
+      expect(find.byKey(const Key('marcarLeido-MANTENIMIENTO:2:VENCIDO')), findsOneWidget);
+    });
+
+    probarAvisos('si el servidor falla la marca se revierte y el contador vuelve a su valor', (tester) async {
+      final cliente = ClienteAvisosFalso()
+        ..resumenPorToken['t-1'] = resumenJson(dos)
+        ..statusLectura = 500;
+      final entorno = await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      await tester.tap(find.byKey(const Key('marcarLeido-MANTENIMIENTO:1:VENCIDO')));
+      await asentar(tester);
+
+      expect(cliente.lecturas, isEmpty);
+      expect(entorno.proveedor.noLeidos, 2);
+      expect(entorno.proveedor.avisos.every((a) => !a.leido), isTrue);
+      expect(find.byKey(const Key('marcarLeido-MANTENIMIENTO:1:VENCIDO')), findsOneWidget);
+    });
+
+    probarAvisos('si el aviso ya no existe (404) se recarga la lista', (tester) async {
+      final cliente = ClienteAvisosFalso()
+        ..resumenPorToken['t-1'] = resumenJson(dos)
+        ..statusLectura = 404;
+      final entorno = await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+      final antes = cliente.consultasAvisos;
+      // Mientras tanto el mantenimiento 1 se completó: el servidor ya no lo devuelve.
+      cliente.resumenPorToken['t-1'] = resumenJson([dos[1]]);
+
+      await tester.tap(find.byKey(const Key('marcarLeido-MANTENIMIENTO:1:VENCIDO')));
+      await asentar(tester);
+      await asentar(tester);
+
+      expect(cliente.consultasAvisos, greaterThan(antes));
+      expect(entorno.proveedor.avisos.map((a) => a.clave), ['MANTENIMIENTO:2:VENCIDO']);
+      expect(entorno.proveedor.noLeidos, 1);
+    });
+
+    probarAvisos('abrir un aviso de orden lo marca como leído, cierra el panel y va a la orden', (tester) async {
+      final orden = avisoJson(
+        clave: 'ORDEN:9:DETENIDA',
+        grupo: 'ORDEN_DETENIDA',
+        estado: 'DETENIDA',
+        titulo: 'Orden detenida',
+        detalle: 'Orden #9 · GHI-789-C · Diagnóstico, sin cambios hace 5 día(s)',
+        pantalla: 'ORDEN',
+        id: 9,
+      );
+      final cliente = ClienteAvisosFalso()..resumenPorToken['t-1'] = resumenJson([orden]);
+      final entorno = await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      await tester.tap(find.byKey(const Key('aviso-ORDEN:9:DETENIDA')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(cliente.lecturas, ['ORDEN:9:DETENIDA']);
+      expect(entorno.rutas.map((r) => r.name), ['/avisos/orden']);
+      expect(entorno.rutas.single.arguments, 9);
+      expect(find.byKey(const Key('panelAvisos')), findsNothing);
+    });
+
+    probarAvisos('abrir un aviso de mantenimiento carga el vehículo y abre su historial', (tester) async {
+      final cliente = ClienteAvisosFalso()..resumenPorToken['t-1'] = resumenJson([_vencido]);
+      final entorno = await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      await tester.tap(find.byKey(const Key('aviso-MANTENIMIENTO:1:VENCIDO')));
+      await tester.pump();
+      await asentar(tester);
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(cliente.consultasDeVehiculo, 1);
+      expect(cliente.lecturas, ['MANTENIMIENTO:1:VENCIDO']);
+      expect(entorno.rutas.map((r) => r.name), ['/avisos/vehiculo']);
+      final vehiculo = entorno.rutas.single.arguments as Vehiculo;
+      expect(vehiculo.id, 3);
+      expect(vehiculo.plates, 'GHI-789-C');
+    });
+
+    probarAvisos('abrir un aviso de stock pide la sección Inventario', (tester) async {
+      final cliente = ClienteAvisosFalso()..resumenPorToken['t-1'] = resumenJson([_stock]);
+      final entorno = await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      await tester.tap(find.byKey(const Key('aviso-STOCK:7:BAJO')));
+      await tester.pump();
+      await asentar(tester);
+
+      expect(entorno.shell.solicitada, SeccionShell.inventario);
+      expect(cliente.lecturas, ['STOCK:7:BAJO']);
+      expect(entorno.rutas, isEmpty);
+    });
+
+    probarAvisos('abrir un aviso de cita pide la sección Citas', (tester) async {
+      final cliente = ClienteAvisosFalso()..resumenPorToken['t-1'] = resumenJson([_cita]);
+      final entorno = await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      await tester.tap(find.byKey(const Key('aviso-CITA:5:HOY')));
+      await tester.pump();
+      await asentar(tester);
+
+      expect(entorno.shell.solicitada, SeccionShell.citas);
+      expect(cliente.lecturas, ['CITA:5:HOY']);
+    });
+
+    probarAvisos('abrir un aviso ya leído navega pero no vuelve a marcarlo', (tester) async {
+      final leido = avisoJson(clave: 'MANTENIMIENTO:1:VENCIDO', leido: true);
+      final cliente = ClienteAvisosFalso()..resumenPorToken['t-1'] = resumenJson([leido]);
+      final entorno = await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      await tester.tap(find.byKey(const Key('aviso-MANTENIMIENTO:1:VENCIDO')));
+      await tester.pump();
+      await asentar(tester);
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(cliente.lecturas, isEmpty);
+      expect(entorno.rutas.map((r) => r.name), ['/avisos/vehiculo']);
     });
   });
 
