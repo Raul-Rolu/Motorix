@@ -1,0 +1,19 @@
+OK    inicio de sesión de admin
+OK    inicio de sesión de recepcion
+OK    inicio de sesión de mecanico
+  admin: total=9 noLeidos=9 grupos={"MANTENIMIENTO_VENCIDO":2,"ORDEN_DETENIDA":1,"STOCK":3,"MANTENIMIENTO_PROXIMO":1,"CITA_DEL_DIA":2}
+OK    ADMIN tiene al menos un aviso de MANTENIMIENTO_VENCIDO
+OK    ADMIN tiene al menos un aviso de ORDEN_DETENIDA
+OK    ADMIN tiene al menos un aviso de STOCK
+OK    ADMIN tiene al menos un aviso de MANTENIMIENTO_PROXIMO
+OK    ADMIN tiene al menos un aviso de CITA_DEL_DIA
+OK    ADMIN tiene un aviso de stock BAJO
+  recepcion: total=6 noLeidos=6 grupos={"MANTENIMIENTO_VENCIDO":2,"ORDEN_DETENIDA":1,"MANTENIMIENTO_PROXIMO":1,"CITA_DEL_DIA":2}
+  mecanico: total=1 noLeidos=1 grupos={"ORDEN_DETENIDA":1}
+  clientes por avisar (recepcion): ["ORDEN_TERMINADA:6","CITA_MANANA:3","MANTENIMIENTO:1","MANTENIMIENTO:2","MANTENIMIENTO:6"]
+OK    Clientes por avisar incluye la orden 6
+OK    Clientes por avisar incluye una cita de mañana
+OK    Clientes por avisar incluye mantenimientos (vencidos y próximo)
+OK    Clientes por avisar incluye el mantenimiento 6 (próximo)
+OK    MECHANIC recibe 403 en Clientes por avisar
+Código de salida del guion: 0

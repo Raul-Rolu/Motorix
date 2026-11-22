@@ -1,0 +1,10 @@
+T070: doble corrida de seeds 001-009 sobre motorix_test (migraciones 001-018 aplicadas antes)
+--- Corrida 1 ---
+{"appointments":5,"client_notices":0,"clients":3,"inventory_movements":10,"maintenance_plans":6,"notification_reads":0,"order_entries":5,"order_labor":2,"order_parts":2,"order_services":4,"parts":7,"payments":4,"schema_migrations":18,"service_orders":6,"tickets":1,"users":3,"vehicles":4}
+[{"id":1,"plates":"ABC-123-A"},{"id":2,"plates":"DEF-456-B"},{"id":3,"plates":"GHI-789-C"},{"id":4,"plates":"JKL-012-D"}]
+[{"id":1,"status":"RECIBIDO","cambio":"2026-11-21 10:13:37"},{"id":2,"status":"EN_REPARACION","cambio":"2026-11-21 10:13:37"},{"id":3,"status":"ESPERANDO_REFACCION","cambio":"2026-11-17 10:13:37"},{"id":4,"status":"ENTREGADO","cambio":"2026-10-23 10:13:37"},{"id":5,"status":"CANCELADA","cambio":"2026-11-02 10:13:37"},{"id":6,"status":"TERMINADO","cambio":"2026-11-21 10:13:37"}]
+--- Corrida 2 ---
+{"appointments":5,"client_notices":0,"clients":3,"inventory_movements":10,"maintenance_plans":6,"notification_reads":0,"order_entries":5,"order_labor":2,"order_parts":2,"order_services":4,"parts":7,"payments":4,"schema_migrations":18,"service_orders":6,"tickets":1,"users":3,"vehicles":4}
+[{"id":1,"plates":"ABC-123-A"},{"id":2,"plates":"DEF-456-B"},{"id":3,"plates":"GHI-789-C"},{"id":4,"plates":"JKL-012-D"}]
+[{"id":1,"status":"RECIBIDO","cambio":"2026-11-21 10:13:37"},{"id":2,"status":"EN_REPARACION","cambio":"2026-11-21 10:13:37"},{"id":3,"status":"ESPERANDO_REFACCION","cambio":"2026-11-17 10:13:37"},{"id":4,"status":"ENTREGADO","cambio":"2026-10-23 10:13:37"},{"id":5,"status":"CANCELADA","cambio":"2026-11-02 10:13:37"},{"id":6,"status":"TERMINADO","cambio":"2026-11-21 10:13:37"}]
+Resultado: conteos por tabla y fechas de status_changed_at idénticos entre corridas (la orden 3 conserva su fecha de hace 5 días).

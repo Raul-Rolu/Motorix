@@ -1,0 +1,8 @@
+Rendimiento de GET /api/notifications (007-notificaciones-internas, T072/T073, CA-13)
+Fecha: 2026-11-22T16:04:35.856Z
+Volumen: 1000 órdenes (200 activas, 100 detenidas), 600 citas (100 de hoy), 400 refacciones (100 en alerta), 500 mantenimientos en 300 vehículos (100 vencidos o próximos), 200 lecturas
+Método: 1 llamada de calentamiento descartada + 5 mediciones por rol; criterio: máximo < 1000 ms y ≤ 10 consultas SQL por petición
+
+ADMIN (admin): total de avisos=400; consultas SQL por petición (máx.)=8; tiempos ms=[21.2, 17.4, 19.8, 17.2, 16.3]; máximo=21.2 ms
+RECEPTIONIST (recepcion): total de avisos=300; consultas SQL por petición (máx.)=7; tiempos ms=[14.6, 15.5, 13.8, 15.1, 16.0]; máximo=16.0 ms
+MECHANIC (mecanico): total de avisos=34; consultas SQL por petición (máx.)=4; tiempos ms=[5.0, 4.6, 4.3, 4.9, 5.3]; máximo=5.3 ms
