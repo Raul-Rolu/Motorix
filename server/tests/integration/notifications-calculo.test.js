@@ -651,3 +651,155 @@ describe('coincidencia del stock con el panel de control y con el inventario (CA
     expect(delCentro.map((clave) => Number(clave.split(':')[1])).sort((a, b) => a - b)).toEqual(ids);
   });
 });
+
+// --- US4 (T038): órdenes detenidas ------------------------------------------
+
+/** Minutos de «hace N días y 10 minutos»: siempre dentro del día N, lejos de los bordes. */
+const hace = (dias) => dias * 1440 + 10;
+
+async function crearOrdenSql({
+  clienteId,
+  vehiculoId,
+  estado = 'DIAGNOSTICO',
+  estadoPrevio = null,
+  minutosSinCambio,
+  mecanicoId = null,
+}) {
+  const [resultado] = await getPool().query(
+    `INSERT INTO service_orders
+       (client_id, vehicle_id, mechanic_id, status, previous_state, mileage_entry, reason, status_changed_at)
+     VALUES (?, ?, ?, ?, ?, 40000, 'Ruido al frenar', DATE_SUB(NOW(), INTERVAL ? MINUTE))`,
+    [clienteId, vehiculoId, mecanicoId, estado, estadoPrevio, minutosSinCambio]
+  );
+  return resultado.insertId;
+}
+
+describe('orden detenida (FR-010, CA-3)', () => {
+  test.each([
+    ['RECIBIDO', 'Recibido', null],
+    ['DIAGNOSTICO', 'Diagnóstico', null],
+    ['EN_REPARACION', 'En reparación', null],
+    ['ESPERANDO_REFACCION', 'Esperando refacción', 'EN_REPARACION'],
+  ])('una orden %s sin cambio de estado hace 5 días genera ORDEN:<id>:DETENIDA', async (estado, nombre, estadoPrevio) => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('ORD-DET-1');
+    const id = await crearOrdenSql({ clienteId, vehiculoId, estado, estadoPrevio, minutosSinCambio: hace(5) });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body.datos).toEqual([
+      {
+        clave: `ORDEN:${id}:DETENIDA`,
+        grupo: 'ORDEN_DETENIDA',
+        estado: 'DETENIDA',
+        titulo: 'Orden detenida',
+        // El nombre del estado en español lo genera el servidor.
+        detalle: `Orden #${id} · ORD-DET-1 · ${nombre}, sin cambios hace 5 día(s)`,
+        leido: false,
+        destino: { pantalla: 'ORDEN', id },
+      },
+    ]);
+  });
+
+  test('el plazo es estrictamente de más de 3 días (72 horas)', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('ORD-DET-2');
+    const justoAntes = await crearOrdenSql({ clienteId, vehiculoId, minutosSinCambio: 3 * 1440 - 5 });
+    const justoDespues = await crearOrdenSql({ clienteId, vehiculoId, minutosSinCambio: 3 * 1440 + 5 });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(clavesDe(respuesta, 'ORDEN_DETENIDA')).toEqual([`ORDEN:${justoDespues}:DETENIDA`]);
+    expect(JSON.stringify(respuesta.body)).not.toContain(`ORDEN:${justoAntes}:`);
+  });
+
+  test.each(['TERMINADO', 'ENTREGADO', 'CANCELADA'])('una orden %s nunca genera aviso de orden detenida', async (estado) => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('ORD-DET-3');
+    await crearOrdenSql({ clienteId, vehiculoId, estado, minutosSinCambio: hace(30) });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+
+  test('cambiar el estado de la orden quita el aviso', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('ORD-DET-4');
+    const id = await crearOrdenSql({ clienteId, vehiculoId, estado: 'DIAGNOSTICO', minutosSinCambio: hace(6) });
+    expect(clavesDe(await avisos(tokens.admin), 'ORDEN_DETENIDA')).toEqual([`ORDEN:${id}:DETENIDA`]);
+
+    const cambio = await request(app)
+      .patch(`/api/orders/${id}/status`)
+      .set('Authorization', `Bearer ${tokens.admin}`)
+      .send({ status: 'EN_REPARACION' });
+
+    expect(cambio.status).toBe(200);
+    expect((await avisos(tokens.admin)).body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+
+  test('editar motivo, notas o kilometraje no reinicia el plazo: el aviso sigue', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('ORD-DET-5');
+    const id = await crearOrdenSql({ clienteId, vehiculoId, minutosSinCambio: hace(6) });
+
+    const edicion = await request(app)
+      .put(`/api/orders/${id}`)
+      .set('Authorization', `Bearer ${tokens.admin}`)
+      .send({ reason: 'Ruido y vibración', notes: 'Se llamó al cliente', mileageEntry: 40500 });
+
+    expect(edicion.status).toBe(200);
+    expect(clavesDe(await avisos(tokens.admin), 'ORDEN_DETENIDA')).toEqual([`ORDEN:${id}:DETENIDA`]);
+  });
+
+  test('reasignar el mecánico tampoco reinicia el plazo', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('ORD-DET-6');
+    const id = await crearOrdenSql({ clienteId, vehiculoId, minutosSinCambio: hace(6) });
+    const [[mecanico]] = await getPool().query("SELECT id FROM users WHERE username = 'mecanico'");
+
+    const asignacion = await request(app)
+      .patch(`/api/orders/${id}/assignment`)
+      .set('Authorization', `Bearer ${tokens.admin}`)
+      .send({ mechanicId: mecanico.id });
+
+    expect(asignacion.status).toBe(200);
+    expect(clavesDe(await avisos(tokens.admin), 'ORDEN_DETENIDA')).toEqual([`ORDEN:${id}:DETENIDA`]);
+  });
+
+  test('la más antigua va primero dentro del grupo', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('ORD-DET-7');
+    const reciente = await crearOrdenSql({ clienteId, vehiculoId, minutosSinCambio: hace(4) });
+    const antigua = await crearOrdenSql({ clienteId, vehiculoId, minutosSinCambio: hace(20) });
+    const media = await crearOrdenSql({ clienteId, vehiculoId, minutosSinCambio: hace(9) });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(clavesDe(respuesta, 'ORDEN_DETENIDA')).toEqual([
+      `ORDEN:${antigua}:DETENIDA`,
+      `ORDEN:${media}:DETENIDA`,
+      `ORDEN:${reciente}:DETENIDA`,
+    ]);
+  });
+
+  test('las órdenes detenidas van entre los vencidos y el stock en el orden de presentación', async () => {
+    const { tokens } = await prepararEntorno();
+    const { clienteId, vehiculoId } = await crearVehiculo('ORD-DET-8');
+    await crearOrdenSql({ clienteId, vehiculoId, minutosSinCambio: hace(5) });
+    await crearRefaccion({ codigo: 'GRP-ORD', stock: 1, minimo: 5 });
+    await crearMantenimiento({ vehiculoId, descripcion: 'Próximo', fechaObjetivo: fechaLocal(7) });
+    await crearMantenimiento({ vehiculoId, descripcion: 'Vencido', fechaObjetivo: fechaLocal(-7) });
+    await crearCita({ clienteId, vehiculoId, fecha: fechaLocal(0) });
+
+    const respuesta = await avisos(tokens.admin);
+
+    expect(respuesta.body.datos.map((aviso) => aviso.grupo)).toEqual([
+      'MANTENIMIENTO_VENCIDO',
+      'ORDEN_DETENIDA',
+      'STOCK',
+      'MANTENIMIENTO_PROXIMO',
+      'CITA_DEL_DIA',
+    ]);
+  });
+});

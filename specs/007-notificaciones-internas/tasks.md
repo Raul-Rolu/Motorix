@@ -151,18 +151,18 @@ description: "Lista de tareas para la feature 007-notificaciones-internas"
 
 ### Pruebas de la Historia 4 (escribirlas primero; deben fallar) ⚠️
 
-- [ ] T037 [P] [US4] Crear `server/tests/integration/order-status-changed.test.js`: cada transición de estado (avance, pausa y reanudación de `ESPERANDO_REFACCION`, cancelación) actualiza `status_changed_at`; el alta de una orden la inicia en su creación; editar motivo, notas, kilometraje o asignar mecánico **no** la modifica; ninguna respuesta existente de órdenes expone la columna ni cambia de forma [FR-020][CA-15]
-- [ ] T038 [US4] Agregar a `server/tests/integration/notifications-calculo.test.js` (depende de T030): orden en estado activo con `status_changed_at` de hace más de 3 días genera `ORDEN:<id>:DETENIDA`; de 3 días o menos no; `TERMINADO`, `ENTREGADO` y `CANCELADA` nunca; cambiar el estado quita el aviso; editar motivo o notas no lo quita; **el detalle del aviso nombra el estado en español generado por el servidor («Recibido», «Diagnóstico», «En reparación», «Esperando refacción»)** [FR-002][FR-010][CA-3]
-- [ ] T039 [US4] Agregar a `server/tests/contract/notifications-roles.test.js` (depende de T024): ADMIN y RECEPTIONIST reciben todas las órdenes detenidas [FR-004][CA-4]
+- [X] T037 [P] [US4] Crear `server/tests/integration/order-status-changed.test.js`: cada transición de estado (avance, pausa y reanudación de `ESPERANDO_REFACCION`, cancelación) actualiza `status_changed_at`; el alta de una orden la inicia en su creación; editar motivo, notas, kilometraje o asignar mecánico **no** la modifica; ninguna respuesta existente de órdenes expone la columna ni cambia de forma [FR-020][CA-15]
+- [X] T038 [US4] Agregar a `server/tests/integration/notifications-calculo.test.js` (depende de T030): orden en estado activo con `status_changed_at` de hace más de 3 días genera `ORDEN:<id>:DETENIDA`; de 3 días o menos no; `TERMINADO`, `ENTREGADO` y `CANCELADA` nunca; cambiar el estado quita el aviso; editar motivo o notas no lo quita; **el detalle del aviso nombra el estado en español generado por el servidor («Recibido», «Diagnóstico», «En reparación», «Esperando refacción»)** [FR-002][FR-010][CA-3]
+- [X] T039 [US4] Agregar a `server/tests/contract/notifications-roles.test.js` (depende de T024): ADMIN y RECEPTIONIST reciben todas las órdenes detenidas [FR-004][CA-4]
 
 ### Implementación de la Historia 4
 
-- [ ] T040 [US4] Actualizar `orderModel.setStatus` en `server/models/order.js` para que su `UPDATE` también asigne `status_changed_at = CURRENT_TIMESTAMP`, sin cambiar su firma, sus validaciones ni sus respuestas; `update`, `setMechanic` y `create` no cambian (depende de T005) [FR-020][CA-15]
-- [ ] T041 [US4] Crear `server/models/notification.js` con `findOrdenesDetenidas({ dias, mechanicId })` (estados `RECIBIDO`, `DIAGNOSTICO`, `EN_REPARACION`, `ESPERANDO_REFACCION` y `status_changed_at < NOW() - INTERVAL ? DAY`, con placas y estado; `mechanicId` opcional) (depende de T005) [FR-010][CA-3]
-- [ ] T042 [P] [US4] Crear `server/utils/notification-text.js` con `nombreEstadoOrden(estado)` (nombre en español del estado de una orden para el detalle del aviso; el mapeo `nombreEstadoOrden` hoy existe solo en el cliente Flutter, por lo que el servidor no puede depender de él) [FR-002][CA-3]
-- [ ] T043 [US4] Ampliar `server/services/notification-service.js` con los avisos de orden detenida (constante `DIAS_ORDEN_DETENIDA = 3`) para ADMIN y RECEPTIONIST, usando `notification-text.js` para el detalle (depende de T034, T041, T042) [FR-002][FR-010][CA-3][CA-4]
-- [ ] T044 [US4] Ajustar `client/lib/widgets/notifications_panel.dart` con el grupo «Órdenes detenidas» (`warning`, `Icons.assignment_late_outlined`) (depende de T035) [FR-001][CA-1]
-- [ ] T045 [US4] Ejecutar T037 a T039 hasta verlas pasar y repetir `npx jest orders order-state` en `server/` para confirmar que las suites previas de órdenes siguen en verde sin editarse [CA-3][CA-15][CA-13]
+- [X] T040 [US4] Actualizar `orderModel.setStatus` en `server/models/order.js` para que su `UPDATE` también asigne `status_changed_at = CURRENT_TIMESTAMP`, sin cambiar su firma, sus validaciones ni sus respuestas; `update`, `setMechanic` y `create` no cambian (depende de T005) [FR-020][CA-15]
+- [X] T041 [US4] Crear `server/models/notification.js` con `findOrdenesDetenidas({ dias, mechanicId })` (estados `RECIBIDO`, `DIAGNOSTICO`, `EN_REPARACION`, `ESPERANDO_REFACCION` y `status_changed_at < NOW() - INTERVAL ? DAY`, con placas y estado; `mechanicId` opcional) (depende de T005) [FR-010][CA-3]
+- [X] T042 [P] [US4] Crear `server/utils/notification-text.js` con `nombreEstadoOrden(estado)` (nombre en español del estado de una orden para el detalle del aviso; el mapeo `nombreEstadoOrden` hoy existe solo en el cliente Flutter, por lo que el servidor no puede depender de él) [FR-002][CA-3]
+- [X] T043 [US4] Ampliar `server/services/notification-service.js` con los avisos de orden detenida (constante `DIAS_ORDEN_DETENIDA = 3`) para ADMIN y RECEPTIONIST, usando `notification-text.js` para el detalle (depende de T034, T041, T042) [FR-002][FR-010][CA-3][CA-4]
+- [X] T044 [US4] Ajustar `client/lib/widgets/notifications_panel.dart` con el grupo «Órdenes detenidas» (`warning`, `Icons.assignment_late_outlined`) (depende de T035) [FR-001][CA-1]
+- [X] T045 [US4] Ejecutar T037 a T039 hasta verlas pasar y repetir `npx jest orders order-state` en `server/` para confirmar que las suites previas de órdenes siguen en verde sin editarse [CA-3][CA-15][CA-13]
 
 **Punto de control**: US4 verificable; las órdenes detenidas aparecen y el plazo solo se reinicia con un cambio de estado.
 
@@ -176,13 +176,13 @@ description: "Lista de tareas para la feature 007-notificaciones-internas"
 
 ### Pruebas de la Historia 5 (escribirlas primero; deben fallar) ⚠️
 
-- [ ] T046 [US5] Agregar a `server/tests/contract/notifications-roles.test.js` (depende de T039): MECHANIC recibe solo `ORDEN:` de sus órdenes; no recibe mantenimientos, citas ni stock aunque existan; una orden detenida sin mecánico no se devuelve; reasignarla cambia el destinatario; para MECHANIC no se ejecutan las consultas de otros tipos [FR-004][CA-4]
+- [X] T046 [US5] Agregar a `server/tests/contract/notifications-roles.test.js` (depende de T039): MECHANIC recibe solo `ORDEN:` de sus órdenes; no recibe mantenimientos, citas ni stock aunque existan; una orden detenida sin mecánico no se devuelve; reasignarla cambia el destinatario; para MECHANIC no se ejecutan las consultas de otros tipos [FR-004][CA-4]
 
 ### Implementación de la Historia 5
 
-- [ ] T047 [US5] Ampliar `server/services/notification-service.js` con la ruta de MECHANIC: solo `findOrdenesDetenidas({ mechanicId: usuario.id })` y ningún otro cálculo (depende de T043) [FR-004][CA-4]
-- [ ] T048 [US5] Ampliar `client/test/notifications_panel_test.dart` (depende de T025): con una respuesta de mecánico solo se muestran los grupos recibidos (sin encabezados vacíos) y la campana cuenta solo sus avisos [FR-001][CA-4]
-- [ ] T049 [US5] Ejecutar T046 y T048 hasta verlas pasar [CA-4][CA-13]
+- [X] T047 [US5] Ampliar `server/services/notification-service.js` con la ruta de MECHANIC: solo `findOrdenesDetenidas({ mechanicId: usuario.id })` y ningún otro cálculo (depende de T043) [FR-004][CA-4]
+- [X] T048 [US5] Ampliar `client/test/notifications_panel_test.dart` (depende de T025): con una respuesta de mecánico solo se muestran los grupos recibidos (sin encabezados vacíos) y la campana cuenta solo sus avisos [FR-001][CA-4]
+- [X] T049 [US5] Ejecutar T046 y T048 hasta verlas pasar [CA-4][CA-13]
 
 **Punto de control**: US5 verificable; el mecánico nunca recibe información ajena (validado en backend).
 

@@ -17,6 +17,7 @@
 import * as maintenanceModel from '../models/maintenance.js';
 import * as appointmentModel from '../models/appointment.js';
 import * as partModel from '../models/part.js';
+import * as notificationModel from '../models/notification.js';
 import {
   MARGEN_PROXIMO_DIAS,
   MARGEN_PROXIMO_KM,
@@ -28,6 +29,10 @@ import {
   proximidad,
 } from './maintenance-state.js';
 import { construirClave } from '../utils/notification-keys.js';
+import { nombreEstadoOrden } from '../utils/notification-text.js';
+
+/** Días sin cambio de estado a partir de los cuales una orden está detenida (el Sprint 7 podrá volverla configurable). */
+export const DIAS_ORDEN_DETENIDA = 3;
 
 /** Grupos de aviso en el orden de presentación del panel (contracts/api-rest.md). */
 export const GRUPOS = Object.freeze([
@@ -43,6 +48,9 @@ const ROLES_CON_MANTENIMIENTOS_Y_CITAS = Object.freeze(['ADMIN', 'RECEPTIONIST']
 
 /** El stock es solo de administración (data-model.md, sección 6; CA-4). */
 const ROL_CON_STOCK = 'ADMIN';
+
+/** El mecánico solo recibe avisos de las órdenes asignadas a él (CA-4). */
+const ROL_MECANICO = 'MECHANIC';
 
 /** Fecha local `YYYY-MM-DD` (la misma que usa `hoyLocal()` para «hoy»). */
 function fechaCorta(fecha) {
@@ -146,6 +154,32 @@ async function avisosDeCitasDelDia() {
 }
 
 /**
+ * Avisos de orden detenida (FR-010): orden activa sin cambio de estado desde
+ * hace más de DIAS_ORDEN_DETENIDA días, medido con `status_changed_at` (que
+ * solo actualiza `orderModel.setStatus`). ADMIN y RECEPTIONIST reciben todas;
+ * con `mechanicId` (MECHANIC) solo las órdenes asignadas a ese mecánico: una
+ * orden sin mecánico no se devuelve a ningún mecánico (CA-4).
+ */
+async function avisosDeOrdenesDetenidas(mechanicId = null) {
+  const ordenes = await notificationModel.findOrdenesDetenidas({
+    dias: DIAS_ORDEN_DETENIDA,
+    mechanicId,
+  });
+  return ordenes.map((orden) => ({
+    clave: construirClave('ORDEN', orden.id, 'DETENIDA'),
+    grupo: 'ORDEN_DETENIDA',
+    estado: 'DETENIDA',
+    titulo: 'Orden detenida',
+    detalle: `Orden #${orden.id} · ${orden.plates} · ${nombreEstadoOrden(orden.status)}, sin cambios hace ${orden.diasSinCambio} día(s)`,
+    leido: false,
+    destino: { pantalla: 'ORDEN', id: orden.id },
+    // Interno: la más antigua primero (más horas sin cambio = más urgente).
+    urgencia: -orden.horasSinCambio,
+    desempate: -orden.id,
+  }));
+}
+
+/**
  * Avisos de stock bajo (0 < stock <= mínimo) y agotado (stock 0) con la misma
  * condición que el panel de control (`CONDICION_STOCK_EN_ALERTA`, CA-5). Solo
  * se calculan para ADMIN: RECEPTIONIST y MECHANIC nunca ejecutan esta consulta.
@@ -194,7 +228,10 @@ export async function obtenerAvisos(usuario) {
   // Solo se calcula lo que el rol puede recibir (el resto ni siquiera se consulta).
   const calculos = [];
   if (ROLES_CON_MANTENIMIENTOS_Y_CITAS.includes(usuario.role)) {
-    calculos.push(avisosDeMantenimiento(), avisosDeCitasDelDia());
+    calculos.push(avisosDeMantenimiento(), avisosDeCitasDelDia(), avisosDeOrdenesDetenidas());
+  } else if (usuario.role === ROL_MECANICO) {
+    // El mecánico solo recibe avisos de SUS órdenes (id tomado del token, nunca de la petición).
+    calculos.push(avisosDeOrdenesDetenidas(usuario.id));
   }
   if (usuario.role === ROL_CON_STOCK) {
     calculos.push(avisosDeStock());

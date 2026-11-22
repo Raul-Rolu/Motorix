@@ -256,6 +256,204 @@ describe('stock: ADMIN lo ve; RECEPTIONIST y MECHANIC no lo reciben ni se calcul
   });
 });
 
+// --- US4 (T039): administración y recepción reciben TODAS las órdenes detenidas ---
+
+describe('órdenes detenidas: ADMIN y RECEPTIONIST reciben todas (CA-4)', () => {
+  /** Tres órdenes detenidas: de un mecánico, de otro y sin mecánico asignado. */
+  async function sembrarOrdenesDetenidas() {
+    const pool = getPool();
+    const hash = await bcrypt.hash('Usuario123', 10);
+    const [segundo] = await pool.query(
+      "INSERT INTO users (username, email, password_hash, full_name, role) VALUES ('mecanico2', 'mecanico2@motorix.local', ?, 'Segundo Mecánico', 'MECHANIC')",
+      [hash]
+    );
+    const [[primero]] = await pool.query("SELECT id FROM users WHERE username = 'mecanico'");
+    const [[cliente]] = await pool.query('SELECT id FROM clients LIMIT 1');
+    const [[vehiculo]] = await pool.query('SELECT id FROM vehicles LIMIT 1');
+    const insertar = async (mecanicoId) => {
+      const [orden] = await pool.query(
+        "INSERT INTO service_orders (client_id, vehicle_id, mechanic_id, status, mileage_entry, reason, status_changed_at) VALUES (?, ?, ?, 'DIAGNOSTICO', 40000, 'Ruido', DATE_SUB(NOW(), INTERVAL 5 DAY))",
+        [cliente.id, vehiculo.id, mecanicoId]
+      );
+      return orden.insertId;
+    };
+    return {
+      deMecanico1: await insertar(primero.id),
+      deMecanico2: await insertar(segundo.insertId),
+      sinMecanico: await insertar(null),
+    };
+  }
+
+  test.each(['admin', 'recepcion'])('%s recibe las órdenes detenidas de cualquier mecánico y las no asignadas', async (usuario) => {
+    const { tokens } = await prepararEntorno();
+    const ids = await sembrarOrdenesDetenidas();
+
+    const respuesta = await consultar(tokens[usuario]);
+
+    const ordenes = respuesta.body.datos.filter((aviso) => aviso.grupo === 'ORDEN_DETENIDA');
+    expect(ordenes.map((aviso) => aviso.clave).sort()).toEqual(
+      [ids.deMecanico1, ids.deMecanico2, ids.sinMecanico].map((id) => `ORDEN:${id}:DETENIDA`).sort()
+    );
+  });
+
+  test('una orden reciente (3 días o menos) no se envía a nadie', async () => {
+    const { tokens } = await prepararEntorno();
+    const [[cliente]] = await getPool().query('SELECT id FROM clients LIMIT 1');
+    const [[vehiculo]] = await getPool().query('SELECT id FROM vehicles LIMIT 1');
+    await getPool().query(
+      "INSERT INTO service_orders (client_id, vehicle_id, status, mileage_entry, reason, status_changed_at) VALUES (?, ?, 'DIAGNOSTICO', 40000, 'Ruido', DATE_SUB(NOW(), INTERVAL 2 DAY))",
+      [cliente.id, vehiculo.id]
+    );
+
+    for (const usuario of ['admin', 'recepcion']) {
+      const respuesta = await consultar(tokens[usuario]);
+      expect(respuesta.body.datos.some((aviso) => aviso.grupo === 'ORDEN_DETENIDA')).toBe(false);
+    }
+  });
+});
+
+// --- US5 (T046): el mecánico solo recibe avisos de SUS órdenes asignadas ------
+
+describe('mecánico: solo órdenes detenidas asignadas a él (CA-4)', () => {
+  /**
+   * Órdenes detenidas de los dos mecánicos y una sin asignar, más una orden
+   * reciente del primero, y todos los demás tipos de aviso (mantenimiento
+   * vencido, próximo, cita de hoy y stock) que el mecánico nunca debe recibir.
+   */
+  async function sembrarEscenarioDeMecanicos(tokens, mantenimientoId) {
+    const pool = getPool();
+    const hash = await bcrypt.hash('Usuario123', 10);
+    await pool.query(
+      "INSERT INTO users (username, email, password_hash, full_name, role) VALUES ('mecanico2', 'mecanico2@motorix.local', ?, 'Segundo Mecánico', 'MECHANIC')",
+      [hash]
+    );
+    const login2 = await request(app)
+      .post('/api/auth/login')
+      .send({ identificacion: 'mecanico2', contrasena: 'Usuario123' });
+    const [[primero]] = await pool.query("SELECT id FROM users WHERE username = 'mecanico'");
+    const [[segundo]] = await pool.query("SELECT id FROM users WHERE username = 'mecanico2'");
+    const [[cliente]] = await pool.query('SELECT id FROM clients LIMIT 1');
+    const [[vehiculo]] = await pool.query('SELECT id FROM vehicles LIMIT 1');
+
+    const insertar = async (mecanicoId, intervalo) => {
+      const [orden] = await pool.query(
+        `INSERT INTO service_orders (client_id, vehicle_id, mechanic_id, status, mileage_entry, reason, status_changed_at)
+         VALUES (?, ?, ?, 'DIAGNOSTICO', 40000, 'Ruido', DATE_SUB(NOW(), INTERVAL ${intervalo}))`,
+        [cliente.id, vehiculo.id, mecanicoId]
+      );
+      return orden.insertId;
+    };
+    const ordenes = {
+      detenidaDe1: await insertar(primero.id, '5 DAY'),
+      detenidaDe2: await insertar(segundo.id, '6 DAY'),
+      detenidaSinMecanico: await insertar(null, '7 DAY'),
+      recienteDe1: await insertar(primero.id, '1 DAY'),
+    };
+
+    // Los demás tipos de aviso, que el mecánico nunca debe recibir.
+    const dia = new Date();
+    const hoy = `${dia.getFullYear()}-${String(dia.getMonth() + 1).padStart(2, '0')}-${String(dia.getDate()).padStart(2, '0')}`;
+    await pool.query(
+      "INSERT INTO maintenance_plans (vehicle_id, description, target_date, status) VALUES (?, 'Próximo', DATE_ADD(CURDATE(), INTERVAL 10 DAY), 'PENDING')",
+      [vehiculo.id]
+    );
+    await pool.query(
+      "INSERT INTO appointments (client_id, vehicle_id, appointment_date, appointment_time, reason) VALUES (?, ?, ?, '09:00:00', 'Revisión')",
+      [cliente.id, vehiculo.id, hoy]
+    );
+    await pool.query("INSERT INTO parts (name, code, stock, min_stock, is_active) VALUES ('Pastillas', 'MEC-PAS', 0, 5, 1)");
+
+    return { ...ordenes, mantenimientoId, token2: login2.body.token, tokens };
+  }
+
+  const clave = (id) => `ORDEN:${id}:DETENIDA`;
+
+  test('recibe solo las órdenes detenidas asignadas a él y ningún otro tipo de aviso', async () => {
+    const { tokens, mantenimientoId } = await prepararEntorno();
+    const escenario = await sembrarEscenarioDeMecanicos(tokens, mantenimientoId);
+
+    const respuesta = await consultar(tokens.mecanico);
+
+    expect(respuesta.status).toBe(200);
+    expect(respuesta.body.datos.map((aviso) => aviso.clave)).toEqual([clave(escenario.detenidaDe1)]);
+    expect(respuesta.body.total).toBe(1);
+    expect(respuesta.body.noLeidos).toBe(1);
+    // Ni mantenimientos, ni citas, ni stock aunque existan.
+    expect(JSON.stringify(respuesta.body)).not.toMatch(/MANTENIMIENTO:|CITA:|STOCK:/);
+  });
+
+  test('cada mecánico recibe solo las suyas', async () => {
+    const { tokens, mantenimientoId } = await prepararEntorno();
+    const escenario = await sembrarEscenarioDeMecanicos(tokens, mantenimientoId);
+
+    const primero = await consultar(tokens.mecanico);
+    const segundo = await consultar(escenario.token2);
+
+    expect(primero.body.datos.map((aviso) => aviso.clave)).toEqual([clave(escenario.detenidaDe1)]);
+    expect(segundo.body.datos.map((aviso) => aviso.clave)).toEqual([clave(escenario.detenidaDe2)]);
+  });
+
+  test('una orden detenida sin mecánico no se devuelve a ningún mecánico', async () => {
+    const { tokens, mantenimientoId } = await prepararEntorno();
+    const escenario = await sembrarEscenarioDeMecanicos(tokens, mantenimientoId);
+
+    for (const token of [tokens.mecanico, escenario.token2]) {
+      const respuesta = await consultar(token);
+      expect(JSON.stringify(respuesta.body)).not.toContain(clave(escenario.detenidaSinMecanico));
+    }
+    // Administración y recepción sí la reciben.
+    const admin = await consultar(tokens.admin);
+    expect(admin.body.datos.map((aviso) => aviso.clave)).toContain(clave(escenario.detenidaSinMecanico));
+  });
+
+  test('reasignar la orden cambia el destinatario del aviso', async () => {
+    const { tokens, mantenimientoId } = await prepararEntorno();
+    const escenario = await sembrarEscenarioDeMecanicos(tokens, mantenimientoId);
+    const [[segundo]] = await getPool().query("SELECT id FROM users WHERE username = 'mecanico2'");
+
+    const asignacion = await request(app)
+      .patch(`/api/orders/${escenario.detenidaDe1}/assignment`)
+      .set('Authorization', `Bearer ${tokens.recepcion}`)
+      .send({ mechanicId: segundo.id });
+    expect(asignacion.status).toBe(200);
+
+    const primero = await consultar(tokens.mecanico);
+    const segundoMecanico = await consultar(escenario.token2);
+    expect(primero.body.datos).toEqual([]);
+    expect(segundoMecanico.body.datos.map((aviso) => aviso.clave).sort()).toEqual(
+      [clave(escenario.detenidaDe1), clave(escenario.detenidaDe2)].sort()
+    );
+  });
+
+  test('sin órdenes propias detenidas recibe una lista vacía', async () => {
+    const { tokens } = await prepararEntorno();
+    await getPool().query('SELECT 1');
+
+    const respuesta = await consultar(tokens.mecanico);
+
+    expect(respuesta.body).toEqual({ total: 0, noLeidos: 0, datos: [] });
+  });
+
+  test('para el mecánico no se ejecutan las consultas de otros tipos de aviso', async () => {
+    const { tokens, mantenimientoId } = await prepararEntorno();
+    await sembrarEscenarioDeMecanicos(tokens, mantenimientoId);
+    const espia = jest.spyOn(getPool(), 'query');
+    const sqlEjecutado = () => espia.mock.calls.map(([sql]) => String(sql?.sql ?? sql)).join('\n');
+
+    try {
+      await consultar(tokens.mecanico);
+      const consultas = sqlEjecutado();
+      // Solo se consultan sus órdenes (más la autenticación); nada de mantenimientos, citas ni refacciones.
+      expect(consultas).toMatch(/service_orders/);
+      expect(consultas).not.toMatch(/maintenance_plans/);
+      expect(consultas).not.toMatch(/appointments/);
+      expect(consultas).not.toMatch(/\bparts\b/);
+    } finally {
+      espia.mockRestore();
+    }
+  });
+});
+
 describe('el rol y el usuario se toman solo del token (nada de la petición los cambia)', () => {
   test.each(ROLES)('%s recibe lo mismo con parámetros, cabeceras o cuerpo que pretenden otro rol', async (usuario) => {
     const { tokens } = await prepararEntorno();

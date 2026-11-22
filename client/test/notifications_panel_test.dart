@@ -92,6 +92,90 @@ void main() {
     });
   });
 
+  group('mecánico: solo los grupos que recibe (US5)', () {
+    probarAvisos('muestra únicamente «Órdenes detenidas», sin encabezados vacíos, y la campana cuenta solo sus avisos', (tester) async {
+      Map<String, dynamic> orden(int id, {bool leido = false}) => avisoJson(
+            clave: 'ORDEN:$id:DETENIDA',
+            grupo: 'ORDEN_DETENIDA',
+            estado: 'DETENIDA',
+            titulo: 'Orden detenida',
+            detalle: 'Orden #$id · GHI-789-C · Diagnóstico, sin cambios hace 5 día(s)',
+            pantalla: 'ORDEN',
+            id: id,
+            leido: leido,
+          );
+      final cliente = ClienteAvisosFalso()
+        ..resumenPorToken['t-3'] = resumenJson([orden(8), orden(9, leido: true)]);
+
+      final entorno = await montarAvisos(tester, cliente, iniciarSesionComo: 'mecanico');
+      await abrirPanel(tester);
+
+      expect(entorno.auth.esMecanico, isTrue);
+      // La campana cuenta solo sus avisos sin leer (1 de 2).
+      expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isTrue);
+      expect(find.descendant(of: find.byType(Badge), matching: find.text('1')), findsOneWidget);
+      // Solo el grupo que recibe; ningún encabezado vacío de los demás.
+      expect(find.text('Órdenes detenidas'), findsOneWidget);
+      expect(find.text('Orden detenida'), findsNWidgets(2));
+      for (final titulo in [
+        'Mantenimientos vencidos',
+        'Mantenimientos próximos',
+        'Stock bajo o agotado',
+        'Citas de hoy',
+      ]) {
+        expect(find.text(titulo), findsNothing);
+      }
+      expect(find.byKey(const Key('contadorGrupo-ORDEN_DETENIDA')), findsOneWidget);
+      expect(tester.widget<Text>(find.byKey(const Key('contadorGrupo-ORDEN_DETENIDA'))).data, '2');
+    });
+
+    probarAvisos('si el mecánico no tiene avisos la campana queda sin número y el panel vacío', (tester) async {
+      final cliente = ClienteAvisosFalso();
+
+      await montarAvisos(tester, cliente, iniciarSesionComo: 'mecanico');
+      await abrirPanel(tester);
+
+      expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isFalse);
+      expect(find.text('No tienes avisos pendientes.'), findsOneWidget);
+    });
+  });
+
+  group('grupo de órdenes detenidas (US4)', () {
+    probarAvisos('muestra el grupo en ámbar con el ícono de orden detenida, entre vencidos y stock', (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final detenida = avisoJson(
+        clave: 'ORDEN:3:DETENIDA',
+        grupo: 'ORDEN_DETENIDA',
+        estado: 'DETENIDA',
+        titulo: 'Orden detenida',
+        detalle: 'Orden #3 · DEF-456-B · Esperando refacción, sin cambios hace 5 día(s)',
+        pantalla: 'ORDEN',
+        id: 3,
+      );
+      final cliente = ClienteAvisosFalso()
+        ..resumenPorToken['t-1'] = resumenJson([_stock, detenida, _vencido]);
+
+      await montarAvisos(tester, cliente);
+      await abrirPanel(tester);
+
+      expect(find.text('Órdenes detenidas'), findsOneWidget);
+      expect(find.text('Orden detenida'), findsOneWidget);
+      expect(
+        find.text('Orden #3 · DEF-456-B · Esperando refacción, sin cambios hace 5 día(s)'),
+        findsOneWidget,
+      );
+      expect(iconoDe(tester, 'ORDEN:3:DETENIDA', Icons.assignment_late_outlined).color,
+          MotorixColores.advertencia);
+      final vencidos = tester.getTopLeft(find.text('Mantenimientos vencidos')).dy;
+      final ordenes = tester.getTopLeft(find.text('Órdenes detenidas')).dy;
+      final stock = tester.getTopLeft(find.text('Stock bajo o agotado')).dy;
+      expect(vencidos, lessThan(ordenes));
+      expect(ordenes, lessThan(stock));
+    });
+  });
+
   group('grupo de stock bajo o agotado (US3)', () {
     probarAvisos('el stock bajo va en ámbar y el agotado en rojo, con el ícono de inventario', (tester) async {
       final agotado = avisoJson(
