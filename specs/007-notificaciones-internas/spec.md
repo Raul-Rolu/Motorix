@@ -15,6 +15,9 @@
 - P: FR-010, orden detenida: el sistema no guarda la fecha del último cambio de estado de una orden (no existe historial de estados); ¿se usa la última modificación del registro o una marca propia? → R: Opción (b). La migración 018 agrega a las órdenes de servicio una fecha propia de **último cambio de estado** (`status_changed_at`), rellenada para las órdenes existentes con su fecha de última modificación actual (`updated_at`). Se actualiza solo cuando cambia el estado de la orden, no con otras ediciones. La orden detenida se calcula con esa fecha y N = 3 días. Los componentes existentes que deberán actualizarla se listan en «Componentes existentes afectados», sin cambiar su comportamiento actual.
 - P: FR-015, cliente avisado por mantenimiento: si un mantenimiento ya avisado como próximo pasa después a vencido, ¿es el mismo hecho o uno nuevo? → R: Es el **mismo hecho**. El cliente no vuelve a la lista por ese mantenimiento al pasar de próximo a vencido; solo aparece de nuevo si existe un mantenimiento nuevo (otro registro de plan de mantenimiento).
 - Revisión de otras ambigüedades de alto impacto: no se encontraron (ver «Supuestos»); no se hicieron preguntas adicionales.
+- P (hallazgo del plan): «mantenimiento próximo» no tiene margen en el sistema actual (la lista de Mantenimientos ordena por urgencia sin ventana y el panel cuenta como próximo todo pendiente no vencido); el insumo hablaba de «el margen que ya existe». ¿Qué define «próximo» en los avisos? → R: Se adoptan **márgenes constantes de 30 días o 1,000 km**, usados solo por el aviso: un mantenimiento pendiente no vencido es próximo si su umbral de fecha está a 30 días o menos, o su umbral de kilometraje está a 1,000 km o menos. Los **vencidos** del centro coinciden al 100 % con el panel de control y con la lista de Mantenimientos; los **próximos** del centro son un subconjunto del conteo de próximos del panel (que no aplica margen), definido por esos márgenes. El panel y la lista no cambian. El Sprint 7 podrá volver configurables los márgenes.
+- P (hallazgo del plan): el insumo describe una insignia con el número de alertas en el ícono de Inventario y un `StockAlertsProvider`; ¿cómo se cumple CA-8? → R: **Ninguno de los dos existe en este repositorio** (el insumo lo describía mal). La única alerta existente es la tarjeta «Alertas que requieren atención» (`alertasPanel`) del panel de control del administrador. CA-8 se cumple conservando esa tarjeta sin cambios y comprobando con una prueba que sus cifras coinciden con las del centro de notificaciones. No se agrega ninguna insignia nueva.
+- P (hallazgo del plan): el seed de ejemplo debe cubrir todos los tipos de aviso; ¿se agregan datos de demostración? → R: Se acepta el seed `009_demo_notifications.sql` (orden 6 terminada, mantenimiento 6 próximo y un ajuste guardado de la orden 3 para bases ya sembradas), además del ajuste de fechas del seed 004. Se revisarán las cifras absolutas de `docs/evidencias/aseguramiento/quickstart-005.mjs`, que siguen siendo válidas en sus comparaciones entre corridas.
 
 ## Alcance de esta especificación
 
@@ -22,7 +25,7 @@ Hoy los avisos están dispersos y limitados al administrador. Esta feature los r
 
 | Elemento existente | Qué hace esta feature con él |
 |---|---|
-| Insignia de alertas en el ícono de Inventario y aviso en la pantalla de inicio (solo ADMIN) | Se conservan sin cambios y no deben contradecir al centro de notificaciones |
+| Tarjeta «Alertas que requieren atención» (`alertasPanel`) del panel de control de ADMIN (mantenimientos vencidos, stock bajo y cobros digitales pendientes). El insumo hablaba además de una insignia en Inventario y de un `StockAlertsProvider`, que **no existen** en este repositorio | Se conserva sin cambios y no debe contradecir al centro de notificaciones; no se agrega ninguna insignia |
 | Contadores del panel de control (mantenimientos próximos y vencidos, citas, stock bajo; solo ADMIN) | Se conservan; los avisos usan el mismo cálculo de mantenimientos y de stock |
 | Lista de Mantenimientos con su indicador calculado (Próximo / Vencido) | Se conserva; es la fuente de la regla de mantenimiento próximo y vencido |
 | Alertas de stock ya calculadas (`stock <= stock mínimo`) | Se consumen; no se redefinen |
@@ -47,7 +50,7 @@ Estos componentes deberán mantener la nueva fecha de último cambio de estado d
 - **Cita del día**: citas de hoy, no canceladas ni completadas. En el sistema actual el estado vigente de una cita pendiente es `PROGRAMADA` (no existe un estado "confirmada"), por lo que "pendientes y confirmadas" del insumo equivale a `PROGRAMADA`. La "cita de mañana" solo aplica a la lista de clientes por avisar.
 - **Actualización del contador**: al iniciar sesión, al navegar entre pantallas y con una consulta cada 60 segundos mientras la app está abierta; sin WebSocket.
 - **Identidad de un aviso para la lectura**: por tipo, objeto y estado (por ejemplo `MANTENIMIENTO:12:VENCIDO`, `STOCK:7:AGOTADO`, `ORDEN:5:DETENIDA`). Un aviso que empeora cambia de clave y vuelve a aparecer como no leído.
-- **Mantenimiento próximo**: se usa el margen y el cálculo que ya existen en la lista de Mantenimientos; esta feature no cambia esa regla.
+- **Mantenimiento próximo**: pendiente no vencido cuyo umbral más cercano está a **30 días o menos** o a **1,000 km o menos** (márgenes constantes solo del aviso; ver «Aclaraciones»). «Vencido» usa la regla que ya existe (RN-11) sin cambios.
 - **Cita en la lista de clientes por avisar**: se avisa un día antes (cita de mañana).
 - **Orden terminada**: el aviso al cliente se registra una sola vez por orden; admite una nota opcional de hasta 255 caracteres; una vez avisado, el cliente sale de la lista por ese hecho.
 - **Mecánico**: solo ve avisos de órdenes asignadas a él; no ve avisos de mantenimiento ni de stock.
@@ -94,15 +97,15 @@ Como recepcionista, quiero ver los mantenimientos próximos y vencidos y las cit
 
 Como administrador, quiero ver las refacciones con stock bajo o agotado para reabastecer a tiempo.
 
-**Por qué esta prioridad**: Complementa el aviso que hoy solo existe como insignia; depende del centro de la historia 1.
+**Por qué esta prioridad**: Complementa la alerta de stock que hoy solo existe en la tarjeta de alertas del panel de control; depende del centro de la historia 1.
 
-**Independiente**: Se prueba con refacciones en distintos niveles de stock y verificando los avisos y su coincidencia con la insignia de Inventario.
+**Independiente**: Se prueba con refacciones en distintos niveles de stock y verificando los avisos y su coincidencia con la tarjeta de alertas del panel de control.
 
 **Escenarios de aceptación**:
 
 1. **Dado** una refacción activa con stock mayor que 0 y menor o igual a su stock mínimo, **Cuando** el administrador abre el centro, **Entonces** ve un aviso de stock bajo.
 2. **Dado** una refacción activa con stock 0, **Cuando** el administrador abre el centro, **Entonces** ve un aviso de stock agotado.
-3. **Dado** el total de refacciones en alerta, **Cuando** se compara el centro con la insignia de Inventario y con el panel de control, **Entonces** las cifras coinciden.
+3. **Dado** el total de refacciones en alerta, **Cuando** se compara el centro con la tarjeta de alertas del panel de control, **Entonces** las cifras coinciden.
 4. **Dado** una refacción cuyo stock se repone por encima del mínimo, **Cuando** se vuelve a consultar, **Entonces** el aviso desaparece.
 
 ---
@@ -206,11 +209,11 @@ Como recepcionista, quiero una lista de clientes por avisar (vehículo listo, ci
 - **FR-005** (Ubicuo): Los avisos deberán usar el mismo cálculo que el panel de control, la lista de Mantenimientos y las alertas de stock, de modo que los números coincidan entre pantallas. (CA-5)
 - **FR-006** (Evento): Cuando un usuario marque un aviso como leído, el sistema deberá guardar la lectura por usuario usando la identidad del aviso (tipo, objeto y estado); si la condición deja de cumplirse el aviso desaparecerá, y si reaparece con otro estado volverá a mostrarse como no leído. (CA-6)
 - **FR-007** (Evento): Cuando el usuario abra un aviso, el sistema deberá llevarlo a la pantalla relacionada (orden, cita, vehículo o Inventario). (CA-7)
-- **FR-008** (Ubicuo): La insignia de Inventario y el aviso de la pantalla de inicio deberán seguir funcionando sin contradecir al centro de notificaciones. (CA-8)
+- **FR-008** (Ubicuo): La tarjeta «Alertas que requieren atención» del panel de control de ADMIN deberá seguir funcionando sin cambios y sin contradecir al centro de notificaciones; no se agregará una insignia a Inventario. (CA-8)
 - **FR-009** (Ubicuo): El centro de notificaciones deberá manejar los estados de carga, vacío y error conforme a `docs/design-system.md`. (CA-9)
 - **FR-010** (Estado): Mientras una orden esté en estado Recibido, Diagnóstico, En reparación o Esperando refacción y su último cambio de estado haya ocurrido hace más de 3 días, el sistema deberá mostrarla como orden detenida, calculado con la fecha propia de último cambio de estado de la orden (FR-020); nunca aplicará a órdenes Terminadas, Entregadas ni Canceladas. (CA-3)
 - **FR-011** (Estado): Mientras una cita de hoy esté en estado `PROGRAMADA`, el sistema deberá mostrarla como aviso de cita del día; las citas canceladas o completadas no generarán aviso. (CA-3)
-- **FR-012** (Ubicuo): Los avisos de mantenimiento próximo y vencido deberán usar el margen y el cálculo que ya existen en la lista de Mantenimientos, sin modificar esa regla. (CA-5)
+- **FR-012** (Ubicuo): El aviso de mantenimiento vencido deberá usar el cálculo que ya existe (RN-11) sin modificarlo; el aviso de mantenimiento próximo será un pendiente no vencido con su umbral más cercano a 30 días o menos, o a 1,000 km o menos (márgenes constantes solo del aviso, no de la lista ni del panel). (CA-5)
 - **FR-013** (Evento): Cuando el usuario inicie sesión, navegue entre pantallas o transcurran 60 segundos con la app abierta, el sistema deberá actualizar el contador de avisos mediante una consulta, sin notificaciones en tiempo real. (CA-1)
 - **FR-014** (Ubicuo): ADMIN y RECEPTIONIST podrán ver la lista de clientes por avisar con cliente, teléfono, vehículo y motivo (orden terminada sin entregar, cita de mañana, mantenimiento próximo o vencido); MECHANIC no tendrá acceso, validado en el backend. (CA-10)
 - **FR-015** (Evento): Cuando un usuario autorizado marque a un cliente como avisado, el sistema deberá guardar quién lo avisó, cuándo y una nota opcional de hasta 255 caracteres, sacarlo de la lista y no volver a mostrarlo por el mismo hecho; un hecho nuevo (otra orden, otra cita u otro registro de mantenimiento) lo hará aparecer de nuevo. Un mantenimiento ya avisado como próximo que pasa a vencido es el mismo hecho y no vuelve a la lista. (CA-11)
@@ -226,10 +229,10 @@ Como recepcionista, quiero una lista de clientes por avisar (vehículo listo, ci
 - **CA-2**: Se comprueba que los avisos se calculan al consultar con datos reales, que no existe una copia de ellos en otra tabla y que solo se guarda la lectura.
 - **CA-3**: Se comprueba que los tipos incluidos son mantenimientos próximos, mantenimientos vencidos, citas del día, stock bajo o agotado y órdenes detenidas, cada uno con su regla.
 - **CA-4**: Se comprueba con pruebas por rol que ADMIN recibe todos los avisos; RECEPTIONIST mantenimientos, citas y órdenes detenidas; MECHANIC solo avisos de órdenes asignadas a él, y que el stock no llega a RECEPTIONIST ni a MECHANIC.
-- **CA-5**: Se comprueba que los avisos de mantenimientos y de stock coinciden con el panel de control y con la lista de Mantenimientos y las alertas de stock.
+- **CA-5**: Se comprueba que los avisos de mantenimiento **vencido** coinciden al 100 % con el conteo del panel de control y con la lista de Mantenimientos, que los avisos de stock coinciden con la alerta de stock del panel, y que los avisos de mantenimiento **próximo** del centro son un subconjunto del conteo de próximos del panel, definido por los márgenes de 30 días o 1,000 km.
 - **CA-6**: Se comprueba que marcar un aviso como leído persiste por usuario, que si la condición deja de cumplirse el aviso desaparece y que si reaparece con otro estado vuelve a mostrarse como no leído.
 - **CA-7**: Se comprueba que cada aviso abre la pantalla relacionada (orden, cita, vehículo o inventario).
-- **CA-8**: Se comprueba que la insignia de Inventario y el aviso de la pantalla de inicio siguen funcionando y no se contradicen con el centro de notificaciones.
+- **CA-8**: Se comprueba con una prueba que la tarjeta «Alertas que requieren atención» del panel de control de ADMIN sigue funcionando sin cambios y que sus cifras (mantenimientos vencidos y stock bajo) coinciden con las del centro de notificaciones. No existe ni se agrega una insignia en Inventario.
 - **CA-9**: Se comprueba que el centro maneja los estados de carga, vacío y error según `docs/design-system.md`.
 - **CA-10**: Se comprueba que RECEPTIONIST y ADMIN ven la lista de clientes por avisar con cliente, teléfono, vehículo y motivo, y que MECHANIC no accede, validado en el backend.
 - **CA-11**: Se comprueba que marcar a un cliente como avisado guarda quién y cuándo, lo saca de la lista y no vuelve a aparecer por el mismo hecho, y que un hecho nuevo (otra orden, otra cita u otro registro de mantenimiento) lo hace aparecer de nuevo; un mantenimiento avisado como próximo que pasa a vencido no vuelve a la lista.
