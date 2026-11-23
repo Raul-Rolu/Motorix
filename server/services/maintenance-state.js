@@ -51,30 +51,35 @@ export function esVencido(mantenimiento, kmActual, hoy = hoyLocal()) {
 }
 
 /**
- * Márgenes del aviso de «mantenimiento próximo» (007-notificaciones-internas,
- * FR-012, decisión del 2026-11-22). Son constantes SOLO del aviso: la lista de
- * Mantenimientos y el panel de control no aplican margen. El Sprint 7 podrá
- * volverlas configurables.
+ * Márgenes de respaldo del aviso de «mantenimiento próximo»
+ * (007-notificaciones-internas, FR-012). Son SOLO del aviso: la lista de
+ * Mantenimientos y el panel de control no aplican margen. Desde el Sprint 7
+ * (008, FR-004) el administrador los ajusta en la configuración
+ * (`maintenance.margin_days` y `maintenance.margin_km`); estas constantes siguen
+ * exportadas y se usan cuando no se pasan márgenes o no hay valor guardado.
  */
 export const MARGEN_PROXIMO_DIAS = 30;
 export const MARGEN_PROXIMO_KM = 1000;
 
 /**
  * ¿Es un mantenimiento próximo? Pendiente, NO vencido y con su umbral de fecha
- * a MARGEN_PROXIMO_DIAS días o menos, o su umbral de kilometraje a
- * MARGEN_PROXIMO_KM km o menos; basta uno. Solo se evalúan los umbrales que
- * existan. No modifica `esVencido`: lo vencido nunca es próximo.
+ * a `margenes.dias` días o menos, o su umbral de kilometraje a `margenes.km` km
+ * o menos; basta uno. Solo se evalúan los umbrales que existan. Los márgenes son
+ * opcionales (008, FR-004): lo que falte usa MARGEN_PROXIMO_DIAS / MARGEN_PROXIMO_KM.
+ * No modifica `esVencido`: lo vencido nunca es próximo.
  */
-export function esProximo(mantenimiento, kmActual, hoy = hoyLocal()) {
+export function esProximo(mantenimiento, kmActual, hoy = hoyLocal(), margenes = {}) {
   if (mantenimiento.status !== 'PENDING' || esVencido(mantenimiento, kmActual, hoy)) {
     return false;
   }
+  const margenDias = margenes?.dias ?? MARGEN_PROXIMO_DIAS;
+  const margenKm = margenes?.km ?? MARGEN_PROXIMO_KM;
   const dias = diasRestantes(mantenimiento.targetDate, hoy);
-  if (dias != null && dias <= MARGEN_PROXIMO_DIAS) {
+  if (dias != null && dias <= margenDias) {
     return true;
   }
   const km = kmRestantes(mantenimiento.targetMileage, kmActual);
-  return km != null && km <= MARGEN_PROXIMO_KM;
+  return km != null && km <= margenKm;
 }
 
 /**

@@ -1,0 +1,94 @@
+AVISO: el servidor debe estar arrancado con DB_NAME=motorix_test.
+       Nunca ejecutes este guion contra la base de demostración.
+
+Validación del quickstart 005 contra http://localhost:3055
+  [OK] La API está conectada a motorix_test (marcador QS5-MARCADOR-188378 visible) (guardia de identidad)
+
+===== E1 - Puesta en marcha e idempotencia del seed 008 (quickstart «Puesta en marcha», R-06) =====
+  [OK] La API responde y alcanza su base de datos (precondición) - {"servicio":"motorix-api","estado":"ok","baseDatos":"ok"}
+  [OK] El cliente mysql está disponible (mysql) (precondición)
+  [OK] Inicio de sesión de admin (precondición) - status 200
+  [OK] Inicio de sesión de recepcion (precondición) - status 200
+  [OK] Inicio de sesión de mecanico (precondición) - status 200
+  [OK] Las 6 refacciones de ejemplo tienen precio de venta (CA-18, FR-015) - con precio: 6
+  [OK] Existe una sola refacción activa sin precio (Batería 12V 60Ah) (CA-18, CA-17) - ["BAT-12V-60"]
+  [OK] La orden 2 trae mecánico asignado (se usa para las órdenes de prueba) (precondición)
+  [OK] La orden 2 tiene 2 usos de refacciones con precio congelado (FR-015) - usos: 2
+  [OK] Ninguna orden de ejemplo tiene el total incompleto (CA-20, FR-015) - incompletas: 0
+  [OK] apply-seeds.mjs termina con código 0 (ejecución 1) (R-06)
+  [OK] apply-seeds.mjs termina con código 0 (ejecución 2) (R-06)
+  [OK] El conteo de refacciones no cambia tras aplicar el seed dos veces (R-06) - 8 -> 8
+  [OK] El conteo de usos en órdenes no cambia (R-06) - 2 -> 2
+  [OK] El conteo de movimientos de inventario no cambia (R-06) - 10 -> 10
+  [OK] El stock de cada refacción no cambia (valores absolutos) (R-06, INC-03) - {"1":11,"2":2,"3":34,"4":8,"5":1,"6":3,"7":5,"8":0}
+  [OK] order_services: conteo y suma de la orden 2 no cambian tras aplicar el seed dos veces (R-06, H-14) - orden 2 servicios: 2 filas / 600 -> 2 filas / 600
+  [OK] order_services: conteo y suma de la orden 4 no cambian tras aplicar el seed dos veces (R-06, H-14) - orden 4 servicios: 2 filas / 950 -> 2 filas / 950
+  [OK] order_labor: conteo y suma de la orden 2 no cambian tras aplicar el seed dos veces (R-06, H-14) - orden 2 mano de obra: 1 filas / 500 -> 1 filas / 500
+  [OK] order_labor: conteo y suma de la orden 4 no cambian tras aplicar el seed dos veces (R-06, H-14) - orden 4 mano de obra: 1 filas / 400 -> 1 filas / 400
+
+===== E2 - Precio de venta en la ficha de la refacción (quickstart 1: CA-2, CA-17) =====
+  [OK] Un precio negativo se rechaza con 400 (CA-2) - status 400
+  [OK] Un precio no numérico se rechaza con 400 (CA-2) - status 400
+  [OK] El precio inválido no se guarda (sigue pendiente) (CA-2)
+  [OK] La administración asigna el precio (CA-1, FR-001) - status 200
+  [OK] Con todas las activas con precio, la lista de pendientes queda vacía (CA-17) - pendientes: 0
+
+===== E3 - Solo administración edita precios (quickstart 2: CA-16, FR-002) =====
+  [OK] El servidor deniega a recepcion editar el precio (CA-16, FR-002) - status 403
+  [OK] El servidor deniega a mecanico editar el precio (CA-16, FR-002) - status 403
+  [OK] El precio de la refacción 1 sigue en 120.00 (CA-16)
+
+===== E4 - El total de la orden incluye las refacciones (quickstart 3: CA-6, CA-4, CA-5, CA-15) =====
+  [OK] Total de la orden 2 = servicios 600 + mano de obra 500 + refacciones 840 = 1940 (CA-6, FR-007) - {"services":600,"labor":500,"parts":840,"grand":1940,"totalCompleto":true,"refaccionesSinPrecio":0}
+  [OK] Cambiar el precio de la refacción no altera el total ya registrado (CA-4, FR-006) - total 1940
+  [OK] Agregar la refacción a la orden usa el precio vigente (200) (CA-5, FR-004) - status 201, unitPrice 200
+  [OK] El total sube por el importe de la línea agregada (2140) (CA-6) - total 2140
+  [OK] Retirar la línea agregada responde 204 (CA-15) - status 204
+  [OK] El total baja por el importe de la línea retirada (1940) (CA-15, FR-007) - total 1940
+  [OK] El stock se repone al retirar la refacción (CA-15) - 11 -> 11
+
+===== E5 - Rechazo al usar una refacción sin precio (quickstart 4: CA-8, FR-005) =====
+  [OK] La refacción de prueba se crea sin precio (precondición)
+  [OK] El mecánico recibe PART_SIN_PRECIO (409) (CA-8, FR-005) - status 409, código PART_SIN_PRECIO
+  [OK] El stock no cambia tras el rechazo (CA-8) - stock 10
+  [OK] El total de la orden no cambia tras el rechazo (CA-8)
+
+===== E6 - Cobro de la orden con refacciones (quickstart 5: CA-12, CA-10, FR-009) =====
+  [OK] El resumen usa el total con refacciones: total 1940, cobrado 800, saldo 1140, PARCIAL (CA-12, FR-012) - {"total":1940,"cobrado":800,"saldo":1140,"estado":"PARCIAL"}
+  [OK] Recepción registra el pago del saldo (CA-12) - status 201
+  [OK] La orden 2 queda LIQUIDADA con saldo 0 (CA-12) - {"estado":"LIQUIDADA","saldo":0}
+  [OK] PRECONDICIÓN: la orden de prueba A queda incompleta (total 300, 1 uso sin precio, no liquidada) antes de cobrar (FR-008, CA-9) - {"services":300,"labor":0,"parts":0,"grand":300,"totalCompleto":false,"refaccionesSinPrecio":1}
+  [OK] El pago de la orden incompleta se bloquea con TOTAL_INCOMPLETO (409) (CA-10, FR-009) - status 409, código TOTAL_INCOMPLETO
+  [OK] details.refaccionesSinPrecio lista la refacción faltante {orderPartId, partId, nombre} (CA-9, CA-10) - [{"orderPartId":4,"partId":10,"nombre":"Refacción pendiente A"}]
+
+===== E7 - Ticket de la orden con refacciones (quickstart 6: CA-13, CA-14, CA-10, CA-21) =====
+  [OK] El ticket de la orden 2 (liquidada) se emite (CA-13) - status 200
+  [OK] El total del ticket es idéntico al de la orden (1940) (CA-14, FR-013) - 1940 = 1940
+  [OK] Cada refacción trae cantidad, precio e importe, y los importes suman 840 (CA-13, FR-014) - [{"nombre":"Filtro de aceite","codigo":"FLT-OIL-010","cantidad":1,"unitPrice":120,"amount":120,"sinPrecio":false},{"nombre":"Aceite sintético 5W30 (litro)","codigo":"LUB-0530-1L","cantidad":4,"unitPrice":180,"amount":720,"sinPrecio":false}]
+  [OK] El ticket de la orden incompleta no liquidada se bloquea con TOTAL_INCOMPLETO (409) (CA-10, FR-010) - status 409, código TOTAL_INCOMPLETO
+  [OK] PRECONDICIÓN: la orden B está liquidada y tiene un uso sin precio (FR-016, CA-21) - {"estado":"LIQUIDADA","totalCompleto":false}
+  [OK] El ticket de la orden liquidada se emite con el total histórico (600) y la línea «sin precio» (CA-21, FR-016) - status 200, total 600
+
+===== E8 - Adopción del precio en órdenes abiertas (quickstart 7: CA-19, CA-11) =====
+  [OK] PRECONDICIÓN: la orden C tiene un pago parcial de 800 y un uso sin precio (CA-19) - {"services":1000,"labor":0,"parts":0,"grand":1000,"totalCompleto":false,"refaccionesSinPrecio":1}
+  [OK] El administrador asigna el precio de venta (150) (FR-011) - status 200
+  [OK] El uso heredado adopta el precio: total 1150, pago de 800 conservado, saldo 350, PARCIAL (CA-19, FR-011) - {"total":1150,"cobrado":800,"saldo":350,"estado":"PARCIAL"}
+  [OK] La orden ya liquidada (B) conserva su total original y no adopta el precio (CA-11, FR-011) - {"total":600,"estado":"LIQUIDADA"}
+
+===== E9 - El historial del vehículo suma las refacciones (quickstart 8: CA-6) =====
+  [OK] Se obtiene el vehículo al que pertenece la orden 2 (precondición) - vehículo 3
+  [OK] La orden 2 pasa a TERMINADO (el historial solo muestra órdenes terminadas o entregadas) (precondición) - status 200
+  [OK] La orden 2 aparece en el historial del vehículo 3 (CA-6) - status 200
+  [OK] El total del historial coincide con el detalle de la orden (1940) (CA-6, FR-007) - 1940 = 1940
+
+===== E10 - Cobro y ticket funcionan tras asignar el precio (H-07, CA-10) =====
+  [OK] PRECONDICIÓN: la orden A sigue bloqueada antes de asignar el precio (CA-10) - status 409
+  [OK] La administración asigna el precio a la refacción de la orden A (CA-10, FR-011) - status 200
+  [OK] La orden A recalcula su total completo (300 + 150 = 450) (CA-11, FR-011) - {"services":300,"labor":0,"parts":150,"grand":450,"totalCompleto":true,"refaccionesSinPrecio":0}
+  [OK] El cobro que estaba bloqueado ahora se registra (CA-10, H-07) - status 201
+  [OK] El ticket que estaba bloqueado ahora se emite con el total completo (450) (CA-10, CA-14, H-07) - status 200, total 450
+  [OK] Se paga el saldo restante y la orden A queda LIQUIDADA (CA-12) - estado LIQUIDADA
+
+===== Resumen: 65/65 verificaciones OK =====
+
+Codigo de salida del guion: 0

@@ -11,24 +11,58 @@ import * as orderModel from '../models/order.js';
 import * as vehicleModel from '../models/vehicle.js';
 import * as paymentService from './payment-service.js';
 import { generarFolio } from './ticket-folio.js';
+import { obtenerAjustes, tallerDe } from './settings-service.js';
+import { calcularProximoServicio } from '../utils/next-service.js';
 import { errores } from '../utils/errors.js';
 
-/** Datos del taller que encabezado cada ticket (constante del negocio). */
-export const TALLER = {
-  nombre: 'Motorix',
-  direccion: 'Av. Taller 123, Col. Centro',
-  telefono: '555-000-0000',
-};
+/**
+ * «Próximo servicio» del ticket (008, FR-009, CA-14): solo para tickets CON
+ * instantánea (emitidos desde este sprint; los anteriores no cambian). Se deriva
+ * de los tipos de servicio con intervalo de las líneas de la orden: fecha =
+ * fecha local de emisión del ticket + el menor intervalo en días; kilometraje =
+ * kilometraje de entrada de la orden + el menor intervalo en km. Devuelve null
+ * (y el campo no aparece) si no hay tipos con intervalo.
+ */
+async function proximoServicioDelTicket(ticket, orden) {
+  if (ticket.shopName === null) {
+    return null;
+  }
+  const tipos = await orderModel.findServicesWithTypes(orden.id);
+  return calcularProximoServicio({
+    tipos,
+    kilometrajeBase: orden.mileageEntry,
+    fechaBase: new Date(ticket.issuedAt),
+  });
+}
+
+/**
+ * Datos del taller del encabezado del ticket (008, FR-003, CA-1, CA-3): los de la
+ * instantánea guardada al emitirlo si existe (los tickets con instantánea no
+ * cambian al editar la configuración) o, en los tickets anteriores al sprint,
+ * los ajustes vigentes (con valores de respaldo).
+ */
+async function tallerDelTicket(ticket) {
+  if (ticket.shopName !== null) {
+    return {
+      nombre: ticket.shopName,
+      direccion: ticket.shopAddress ?? '',
+      telefono: ticket.shopPhone ?? '',
+    };
+  }
+  return tallerDe(await obtenerAjustes());
+}
 
 /**
  * Emite el ticket si aún no existe; en caso contrario reutiliza el mismo
- * folio (nunca se duplican comprobantes por orden).
+ * folio (nunca se duplican comprobantes por orden). Al emitir guarda una
+ * instantánea del taller con los ajustes vigentes (008, FR-003).
  */
 async function emitirSiFalta(orderId, issuedBy) {
   const existente = await ticketModel.findByOrder(orderId);
   if (existente) {
     return existente;
   }
+  const taller = tallerDe(await obtenerAjustes());
   const anio = new Date().getFullYear();
   // Reintento amable ante una carrera entre dos emisiones simultáneas: la
   // UNIQUE de folio rechaza la segunda y se asigna la secuencia siguiente.
@@ -39,6 +73,7 @@ async function emitirSiFalta(orderId, issuedBy) {
         orderId,
         folio: generarFolio(anio, secuencia),
         issuedBy,
+        taller,
       });
     } catch (error) {
       if (error.code !== 'ER_DUP_ENTRY') {
@@ -85,10 +120,12 @@ export async function obtenerContenido(orderId, usuario) {
     orderModel.findOrderParts(orderId),
   ]);
 
+  const proximoServicio = await proximoServicioDelTicket(ticket, orden);
+
   return {
     folio: ticket.folio,
     fecha: ticket.issuedAt,
-    taller: TALLER,
+    taller: await tallerDelTicket(ticket),
     cliente: {
       id: vehiculo.duenio.id,
       nombreCompleto: vehiculo.duenio.fullName,
@@ -127,5 +164,8 @@ export async function obtenerContenido(orderId, usuario) {
     })),
     estadoPago: resumen.estadoCobro,
     saldoPendiente: resumen.saldoPendiente,
+    // El campo se omite cuando no hay próximo servicio: los tickets anteriores
+    // y los sin tipos conservan exactamente el cuerpo de siempre.
+    ...(proximoServicio ? { proximoServicio } : {}),
   };
 }

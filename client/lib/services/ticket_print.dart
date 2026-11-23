@@ -44,6 +44,12 @@ String construirHtmlTicket(TicketServicio ticket) {
               '<td class="num">${formatearMoneda(pago.monto)}</td></tr>')
           .join('\n');
 
+  // 008 (FR-009): línea «Próximo servicio» solo si el ticket la trae.
+  final proximoServicio = ticket.proximoServicio == null
+      ? ''
+      : '\n    <tr><td>Próximo servicio</td>'
+          '<td class="num">${_escapar(ticket.proximoServicio!.texto)}</td></tr>';
+
   return '''
 <!DOCTYPE html>
 <html lang="es">
@@ -77,7 +83,7 @@ String construirHtmlTicket(TicketServicio ticket) {
     <tr><td>Cliente</td><td class="num">${_escapar(ticket.clienteNombre)}</td></tr>
     <tr><td>Vehículo</td><td class="num">${_escapar(ticket.vehiculoDescripcion)} · ${_escapar(ticket.placas)}</td></tr>
     <tr><td>Kilometraje registrado</td><td class="num">${ticket.kilometraje} km</td></tr>
-    <tr><td>Fecha</td><td class="num">${_escapar(ticket.fecha)}</td></tr>
+    <tr><td>Fecha</td><td class="num">${_escapar(ticket.fecha)}</td></tr>$proximoServicio
   </table>
 
   <h2>Servicios</h2>

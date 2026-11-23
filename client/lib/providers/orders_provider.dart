@@ -204,14 +204,17 @@ class OrdersProvider extends ChangeNotifier {
     int id,
     String description,
     double amount,
-    String kind,
-  ) async {
+    String kind, {
+    int? serviceTypeId,
+  }) async {
     error = null;
     try {
       await api.post('/orders/$id/services', {
         'description': description,
         'amount': amount,
         'kind': kind,
+        // 008 (FR-007): tipo del catálogo opcional, solo en líneas de servicio.
+        'serviceTypeId': ?serviceTypeId,
       });
       await obtenerDetalle(id);
       return true;

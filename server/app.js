@@ -21,6 +21,8 @@ import { dashboardRoutes } from './routes/dashboard-routes.js';
 import { meRoutes } from './routes/me-routes.js';
 import { notificationRoutes } from './routes/notification-routes.js';
 import { clientNoticeRoutes } from './routes/client-notice-routes.js';
+import { settingsRoutes } from './routes/settings-routes.js';
+import { serviceTypeRoutes } from './routes/service-type-routes.js';
 
 export function crearApp() {
   const app = express();
@@ -58,6 +60,10 @@ export function crearApp() {
   // 007-notificaciones-internas: un router por recurso en su prefijo.
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/client-notices', clientNoticeRoutes);
+  // 008-configuracion-seguridad-reportes: configuración del taller (solo ADMIN).
+  app.use('/api/settings', settingsRoutes);
+  // Catálogo de tipos de servicio: lectura para los tres roles, administración de ADMIN.
+  app.use('/api/service-types', serviceTypeRoutes);
 
   // Manejo centralizado de errores (al final de la cadena).
   app.use(errorHandler);

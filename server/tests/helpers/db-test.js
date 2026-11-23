@@ -104,6 +104,10 @@ export async function limpiarTablas() {
   // Sprint 6: lecturas de avisos y avisos a clientes, antes de users y clients.
   await pool.query('DELETE FROM notification_reads');
   await pool.query('DELETE FROM client_notices');
+  // Sprint 7 (008, bloque P1): catálogo de tipos de servicio y configuración.
+  // `order_services` ya se vació arriba; `settings` referencia a `users`.
+  await pool.query('DELETE FROM service_types');
+  await pool.query('DELETE FROM settings');
   await pool.query('DELETE FROM service_orders');
   await pool.query('DELETE FROM appointments');
   await pool.query('DELETE FROM vehicles');

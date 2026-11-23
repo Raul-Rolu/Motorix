@@ -93,6 +93,16 @@ export function validarPartida(payload) {
   if (!['SERVICE', 'LABOR'].includes(payload?.kind)) {
     errores.push('El tipo de partida (kind) debe ser SERVICE o LABOR.');
   }
+  // 008 (FR-007): el tipo de servicio del catálogo es opcional y solo aplica a
+  // las líneas de servicio, nunca a la mano de obra.
+  const tipo = payload?.serviceTypeId;
+  if (tipo !== undefined && tipo !== null) {
+    if (typeof tipo !== 'number' || !Number.isInteger(tipo) || tipo <= 0) {
+      errores.push('El tipo de servicio (serviceTypeId) debe ser un identificador válido.');
+    } else if (payload.kind !== 'SERVICE') {
+      errores.push('El tipo de servicio (serviceTypeId) solo puede asignarse a líneas de servicio (kind SERVICE).');
+    }
+  }
   return errores;
 }
 

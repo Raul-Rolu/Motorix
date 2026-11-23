@@ -9,6 +9,7 @@ import * as vehicleModel from '../models/vehicle.js';
 import * as clientModel from '../models/client.js';
 import * as userModel from '../models/user.js';
 import * as inventoryModel from '../models/inventory.js';
+import * as serviceTypeService from './service-type-service.js';
 import { errores } from '../utils/errors.js';
 import { aCentavos, deCentavos, LIMITE_TOTAL_CENTAVOS } from '../utils/money.js';
 import {
@@ -148,12 +149,18 @@ export async function agregarPartida(id, datos, usuario) {
       'La orden debe haber avanzado a DIAGNOSTICO antes de registrar servicios o mano de obra (FR-011).'
     );
   }
+  // 008 (FR-007): tipo del catálogo opcional; debe existir (404) y estar activo (409).
+  let serviceTypeId = null;
+  if (datos.serviceTypeId != null) {
+    serviceTypeId = (await serviceTypeService.obtenerActivo(datos.serviceTypeId)).id;
+  }
   await exigirTopeDeTotal(id, aCentavos(datos.amount));
   return orderModel.createPart({
     orderId: id,
     description: datos.description.trim(),
     amount: Number(datos.amount),
     kind: datos.kind,
+    serviceTypeId,
   });
 }
 

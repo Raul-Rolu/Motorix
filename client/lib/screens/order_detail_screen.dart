@@ -15,7 +15,9 @@ import '../models/service_order.dart';
 import '../providers/auth_provider.dart';
 import '../providers/orders_provider.dart';
 import '../providers/payments_provider.dart';
+import '../providers/service_types_provider.dart';
 import '../services/order_state.dart';
+import '../widgets/add_service_dialog.dart';
 import 'payment_form_screen.dart';
 import 'ticket_screen.dart';
 
@@ -42,6 +44,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<OrdersProvider>().obtenerDetalle(widget.ordenId);
       context.read<OrdersProvider>().recargarPartesDisponibles();
+      // 008: catálogo de servicios para nombrar el tipo de cada línea y elegirlo al agregar.
+      final tipos = context.read<ServiceTypesProvider>();
+      if (!tipos.cargado) tipos.cargar();
       // Los cobros solo consultan recepción y administración (FR-005, RN-15).
       final rol = context.read<AuthProvider>().usuario?.role ?? '';
       if (rol == 'ADMIN' || rol == 'RECEPTIONIST') {
@@ -85,6 +90,40 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         content: Text(exito
             ? 'Entrada registrada en el historial.'
             : provider.error ?? 'No se pudo registrar la entrada.'),
+        backgroundColor: exito ? MotorixColores.exito : MotorixColores.error,
+      ),
+    );
+  }
+
+  /// «Servicio» o «Servicio · Nombre del tipo» si la línea lleva tipo y se conoce su nombre.
+  String _etiquetaServicio(PartidaOrden partida) {
+    final tipo = context.watch<ServiceTypesProvider>().porId(partida.serviceTypeId);
+    return tipo == null ? 'Servicio' : 'Servicio · ${tipo.nombre}';
+  }
+
+  /// Agrega una línea de servicio con su tipo del catálogo opcional (008, FR-007).
+  /// El servidor valida el estado de la orden, el mecánico y que el tipo exista y
+  /// esté activo; si rechaza, se muestra su mensaje.
+  Future<void> _agregarServicio(OrdenServicio orden) async {
+    final nuevo = await showDialog<ServicioNuevo>(
+      context: context,
+      builder: (_) => const DialogoAgregarServicio(),
+    );
+    if (nuevo == null || !mounted) return;
+    final provider = context.read<OrdersProvider>();
+    final exito = await provider.agregarPartida(
+      orden.id!,
+      nuevo.descripcion,
+      nuevo.importe,
+      'SERVICE',
+      serviceTypeId: nuevo.serviceTypeId,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(exito
+            ? 'Servicio agregado a la orden.'
+            : provider.error ?? 'No se pudo agregar el servicio.'),
         backgroundColor: exito ? MotorixColores.exito : MotorixColores.error,
       ),
     );
@@ -433,8 +472,21 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
             ],
             const SizedBox(height: MotorixEspaciados.m),
-            Text('Servicios y mano de obra',
-                style: Theme.of(context).textTheme.titleMedium),
+            Row(
+              children: [
+                Expanded(
+                  child: Text('Servicios y mano de obra',
+                      style: Theme.of(context).textTheme.titleMedium),
+                ),
+                if (!orden.esFinal)
+                  TextButton.icon(
+                    key: const Key('botonAgregarServicioOrden'),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('Agregar servicio'),
+                    onPressed: () => _agregarServicio(orden),
+                  ),
+              ],
+            ),
             if (orden.services.isEmpty && orden.labor.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: MotorixEspaciados.s),
@@ -456,7 +508,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                         title: Text(partida.description),
                         subtitle: Text(partida.kind == 'LABOR'
                             ? 'Mano de obra'
-                            : 'Servicio'),
+                            : _etiquetaServicio(partida)),
                         trailing: Text(
                           '\$${partida.amount.toStringAsFixed(2)}',
                           style: const TextStyle(fontWeight: FontWeight.w600),

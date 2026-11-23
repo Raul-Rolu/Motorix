@@ -176,6 +176,12 @@ class _TicketScreenState extends State<TicketScreen> {
                   _fila('Kilometraje registrado',
                       '${ticket.kilometraje} km'),
                   _fila('Fecha', ticket.fecha),
+                  // 008 (FR-009): solo los tickets nuevos con servicios con tipo e intervalo.
+                  if (ticket.proximoServicio != null)
+                    KeyedSubtree(
+                      key: const Key('proximoServicioTicket'),
+                      child: _fila('Próximo servicio', ticket.proximoServicio!.texto),
+                    ),
                 ],
               ),
             ),

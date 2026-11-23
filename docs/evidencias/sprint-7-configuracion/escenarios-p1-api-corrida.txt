@@ -1,0 +1,42 @@
+===== E2 - Datos del taller en el ticket (CA-1) =====
+  OK    ADMIN guarda los datos del taller
+  OK    recepcion no puede editar la configuración (403)
+  OK    mecanico no puede editar la configuración (403)
+  OK    recepción crea una orden nueva para el ticket
+  OK    una línea sin tipo no incluye serviceTypeId
+  OK    el ticket nuevo muestra los datos nuevos del taller
+  OK    sin tipos, el ticket nuevo no muestra «Próximo servicio»
+  OK    cambiar la configuración NO cambia el ticket ya emitido
+  OK    el ticket de ejemplo 9001 conserva su instantánea
+  OK    un ticket anterior al sprint (sin instantánea) muestra los datos vigentes
+===== E3 - Márgenes y orden detenida (CA-2, CA-3) =====
+  OK    con los valores de respaldo, el mantenimiento 6 (vence en 10 días) es próximo
+  OK    con los valores de respaldo, la orden 3 (5 días sin cambio) está detenida
+  OK    ADMIN ajusta los márgenes (5 días, 500 km y 10 días)
+  OK    con margen de 5 días, el mantenimiento a 10 días ya no es próximo
+  OK    con 10 días de orden detenida, la orden 3 deja de estar detenida
+  OK    clientes por avisar usa el mismo margen
+  OK    la lista de Mantenimientos no cambia
+  OK    el panel de control no cambia (mantenimientos)
+  OK    valor fuera de límites {"margenProximoDias":0} → 400
+  OK    valor fuera de límites {"margenProximoDias":366} → 400
+  OK    valor fuera de límites {"margenProximoKm":99} → 400
+  OK    valor fuera de límites {"diasOrdenDetenida":91} → 400
+  OK    valor fuera de límites {"margenProximoDias":"abc"} → 400
+  OK    al volver a los valores de respaldo regresan los avisos del Sprint 6
+===== E4 - Catálogo, línea con tipo, próximo servicio y propuesta (CA-4, CA-5, CA-14) =====
+  OK    un nombre repetido (sin distinguir mayúsculas) se rechaza (409)
+  OK    un tipo sin intervalos se rechaza (400)
+  OK    ADMIN crea el tipo «Alineación y balanceo» (60 días y 8,000 km)
+  OK    recepción no administra el catálogo (403)
+  OK    recepción sí consulta los tipos activos
+  OK    recepción agrega una línea con el tipo
+  OK    el ticket muestra «Próximo servicio»: hoy + 60 días y 60,000 + 8,000 km
+  OK    la propuesta desde la orden coincide (fecha y kilometraje)
+  OK    el administrador guarda el mantenimiento con el kilometraje corregido
+  OK    ADMIN desactiva el tipo
+  OK    un tipo inactivo ya no se puede elegir (409)
+  OK    la línea existente conserva su tipo desactivado
+  OK    no existe forma de borrar un tipo (DELETE → 404)
+  OK    ADMIN ve el tipo inactivo con ?incluirInactivos=true
+Resultado: TODO OK

@@ -16,6 +16,7 @@
 import * as clientNoticeModel from '../models/client-notice.js';
 import * as maintenanceModel from '../models/maintenance.js';
 import { esProximo, esVencido, hoyLocal } from './maintenance-state.js';
+import { obtenerAjustes } from './settings-service.js';
 import { errores } from '../utils/errors.js';
 import { diasDespues, fechaCorta } from '../utils/fechas.js';
 
@@ -44,14 +45,18 @@ function hechoDeCita(cita) {
   };
 }
 
-/** Mantenimientos vencidos primero y después los próximos; el resto no se avisa. */
-function hechosDeMantenimiento(mantenimientos, kilometrajes) {
+/**
+ * Mantenimientos vencidos primero y después los próximos; el resto no se avisa.
+ * «Próximo» usa los márgenes configurados (008, FR-004), los mismos del centro
+ * de notificaciones.
+ */
+function hechosDeMantenimiento(mantenimientos, kilometrajes, margenes) {
   const vencidos = [];
   const proximos = [];
   for (const mantenimiento of mantenimientos) {
     const kmActual = kilometrajes.get(mantenimiento.vehicleId) ?? 0;
     const esDeVencido = esVencido(mantenimiento, kmActual);
-    if (!esDeVencido && !esProximo(mantenimiento, kmActual)) {
+    if (!esDeVencido && !esProximo(mantenimiento, kmActual, undefined, margenes)) {
       continue;
     }
     (esDeVencido ? vencidos : proximos).push({
@@ -69,17 +74,19 @@ function hechosDeMantenimiento(mantenimientos, kilometrajes) {
 /** Hechos pendientes de avisar: orden terminada, cita de mañana y mantenimiento. */
 export async function listarClientesPorAvisar() {
   const manana = fechaCorta(diasDespues(1, hoyLocal()));
-  const [ordenes, citas, mantenimientos, kilometrajes] = await Promise.all([
+  const [ordenes, citas, mantenimientos, kilometrajes, ajustes] = await Promise.all([
     clientNoticeModel.findOrdenesTerminadasPendientes(),
     clientNoticeModel.findCitasPendientesPorFecha(manana),
     clientNoticeModel.findMantenimientosPendientes(),
     maintenanceModel.findCurrentMileageByVehicles(),
+    obtenerAjustes(),
   ]);
+  const margenes = { dias: ajustes.margenProximoDias, km: ajustes.margenProximoKm };
 
   const datos = [
     ...ordenes.map(hechoDeOrden),
     ...citas.map(hechoDeCita),
-    ...hechosDeMantenimiento(mantenimientos, kilometrajes),
+    ...hechosDeMantenimiento(mantenimientos, kilometrajes, margenes),
   ];
   datos.sort((a, b) => ORDEN_DE_TIPOS.indexOf(a.tipo) - ORDEN_DE_TIPOS.indexOf(b.tipo));
   return { total: datos.length, datos };

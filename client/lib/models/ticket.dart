@@ -87,6 +87,42 @@ class TicketPago {
   }
 }
 
+/// Próximo servicio del ticket (008-configuracion-seguridad-reportes, FR-009,
+/// CA-14): fecha (AAAA-MM-DD) y/o kilometraje calculados por el servidor desde
+/// los tipos de servicio con intervalo de la orden. Solo viene en los tickets
+/// emitidos desde el Sprint 7; los anteriores no lo traen.
+class ProximoServicio {
+  final String? fecha;
+  final int? kilometraje;
+
+  const ProximoServicio({this.fecha, this.kilometraje});
+
+  factory ProximoServicio.desdeJson(Map<String, dynamic> json) => ProximoServicio(
+        fecha: json['fecha'] as String?,
+        kilometraje: (json['kilometraje'] as num?)?.toInt(),
+      );
+
+  /// Texto para mostrar: «2027-05-22 o 83,000 km», solo la fecha o solo los km.
+  String get texto {
+    final partes = <String>[
+      ?fecha,
+      if (kilometraje != null) '${_conMiles(kilometraje!)} km',
+    ];
+    return partes.join(' o ');
+  }
+
+  /// Entero con separador de miles (83000 → 83,000).
+  static String _conMiles(int valor) {
+    final texto = valor.toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < texto.length; i++) {
+      if (i > 0 && (texto.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(texto[i]);
+    }
+    return buffer.toString();
+  }
+}
+
 /// Ticket completo de una orden de servicio (respuesta de GET /api/tickets/:orderId).
 class TicketServicio {
   final String folio;
@@ -111,6 +147,10 @@ class TicketServicio {
   /// solo puede ocurrir en órdenes ya liquidadas (FR-016).
   final bool totalCompleto;
 
+  /// «Próximo servicio» (008, FR-009); null en los tickets anteriores al sprint o
+  /// sin servicios con tipo e intervalo (el servidor omite el campo).
+  final ProximoServicio? proximoServicio;
+
   const TicketServicio({
     required this.folio,
     required this.fecha,
@@ -130,6 +170,7 @@ class TicketServicio {
     required this.estadoPago,
     required this.saldoPendiente,
     this.totalCompleto = true,
+    this.proximoServicio,
   });
 
   factory TicketServicio.desdeJson(Map<String, dynamic> json) {
@@ -172,6 +213,9 @@ class TicketServicio {
       estadoPago: json['estadoPago'] as String? ?? 'PENDIENTE',
       saldoPendiente: (json['saldoPendiente'] as num? ?? 0).toDouble(),
       totalCompleto: json['totalCompleto'] as bool? ?? true,
+      proximoServicio: json['proximoServicio'] is Map<String, dynamic>
+          ? ProximoServicio.desdeJson(json['proximoServicio'] as Map<String, dynamic>)
+          : null,
     );
   }
 

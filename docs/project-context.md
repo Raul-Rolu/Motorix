@@ -151,9 +151,16 @@ Para facilitar las pruebas durante el MVP, los usuarios iniciales siguen un est�
 
 | Rol | Usuario | Contraseña inicial |
 |---|---|---|
-| Administrador | `admin` | `Admin2026!` |
-| Recepcionista | `recepcion` | `Recepcion2026!` |
-| Mecánico | `mecanico` | `Mecanico2026!` |
+| Administrador | `admin` | `Admin123` |
+| Recepcionista | `recepcion` | `Recepcion123` |
+| Mecánico | `mecanico` | `Mecanico123` |
+
+> **Corrección (Sprint 7).** Una versión anterior de esta tabla decía
+> `Admin2026!`, `Recepcion2026!` y `Mecanico2026!`; **nunca fueron las contraseñas
+> sembradas**. Las cuentas que crea `database/seeds/001_initial_accounts.sql` usan
+> las de la tabla de arriba (con hash bcrypt en la base). Las tres cumplen la
+> política mínima (8 caracteres, mayúscula, minúscula y número, RN-17), por lo que
+> no se obliga a cambiarlas.
 
 Reglas:
 
@@ -270,6 +277,11 @@ registrada.
 
 Estados visuales sugeridos: - Normal. - Próximo. - Vencido.
 
+> **Sprint 7.** Los intervalos configurables (RN-12) viven ahora en el catálogo
+> de tipos de servicio y los márgenes de «Próximo» del aviso en la configuración;
+> ver 6.13. La lista de Mantenimientos y el panel de control no aplican margen y
+> no cambiaron.
+
 ------------------------------------------------------------------------
 
 ## 6.7 Inventario y refacciones
@@ -376,6 +388,17 @@ obra. - Subtotal. - Total. - Método de pago. - Estado del pago. - Fecha.
 Debe contemplarse visualización e impresión. La generación PDF puede
 implementarse conforme avance el MVP.
 
+**Sprint 7 (`specs/008-configuracion-seguridad-reportes/`).** El ticket sigue
+emitiéndose bajo demanda y derivando su contenido al vuelo; ahora, al **emitirse**,
+guarda una instantánea del nombre, la dirección y el teléfono del taller vigentes
+(columnas `shop_name`, `shop_address` y `shop_phone` de `tickets`). Los datos del
+taller ya no son una constante del código: viven en la configuración (sección
+6.13). Los tickets emitidos con instantánea no cambian aunque se edite la
+configuración después. Si la orden tiene líneas de servicio con tipo e
+intervalo, el ticket nuevo agrega **«Próximo servicio»** (`proximoServicio`):
+fecha de emisión más el menor intervalo en días y kilometraje de entrada de la
+orden más el menor intervalo en km. Detalles y límites en 6.13.
+
 ------------------------------------------------------------------------
 
 ## 6.11 Dashboard
@@ -472,6 +495,95 @@ Evidencia en `docs/evidencias/sprint-6-notificaciones/`.
   se reprodujo en tres corridas posteriores; causa sin diagnosticar (posible
   dependencia de la hora o de la base recién sembrada).
 - No se pagina el panel de avisos ni hay notificaciones del sistema operativo.
+
+> **Actualización (Sprint 7).** Los márgenes de «próximo» (30 días y 1,000 km) y
+> los 3 días de «orden detenida» que aquí se describen como constantes ahora son
+> **valores de respaldo** de la configuración (sección 6.13): el administrador los
+> ajusta y el centro de avisos y la lista de «Clientes por avisar» los respetan.
+> Sin valores guardados, los resultados son los descritos en esta sección.
+
+------------------------------------------------------------------------
+
+## 6.13 Configuración y catálogo de servicios
+
+Implementada en el bloque P1 del Sprint 7
+(`specs/008-configuracion-seguridad-reportes/`). Solo el administrador configura;
+los demás roles reciben `403` en la configuración y en la administración del
+catálogo (validado en el backend, RN-15).
+
+**Configuración (`settings`).** Tabla clave-valor editable desde la sección
+«Configuración» (solo ADMIN). Sin ningún valor guardado se usan los **valores de
+respaldo**, que repiten lo que antes eran constantes del código, de modo que una
+instalación existente se comporta igual:
+
+| Ajuste | Respaldo | Límites | Dónde se usa |
+|---|---|---|---|
+| Nombre del taller | `Motorix` | 1–100 caracteres, obligatorio | Encabezado del ticket |
+| Dirección | `Av. Taller 123, Col. Centro` | hasta 150 caracteres | Ticket |
+| Teléfono | `555-000-0000` | hasta 30; dígitos, espacios y `+ - ( )` | Ticket |
+| Margen de «próximo» en días | 30 | 1–365 | Centro de avisos y «Clientes por avisar» |
+| Margen de «próximo» en km | 1,000 | 100–50,000 | Ídem |
+| Días de «orden detenida» | 3 | 1–90 | Centro de avisos |
+
+Un valor guardado inválido se ignora y se usa el respaldo (el servidor nunca falla
+por un dato corrupto). La lista de Mantenimientos y el panel de control **no**
+aplican margen y no cambian. Los datos del taller **no** están en `.env`
+(`SHOP_NAME`, `SHOP_ADDRESS` y `SHOP_PHONE` nunca existieron: eran la constante
+`TALLER` del código). La clave de minutos de inactividad de la sesión existe en la
+tabla con su respaldo (30) pero no se expone ni tiene efecto hasta el bloque P2.
+
+**Catálogo de tipos de servicio (`service_types`).** Cada tipo tiene un nombre
+único (sin distinguir mayúsculas) y un intervalo en días, en kilómetros o en
+ambos (al menos uno; RN-12: nada de intervalos universales). El administrador
+crea, edita y **desactiva**; un tipo **nunca se borra**. Recepción y mecánico
+pueden consultar los tipos **activos** para elegirlos. Las líneas de servicio de
+`order_services` tienen una columna opcional `service_type_id`; las líneas
+existentes quedan sin tipo y no proponen nada. La mano de obra no lleva tipo.
+
+**Próximo servicio y propuesta de mantenimiento.** Se calculan **desde la orden**
+(no hay vínculo entre órdenes y `maintenance_plans`): fecha = fecha base + el
+menor intervalo en días y kilometraje = kilometraje de entrada de la orden + el
+menor intervalo en km de los tipos de sus líneas; cada dimensión es independiente.
+- *Ticket*: la fecha base es la de emisión del ticket. Solo los tickets emitidos
+  con instantánea del taller muestran «Próximo servicio»; los anteriores al sprint
+  **no cambian y no lo muestran**.
+- *Propuesta* (`GET /api/maintenances/proposal?orderId=`): la fecha base es hoy; el
+  formulario de Mantenimientos tiene «Proponer desde una orden», que rellena la
+  fecha objetivo y el kilometraje y deja corregirlos antes de guardar. No crea
+  nada por sí sola. La usan ADMIN y MECHANIC (los que registran mantenimientos; el
+  mecánico solo sobre sus órdenes).
+
+**Instantánea del taller en el ticket.** `tickets` guarda nombre, dirección y
+teléfono del taller al emitirse. Los tickets existentes quedan con esas columnas
+en `NULL` **sin relleno** (no se inventa un dato que nunca se capturó) y usan los
+datos vigentes.
+
+**Datos de ejemplo.** Seed `010_demo_settings_service_types.sql`: los 7 ajustes
+(sin pisar los ya cambiados), 4 tipos de servicio (ids 1 a 4) y la orden `9001`
+entregada con su pago y su ticket con instantánea.
+
+**Entidades.** `settings`, `service_types`, columna `order_services.service_type_id`
+y columnas `tickets.shop_name`, `shop_address`, `shop_phone` (migraciones 019 a 021).
+
+**Limitaciones y trabajo futuro.**
+
+- **Seguridad y términos** (bitácora, renovación del token e inactividad
+  configurable, aceptación de términos) y **reportes** son los bloques P2 y P3 del
+  Sprint 7 y **todavía no están implementados** en esta versión.
+- **No hay bloqueo temporal por intentos fallidos de inicio de sesión ni
+  `helmet`**: el insumo del sprint los daba por existentes, pero no están en el
+  código; quedan como trabajo futuro (decisión del 2026-11-23).
+- **Tickets anteriores al sprint** sin instantánea: muestran los datos vigentes del
+  taller (si se cambia la configuración, esos tickets mostrarán el cambio) y no
+  muestran «Próximo servicio».
+- El «Próximo servicio» del ticket se deriva de las líneas actuales de la orden:
+  si se agrega un tipo después de emitir el ticket, aparece al consultarlo de nuevo.
+- La pantalla de la orden no tenía forma de agregar líneas de servicio; el Sprint 7
+  agregó «Agregar servicio» (descripción, importe y tipo opcional). La mano de obra
+  sigue sin captura en la interfaz (existe en la API).
+- Los IDs de demostración altos (9001) de los seeds hacen que los registros nuevos
+  de órdenes, líneas, pagos y tickets continúen desde 9002 en la base donde se
+  siembra; las tablas nuevas usan IDs desde 1.
 
 ------------------------------------------------------------------------
 

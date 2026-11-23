@@ -14,6 +14,8 @@ import '../models/maintenance.dart';
 import '../providers/auth_provider.dart';
 import '../providers/maintenances_provider.dart';
 import '../providers/vehicles_provider.dart';
+import '../services/api_client.dart';
+import '../services/order_state.dart';
 
 class MaintenanceFormScreen extends StatefulWidget {
   /// Mantenimiento existente para ver detalle y acciones; null = alta nueva.
@@ -65,6 +67,99 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
 
   String? _fechaCorta(String? fecha) =>
       fecha != null && fecha.length >= 10 ? fecha.substring(0, 10) : fecha;
+
+  void _avisar(String mensaje, {bool exito = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: exito ? MotorixColores.exito : MotorixColores.error,
+      ),
+    );
+  }
+
+  /// «Proponer desde una orden» (008, FR-008, CA-5): lista las órdenes del
+  /// vehículo elegido, pide la propuesta al servidor y rellena la fecha objetivo
+  /// y el kilometraje. El usuario puede corregirlos antes de guardar; la
+  /// propuesta no crea ningún mantenimiento por sí sola.
+  Future<void> _proponerDesdeOrden() async {
+    final vehiculo = context
+        .read<VehiclesProvider>()
+        .vehiculos
+        .where((v) => v.id == _vehicleId)
+        .firstOrNull;
+    if (vehiculo == null) return;
+    final provider = context.read<MaintenancesProvider>();
+
+    final List<OrdenDeVehiculo> ordenes;
+    try {
+      ordenes = await provider.ordenesDelVehiculo(vehiculo.id!, vehiculo.plates);
+    } on ExcepcionApi catch (excepcion) {
+      if (mounted) _avisar(excepcion.mensaje);
+      return;
+    }
+    if (!mounted) return;
+
+    final elegida = await showDialog<OrdenDeVehiculo>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('Proponer desde una orden'),
+        children: [
+          if (ordenes.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: MotorixEspaciados.l, vertical: MotorixEspaciados.s),
+              child: Text('Este vehículo no tiene órdenes.'),
+            )
+          else
+            for (final orden in ordenes)
+              SimpleDialogOption(
+                onPressed: () => Navigator.of(dialogContext).pop(orden),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Orden #${orden.id} · ${nombreEstadoOrden(orden.estado)}'),
+                    Text(
+                      orden.motivo,
+                      style: const TextStyle(color: MotorixColores.textoSecundario),
+                    ),
+                  ],
+                ),
+              ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+    if (elegida == null || !mounted) return;
+
+    final PropuestaMantenimiento? propuesta;
+    try {
+      propuesta = await provider.proponerDesdeOrden(elegida.id);
+    } on ExcepcionApi catch (excepcion) {
+      if (mounted) _avisar(excepcion.mensaje);
+      return;
+    }
+    if (!mounted) return;
+
+    if (propuesta == null) {
+      _avisar('La orden no tiene servicios con tipo e intervalo; capture los umbrales manualmente.');
+      return;
+    }
+    setState(() {
+      // Solo se rellena lo que la propuesta trae; lo demás se conserva.
+      if (propuesta!.fecha != null) {
+        _fechaObjetivo = DateTime.tryParse(propuesta.fecha!) ?? _fechaObjetivo;
+      }
+      if (propuesta.kilometraje != null) {
+        _kilometrajeController.text = '${propuesta.kilometraje}';
+      }
+    });
+    _avisar(
+      'Se propusieron la fecha y el kilometraje; puede corregirlos antes de guardar.',
+      exito: true,
+    );
+  }
 
   Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) {
@@ -244,8 +339,20 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
               validator: (valor) =>
                   valor == null ? 'Seleccione el vehículo.' : null,
             ),
+            const SizedBox(height: MotorixEspaciados.s),
+            // 008 (FR-008): propone fecha y kilometraje desde los servicios con tipo de una orden.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const Key('botonProponerDesdeOrden'),
+                onPressed: _vehicleId == null ? null : _proponerDesdeOrden,
+                icon: const Icon(Icons.auto_fix_high_outlined, size: 18),
+                label: const Text('Proponer desde una orden'),
+              ),
+            ),
             const SizedBox(height: MotorixEspaciados.m),
             TextFormField(
+              key: const Key('campoDescripcionMantenimiento'),
               controller: _descripcionController,
               maxLength: 255,
               decoration: const InputDecoration(
@@ -268,11 +375,16 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
               trailing: const Icon(Icons.calendar_today_outlined),
               onTap: () async {
                 final ahora = DateTime.now();
+                final limite = ahora.add(const Duration(days: 365 * 2));
+                // Una fecha propuesta puede superar los 2 años (intervalos largos del catálogo).
+                final ultima = (_fechaObjetivo != null && _fechaObjetivo!.isAfter(limite))
+                    ? _fechaObjetivo!
+                    : limite;
                 final seleccionada = await showDatePicker(
                   context: context,
                   initialDate: _fechaObjetivo ?? ahora.add(const Duration(days: 30)),
                   firstDate: ahora,
-                  lastDate: ahora.add(const Duration(days: 365 * 2)),
+                  lastDate: ultima,
                 );
                 if (seleccionada != null) {
                   setState(() => _fechaObjetivo = seleccionada);
@@ -281,6 +393,7 @@ class _MaintenanceFormScreenState extends State<MaintenanceFormScreen> {
             ),
             const SizedBox(height: MotorixEspaciados.s),
             TextFormField(
+              key: const Key('campoKilometrajeObjetivo'),
               controller: _kilometrajeController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
