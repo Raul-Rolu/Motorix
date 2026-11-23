@@ -19,8 +19,6 @@ import * as appointmentModel from '../models/appointment.js';
 import * as partModel from '../models/part.js';
 import * as notificationModel from '../models/notification.js';
 import {
-  MARGEN_PROXIMO_DIAS,
-  MARGEN_PROXIMO_KM,
   diasRestantes,
   esProximo,
   esVencido,
@@ -32,8 +30,13 @@ import { construirClave } from '../utils/notification-keys.js';
 import { errores } from '../utils/errors.js';
 import { fechaCorta } from '../utils/fechas.js';
 import { nombreEstadoOrden } from '../utils/notification-text.js';
+import { obtenerAjustes } from './settings-service.js';
 
-/** Días sin cambio de estado a partir de los cuales una orden está detenida (el Sprint 7 podrá volverla configurable). */
+/**
+ * Días sin cambio de estado a partir de los cuales una orden está detenida:
+ * valor de RESPALDO. Desde el Sprint 7 (008, FR-004) el administrador lo ajusta
+ * (`orders.stalled_days`) y cada consulta usa el ajuste vigente.
+ */
 export const DIAS_ORDEN_DETENIDA = 3;
 
 /** Grupos de aviso en el orden de presentación del panel (contracts/api-rest.md). */
@@ -77,14 +80,14 @@ function detalleDeVencimiento(mantenimiento, kmActual) {
 }
 
 /** Texto de lo que falta: solo los umbrales que entran en el margen del aviso. */
-function detalleDeProximidad(mantenimiento, kmActual) {
+function detalleDeProximidad(mantenimiento, kmActual, margenes) {
   const faltantes = [];
   const dias = diasRestantes(mantenimiento.targetDate);
-  if (dias != null && dias <= MARGEN_PROXIMO_DIAS) {
+  if (dias != null && dias <= margenes.dias) {
     faltantes.push(`${dias} día(s)`);
   }
   const km = kmRestantes(mantenimiento.targetMileage, kmActual);
-  if (km != null && km <= MARGEN_PROXIMO_KM) {
+  if (km != null && km <= margenes.km) {
     faltantes.push(`${km} km`);
   }
   return `faltan ${faltantes.join(' o ')}`;
@@ -93,9 +96,10 @@ function detalleDeProximidad(mantenimiento, kmActual) {
 /**
  * Avisos de mantenimiento vencido y próximo a partir de los mismos pendientes y
  * del mismo kilometraje actual: vencido usa `esVencido` (RN-11, la regla del
- * panel y de la lista) y próximo usa `esProximo` (márgenes de 30 días o 1,000 km).
+ * panel y de la lista) y próximo usa `esProximo` con los márgenes configurados
+ * (por omisión 30 días o 1,000 km).
  */
-async function avisosDeMantenimiento() {
+async function avisosDeMantenimiento(margenes) {
   const [pendientes, kilometrajes] = await Promise.all([
     maintenanceModel.findAll({ status: 'PENDING' }),
     maintenanceModel.findCurrentMileageByVehicles(),
@@ -105,12 +109,12 @@ async function avisosDeMantenimiento() {
   for (const mantenimiento of pendientes) {
     const kmActual = kilometrajes.get(mantenimiento.vehicleId) ?? 0;
     const vencido = esVencido(mantenimiento, kmActual);
-    if (!vencido && !esProximo(mantenimiento, kmActual)) {
+    if (!vencido && !esProximo(mantenimiento, kmActual, undefined, margenes)) {
       continue;
     }
     const detalleDelMotivo = vencido
       ? detalleDeVencimiento(mantenimiento, kmActual)
-      : detalleDeProximidad(mantenimiento, kmActual);
+      : detalleDeProximidad(mantenimiento, kmActual, margenes);
     avisos.push({
       clave: construirClave('MANTENIMIENTO', mantenimiento.id, vencido ? 'VENCIDO' : 'PROXIMO'),
       grupo: vencido ? 'MANTENIMIENTO_VENCIDO' : 'MANTENIMIENTO_PROXIMO',
@@ -150,14 +154,15 @@ async function avisosDeCitasDelDia() {
 
 /**
  * Avisos de orden detenida (FR-010): orden activa sin cambio de estado desde
- * hace más de DIAS_ORDEN_DETENIDA días, medido con `status_changed_at` (que
- * solo actualiza `orderModel.setStatus`). ADMIN y RECEPTIONIST reciben todas;
- * con `mechanicId` (MECHANIC) solo las órdenes asignadas a ese mecánico: una
- * orden sin mecánico no se devuelve a ningún mecánico (CA-4).
+ * hace más de `dias` días (el ajuste `orders.stalled_days`; 3 por omisión),
+ * medido con `status_changed_at` (que solo actualiza `orderModel.setStatus`).
+ * ADMIN y RECEPTIONIST reciben todas; con `mechanicId` (MECHANIC) solo las
+ * órdenes asignadas a ese mecánico: una orden sin mecánico no se devuelve a
+ * ningún mecánico (CA-4).
  */
-async function avisosDeOrdenesDetenidas(mechanicId = null) {
+async function avisosDeOrdenesDetenidas(dias, mechanicId = null) {
   const ordenes = await notificationModel.findOrdenesDetenidas({
-    dias: DIAS_ORDEN_DETENIDA,
+    dias,
     mechanicId,
   });
   return ordenes.map((orden) => ({
@@ -220,13 +225,23 @@ function compararAvisos(a, b) {
  * @returns {Promise<{ total: number, noLeidos: number, datos: object[] }>}
  */
 export async function obtenerAvisos(usuario) {
+  // Ajustes vigentes (una consulta por petición; sin caché): márgenes de
+  // «próximo» y días de orden detenida (008, FR-004). Sin valores guardados son
+  // los del Sprint 6: 30 días, 1,000 km y 3 días.
+  const ajustes = await obtenerAjustes();
+  const margenes = { dias: ajustes.margenProximoDias, km: ajustes.margenProximoKm };
+
   // Solo se calcula lo que el rol puede recibir (el resto ni siquiera se consulta).
   const calculos = [];
   if (ROLES_CON_MANTENIMIENTOS_Y_CITAS.includes(usuario.role)) {
-    calculos.push(avisosDeMantenimiento(), avisosDeCitasDelDia(), avisosDeOrdenesDetenidas());
+    calculos.push(
+      avisosDeMantenimiento(margenes),
+      avisosDeCitasDelDia(),
+      avisosDeOrdenesDetenidas(ajustes.diasOrdenDetenida)
+    );
   } else if (usuario.role === ROL_MECANICO) {
     // El mecánico solo recibe avisos de SUS órdenes (id tomado del token, nunca de la petición).
-    calculos.push(avisosDeOrdenesDetenidas(usuario.id));
+    calculos.push(avisosDeOrdenesDetenidas(ajustes.diasOrdenDetenida, usuario.id));
   }
   if (usuario.role === ROL_CON_STOCK) {
     calculos.push(avisosDeStock());

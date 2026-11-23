@@ -167,7 +167,7 @@ export async function findEntries(orderId) {
 
 export async function findServices(orderId) {
   const [filas] = await getPool().query(
-    'SELECT id, description, amount FROM order_services WHERE order_id = ? ORDER BY id ASC',
+    'SELECT id, description, amount, service_type_id FROM order_services WHERE order_id = ? ORDER BY id ASC',
     [orderId]
   );
   return filas.map((fila) => ({
@@ -175,6 +175,33 @@ export async function findServices(orderId) {
     kind: 'SERVICE',
     description: fila.description,
     amount: Number(fila.amount),
+    // 008 (FR-007): el tipo de servicio es opcional; las líneas sin tipo NO
+    // incluyen el campo para que las respuestas existentes no cambien.
+    ...(fila.service_type_id != null ? { serviceTypeId: fila.service_type_id } : {}),
+  }));
+}
+
+/**
+ * Tipos de servicio de las líneas de una orden con su intervalo
+ * (008, FR-008, FR-009): solo las líneas con tipo. Incluye tipos ya
+ * desactivados (el tipo es el de la línea). Alimenta el cálculo del próximo
+ * servicio de la propuesta de mantenimiento y del ticket.
+ */
+export async function findServicesWithTypes(orderId) {
+  const [filas] = await getPool().query(
+    `SELECT s.id, s.service_type_id, t.name, t.interval_days, t.interval_km
+     FROM order_services s
+     JOIN service_types t ON t.id = s.service_type_id
+     WHERE s.order_id = ?
+     ORDER BY s.id ASC`,
+    [orderId]
+  );
+  return filas.map((fila) => ({
+    id: fila.id,
+    serviceTypeId: fila.service_type_id,
+    nombre: fila.name,
+    intervaloDias: fila.interval_days ?? null,
+    intervaloKm: fila.interval_km ?? null,
   }));
 }
 
@@ -292,14 +319,30 @@ export async function findPart(orderId, partId) {
   return null;
 }
 
-/** Inserta una partida en la tabla correspondiente (SERVICE o LABOR). */
-export async function createPart({ orderId, description, amount, kind }) {
-  const tabla = kind === 'LABOR' ? 'order_labor' : 'order_services';
+/**
+ * Inserta una partida en la tabla correspondiente (SERVICE o LABOR). Las líneas
+ * de servicio pueden llevar un tipo del catálogo (008, FR-007); la mano de obra
+ * nunca (el servicio lo valida antes). Sin tipo, la respuesta es la de siempre.
+ */
+export async function createPart({ orderId, description, amount, kind, serviceTypeId = null }) {
+  if (kind === 'LABOR') {
+    const [resultado] = await getPool().query(
+      'INSERT INTO order_labor (order_id, description, amount) VALUES (?, ?, ?)',
+      [orderId, description, amount]
+    );
+    return { id: resultado.insertId, kind, description, amount: Number(amount) };
+  }
   const [resultado] = await getPool().query(
-    `INSERT INTO ${tabla} (order_id, description, amount) VALUES (?, ?, ?)`,
-    [orderId, description, amount]
+    'INSERT INTO order_services (order_id, description, amount, service_type_id) VALUES (?, ?, ?, ?)',
+    [orderId, description, amount, serviceTypeId]
   );
-  return { id: resultado.insertId, kind, description, amount: Number(amount) };
+  return {
+    id: resultado.insertId,
+    kind,
+    description,
+    amount: Number(amount),
+    ...(serviceTypeId != null ? { serviceTypeId } : {}),
+  };
 }
 
 /** Elimina una partida (solo antes de cerrar la orden). */

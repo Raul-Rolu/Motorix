@@ -1,8 +1,9 @@
 /// Estructura de navegación con menú lateral (T030, US1; FR-016).
 ///
 /// Secciones: Inicio, Citas, Clientes, Vehículos, Mantenimientos, Inventario,
-/// Órdenes, Clientes por avisar, Usuarios y Configuración. Usuarios y
-/// Configuración (008, datos del taller) solo son visibles para el rol ADMIN; Órdenes es visible para los tres roles (el mecánico ve las
+/// Órdenes, Clientes por avisar, Usuarios, Configuración y Catálogo de servicios.
+/// Usuarios, Configuración (008, datos del taller y operación) y Catálogo de
+/// servicios (008, tipos con intervalo) solo son visibles para el rol ADMIN; Órdenes es visible para los tres roles (el mecánico ve las
 /// suyas); Clientes por avisar es solo de ADMIN y RECEPTIONIST. El encabezado
 /// lleva la campana de avisos internos y el panel lateral de avisos
 /// (007-notificaciones-internas), que también puede pedir abrir una sección.
@@ -25,6 +26,7 @@ import '../screens/home_content.dart';
 import '../screens/maintenances_screen.dart';
 import '../screens/orders_screen.dart';
 import '../screens/parts_screen.dart';
+import '../screens/service_types_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/users_screen.dart';
 import '../screens/vehicles_screen.dart';
@@ -84,6 +86,10 @@ class _AppShellState extends State<AppShell> {
       if (esAdmin)
         const _Seccion(
             'Configuración', Icons.settings_outlined, SettingsScreen()),
+      // 008, US3: catálogo de tipos de servicio con intervalo (solo ADMIN).
+      if (esAdmin)
+        const _Seccion(
+            'Catálogo de servicios', Icons.list_alt_outlined, ServiceTypesScreen()),
     ];
 
     // Un aviso puede pedir abrir una sección (Inventario, Citas…): se atiende al

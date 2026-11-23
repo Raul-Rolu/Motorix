@@ -122,6 +122,37 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
+  /// Guarda los márgenes de mantenimiento próximo y los días de orden detenida
+  /// (solo el grupo `operacion`; el servidor valida los límites).
+  Future<ResultadoAjustes> guardarOperacion({
+    required int margenProximoDias,
+    required int margenProximoKm,
+    required int diasOrdenDetenida,
+  }) async {
+    final generacion = _generacion;
+    try {
+      final respuesta = await api.put('/settings', {
+        'operacion': {
+          'margenProximoDias': margenProximoDias,
+          'margenProximoKm': margenProximoKm,
+          'diasOrdenDetenida': diasOrdenDetenida,
+        },
+      });
+      if (generacion == _generacion) {
+        ajustes = AppSettings.desdeJson(respuesta);
+        notifyListeners();
+      }
+      return const ResultadoAjustes(true, 'Ajustes de operación guardados.');
+    } on ExcepcionApi catch (excepcion) {
+      if (excepcion.status == 403) {
+        return const ResultadoAjustes(false, _mensajeSinPermiso);
+      }
+      return ResultadoAjustes(false, excepcion.mensaje);
+    } catch (_) {
+      return const ResultadoAjustes(false, 'No se pudo guardar la configuración.');
+    }
+  }
+
   @override
   void dispose() {
     _liberado = true;

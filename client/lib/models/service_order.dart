@@ -244,11 +244,16 @@ class PartidaOrden {
   final String description;
   final double amount;
 
+  /// Tipo del catálogo de servicios (008, FR-007); null en las líneas sin tipo
+  /// (el servidor omite el campo) y en la mano de obra.
+  final int? serviceTypeId;
+
   const PartidaOrden({
     required this.id,
     required this.kind,
     required this.description,
     required this.amount,
+    this.serviceTypeId,
   });
 
   factory PartidaOrden.desdeJson(Map<String, dynamic> json) => PartidaOrden(
@@ -256,6 +261,7 @@ class PartidaOrden {
         kind: json['kind'] as String? ?? 'SERVICE',
         description: json['description'] as String? ?? '',
         amount: (json['amount'] as num?)?.toDouble() ?? 0,
+        serviceTypeId: (json['serviceTypeId'] as num?)?.toInt(),
       );
 }
 

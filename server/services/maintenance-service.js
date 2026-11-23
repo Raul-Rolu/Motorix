@@ -9,13 +9,48 @@
  */
 import * as maintenanceModel from '../models/maintenance.js';
 import * as vehicleModel from '../models/vehicle.js';
+import * as orderModel from '../models/order.js';
 import { errores } from '../utils/errors.js';
+import { calcularProximoServicio, nombreDelServicioMasProximo } from '../utils/next-service.js';
 import {
   esVencido,
+  hoyLocal,
   proximidad,
   diasRestantes,
   kmRestantes,
 } from './maintenance-state.js';
+
+/**
+ * Propone el próximo mantenimiento a partir de una orden (008, FR-008, CA-5):
+ * fecha de hoy + el menor intervalo en días y kilometraje de entrada de la orden
+ * + el menor intervalo en km de los tipos de servicio de sus líneas (RN-12: los
+ * intervalos los define el taller). NO crea nada: el usuario corrige y guarda
+ * con el alta de mantenimientos. El mecánico solo puede proponer desde sus
+ * órdenes (RN-15). `propuesta` es null si la orden no tiene tipos con intervalo.
+ */
+export async function proponerDesdeOrden(orderId, usuario) {
+  const orden = await orderModel.findById(orderId);
+  if (!orden) {
+    throw errores.ordenNoEncontrada();
+  }
+  if (usuario.role === 'MECHANIC' && orden.mechanicId !== usuario.id) {
+    throw errores.ordenDeOtroMecanico();
+  }
+
+  const tipos = await orderModel.findServicesWithTypes(orderId);
+  const proximo = calcularProximoServicio({
+    tipos,
+    kilometrajeBase: orden.mileageEntry,
+    fechaBase: hoyLocal(),
+  });
+  if (proximo === null) {
+    return { orderId, propuesta: null };
+  }
+  return {
+    orderId,
+    propuesta: { ...proximo, servicio: nombreDelServicioMasProximo(tipos) },
+  };
+}
 
 /** Registra un mantenimiento nuevo (siempre PENDING). */
 export async function registrar(datos, usuario) {

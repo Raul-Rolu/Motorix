@@ -103,10 +103,153 @@ class _SettingsScreenState extends State<SettingsScreen> {
           alignment: Alignment.topLeft,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
-            child: _SeccionTaller(proveedor: proveedor),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SeccionTaller(proveedor: proveedor),
+                const SizedBox(height: MotorixEspaciados.l),
+                _SeccionOperacion(proveedor: proveedor),
+              ],
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Sección «Operación» (008, US2): márgenes de «Próximo» del mantenimiento y días
+/// para considerar una orden detenida. Los usa el centro de notificaciones y la
+/// lista de clientes por avisar; la lista de Mantenimientos y el panel no cambian.
+class _SeccionOperacion extends StatefulWidget {
+  final SettingsProvider proveedor;
+
+  const _SeccionOperacion({required this.proveedor});
+
+  @override
+  State<_SeccionOperacion> createState() => _SeccionOperacionState();
+}
+
+class _SeccionOperacionState extends State<_SeccionOperacion> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _dias;
+  late final TextEditingController _km;
+  late final TextEditingController _detenida;
+  bool _guardando = false;
+
+  List<int> _limite(String clave, List<int> respaldo) =>
+      widget.proveedor.ajustes!.limites[clave] ?? respaldo;
+
+  @override
+  void initState() {
+    super.initState();
+    final operacion = widget.proveedor.ajustes!.operacion;
+    _dias = TextEditingController(text: '${operacion.margenProximoDias}');
+    _km = TextEditingController(text: '${operacion.margenProximoKm}');
+    _detenida = TextEditingController(text: '${operacion.diasOrdenDetenida}');
+  }
+
+  @override
+  void dispose() {
+    _dias.dispose();
+    _km.dispose();
+    _detenida.dispose();
+    super.dispose();
+  }
+
+  /// Valida que sea un entero dentro del límite que informa el servidor.
+  String? _validar(String? valor, List<int> limite) {
+    final numero = int.tryParse((valor ?? '').trim());
+    if (numero == null || numero < limite[0] || numero > limite[1]) {
+      return 'Debe ser un número entero entre ${limite[0]} y ${limite[1]}.';
+    }
+    return null;
+  }
+
+  Future<void> _guardar() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _guardando = true);
+    final resultado = await widget.proveedor.guardarOperacion(
+      margenProximoDias: int.parse(_dias.text.trim()),
+      margenProximoKm: int.parse(_km.text.trim()),
+      diasOrdenDetenida: int.parse(_detenida.text.trim()),
+    );
+    if (!mounted) return;
+    setState(() => _guardando = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(resultado.mensaje),
+        backgroundColor: resultado.exito ? MotorixColores.exito : MotorixColores.error,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final limiteDias = _limite('margenProximoDias', [1, 365]);
+    final limiteKm = _limite('margenProximoKm', [100, 50000]);
+    final limiteDetenida = _limite('diasOrdenDetenida', [1, 90]);
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Operación', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: MotorixEspaciados.xs),
+          const Text(
+            'Definen cuándo un mantenimiento se considera próximo y cuándo una orden se considera detenida en los avisos.',
+            style: TextStyle(color: MotorixColores.textoSecundario),
+          ),
+          const SizedBox(height: MotorixEspaciados.m),
+          TextFormField(
+            key: const Key('campoMargenDias'),
+            controller: _dias,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Mantenimiento próximo: días de margen',
+              helperText: 'Entre ${limiteDias[0]} y ${limiteDias[1]} días.',
+            ),
+            validator: (valor) => _validar(valor, limiteDias),
+          ),
+          TextFormField(
+            key: const Key('campoMargenKm'),
+            controller: _km,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Mantenimiento próximo: kilómetros de margen',
+              helperText: 'Entre ${limiteKm[0]} y ${limiteKm[1]} km.',
+            ),
+            validator: (valor) => _validar(valor, limiteKm),
+          ),
+          TextFormField(
+            key: const Key('campoDiasDetenida'),
+            controller: _detenida,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Orden detenida: días sin cambio de estado',
+              helperText: 'Entre ${limiteDetenida[0]} y ${limiteDetenida[1]} días.',
+            ),
+            validator: (valor) => _validar(valor, limiteDetenida),
+          ),
+          const SizedBox(height: MotorixEspaciados.m),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton(
+              key: const Key('botonGuardarOperacion'),
+              onPressed: _guardando ? null : _guardar,
+              child: _guardando
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Guardar'),
+            ),
+          ),
+          const SizedBox(height: MotorixEspaciados.l),
+          const Divider(height: 1),
+        ],
+      ),
     );
   }
 }

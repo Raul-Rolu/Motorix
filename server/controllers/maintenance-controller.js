@@ -7,6 +7,18 @@ import {
 } from '../validators/maintenance-validator.js';
 import * as maintenanceService from '../services/maintenance-service.js';
 
+/**
+ * Propuesta del próximo mantenimiento desde una orden (008, FR-008, CA-5).
+ * `orderId` es un entero positivo; no crea ningún mantenimiento.
+ */
+export const proponer = asyncHandler(async (req, res) => {
+  const texto = String(req.query.orderId ?? '');
+  if (!/^[1-9][0-9]*$/.test(texto)) {
+    return error(res, 400, 'DATOS_INVALIDOS', 'La orden (orderId) es obligatoria y debe ser un identificador válido.');
+  }
+  return ok(res, await maintenanceService.proponerDesdeOrden(Number(texto), req.user));
+});
+
 export const listar = asyncHandler(async (req, res) => {
   const mantenimientos = await maintenanceService.listar({
     vehicleId: req.query.vehicleId,

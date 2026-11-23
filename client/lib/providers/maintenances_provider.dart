@@ -78,6 +78,27 @@ class MaintenancesProvider extends ChangeNotifier {
     }
   }
 
+  /// Órdenes de un vehículo (008, FR-008): se buscan por placas y se filtran por
+  /// vehículo; el mecánico solo recibe las suyas (visibilidad de RN-15).
+  Future<List<OrdenDeVehiculo>> ordenesDelVehiculo(int vehicleId, String placas) async {
+    final respuesta = await api.get('/orders?texto=${Uri.encodeComponent(placas)}');
+    final datos = respuesta['datos'] as List<dynamic>? ?? [];
+    return datos
+        .cast<Map<String, dynamic>>()
+        .where((orden) => orden['vehicleId'] == vehicleId)
+        .map(OrdenDeVehiculo.desdeJson)
+        .toList();
+  }
+
+  /// Propuesta del próximo mantenimiento desde una orden (008, FR-008, CA-5).
+  /// Devuelve null si la orden no tiene servicios con tipo e intervalo. No crea
+  /// nada: el usuario corrige y guarda con [registrar].
+  Future<PropuestaMantenimiento?> proponerDesdeOrden(int orderId) async {
+    final respuesta = await api.get('/maintenances/proposal?orderId=$orderId');
+    final propuesta = respuesta['propuesta'];
+    return propuesta is Map<String, dynamic> ? PropuestaMantenimiento.desdeJson(propuesta) : null;
+  }
+
   /// Cumplimiento manual (aclaración Q1): PENDING → COMPLETED.
   Future<bool> completar(int id) async {
     return _accion('/maintenances/$id/complete');

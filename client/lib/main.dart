@@ -21,6 +21,7 @@ import 'providers/notifications_provider.dart';
 import 'providers/orders_provider.dart';
 import 'providers/parts_provider.dart';
 import 'providers/payments_provider.dart';
+import 'providers/service_types_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/shell_navigation_provider.dart';
 import 'providers/ticket_provider.dart';
@@ -75,6 +76,11 @@ void main() {
         // taller (solo ADMIN); se limpia al cerrar sesión o cambiar de usuario.
         ChangeNotifierProvider(
           create: (context) => SettingsProvider(api, context.read<AuthProvider>()),
+        ),
+        // Catálogo de tipos de servicio: ADMIN lo administra; los tres roles
+        // eligen un tipo activo en las líneas de servicio.
+        ChangeNotifierProvider(
+          create: (context) => ServiceTypesProvider(api, context.read<AuthProvider>()),
         ),
       ],
       child: const MotorixApp(),

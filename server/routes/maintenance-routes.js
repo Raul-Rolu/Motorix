@@ -13,6 +13,14 @@ export const maintenanceRoutes = Router();
 
 maintenanceRoutes.use(auth);
 
+// 008 (FR-008): propuesta de próximo mantenimiento desde una orden. Se declara
+// ANTES de las rutas con `/:id`; solo los roles que registran mantenimientos
+// (ADMIN y MECHANIC; el mecánico solo sobre sus órdenes, validado en el servicio).
+maintenanceRoutes.get(
+  '/proposal',
+  requireRole('ADMIN', 'MECHANIC'),
+  maintenanceController.proponer
+);
 maintenanceRoutes.get(
   '/',
   requireRole('ADMIN', 'RECEPTIONIST'),

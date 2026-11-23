@@ -127,3 +127,36 @@ class ClienteMantenimiento {
         telefono: json['telefono'] as String? ?? '',
       );
 }
+
+/// Orden de un vehículo que se ofrece como origen de la propuesta de próximo
+/// mantenimiento (008, FR-008).
+class OrdenDeVehiculo {
+  final int id;
+  final String estado;
+  final String motivo;
+
+  const OrdenDeVehiculo({required this.id, required this.estado, required this.motivo});
+
+  factory OrdenDeVehiculo.desdeJson(Map<String, dynamic> json) => OrdenDeVehiculo(
+        id: json['id'] as int? ?? 0,
+        estado: json['status'] as String? ?? '',
+        motivo: json['reason'] as String? ?? '',
+      );
+}
+
+/// Propuesta del próximo mantenimiento calculada por el servidor a partir de los
+/// tipos de servicio de una orden (008, FR-008, CA-5). `fecha` (AAAA-MM-DD) y
+/// `kilometraje` pueden ser null si el tipo solo tiene uno de los intervalos.
+class PropuestaMantenimiento {
+  final String? fecha;
+  final int? kilometraje;
+  final String? servicio;
+
+  const PropuestaMantenimiento({this.fecha, this.kilometraje, this.servicio});
+
+  factory PropuestaMantenimiento.desdeJson(Map<String, dynamic> json) => PropuestaMantenimiento(
+        fecha: json['fecha'] as String?,
+        kilometraje: (json['kilometraje'] as num?)?.toInt(),
+        servicio: json['servicio'] as String?,
+      );
+}
