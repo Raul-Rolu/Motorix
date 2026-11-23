@@ -170,6 +170,7 @@ client/
 │   ├── providers/              # settings, service_types, audit, terms, session, reports (NUEVOS)
 │   ├── screens/                # settings, service_types, audit_log, terms_acceptance, terms_admin, reports (NUEVAS);
 │   │                           # order_detail, maintenance_form, ticket, login se amplían
+│   ├── widgets/add_service_dialog.dart # NUEVO (P1, hallazgo de la implementación): diálogo «Agregar servicio» con tipo opcional; la pantalla de la orden no tenía forma de agregar líneas de servicio
 │   ├── widgets/session_activity.dart  # NUEVO: detecta actividad del usuario (puntero y teclado)
 │   ├── widgets/app_shell.dart  # secciones Configuración, Catálogo, Bitácora, Términos y Reportes (solo ADMIN)
 │   ├── services/ticket_print.dart     # línea «Próximo servicio»

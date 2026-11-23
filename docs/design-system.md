@@ -348,6 +348,62 @@ snackbar de éxito «Cliente marcado como avisado.» y la fila sale de la lista.
 Estados: cargando, vacío («No hay clientes por avisar.») y error («No se pudo
 cargar la lista de clientes por avisar.» con «Reintentar»).
 
+### 8.8 Configuración, catálogo de servicios y «Próximo servicio» (Sprint 7, bloque P1)
+
+**Configuración.** Sección del menú lateral (`Icons.settings_outlined`), visible solo
+para ADMIN. Una sola pantalla con **secciones separadas por título y divisor, sin
+tarjetas** (8.6), cada una con su propio botón «Guardar» a la derecha y su propio
+mensaje de éxito en snackbar (8.4):
+
+- **Datos del taller**: «Nombre del taller», «Dirección» y «Teléfono» con contador
+  de caracteres (100, 150 y 30). El nombre es obligatorio («El nombre del taller es
+  obligatorio.»). Texto de ayuda: «Aparecen en el encabezado de los tickets nuevos.
+  Los tickets ya emitidos no cambian.». Éxito: «Datos del taller guardados.».
+- **Operación**: «Mantenimiento próximo: días de margen», «…kilómetros de margen» y
+  «Orden detenida: días sin cambio de estado», con el rango válido como texto de
+  ayuda («Entre 1 y 365 días.») y la validación «Debe ser un número entero entre X y
+  Y.». Éxito: «Ajustes de operación guardados.».
+
+Estados: **cargando**, indicador discreto; **error**, «No se pudo cargar la
+configuración.» en `error` con «Reintentar»; **sin permiso**, «No tiene permisos
+para ver la configuración.» sin botón de reintento. Un error del servidor al guardar
+se muestra en español en un snackbar `error`, sin trazas, y conserva lo escrito.
+
+**Catálogo de servicios.** Sección del menú (`Icons.list_alt_outlined`), solo ADMIN.
+Lista densa con divisores: nombre en peso 600, intervalo en `textSecondary`
+(«180 días · 5,000 km», «90 días» o «10,000 km»), la etiqueta «Activo» (`success`) o
+«Inactivo» (`textSecondary`) y los botones de ícono «Editar» (`Icons.edit_outlined`) y
+«Desactivar» / «Reactivar». **No hay botón de borrar**: un tipo usado nunca se
+elimina. «Nuevo tipo» y «Editar» abren un diálogo con «Nombre», «Intervalo en días» e
+«Intervalo en kilómetros» (solo dígitos) y los botones «Cancelar» y «Guardar»; sin
+ningún intervalo se muestra «Indique al menos un intervalo: días, kilómetros o
+ambos.» y un error del servidor (p. ej. nombre repetido) aparece dentro del diálogo.
+**Desactivar** exige confirmación con «Cancelar» y «Confirmar» (8.5); reactivar no.
+Estados: cargando, vacío («No hay tipos de servicio registrados.») y error («No se
+pudo cargar el catálogo de servicios.» con «Reintentar»).
+
+**Agregar servicio a una orden.** En «Servicios y mano de obra» del detalle de la
+orden, el botón de texto «Agregar servicio» (`Icons.add`) aparece mientras la orden
+no esté cerrada. Abre un diálogo con «Descripción del servicio», «Importe ($)» y el
+selector opcional «Tipo de servicio (opcional)» (solo tipos activos; «Sin tipo» por
+omisión) y los botones «Cancelar» y «Agregar». La línea muestra «Servicio · Nombre
+del tipo» en su subtítulo cuando tiene tipo.
+
+**Propuesta de mantenimiento.** En el formulario de Mantenimientos, el
+`OutlinedButton` «Proponer desde una orden» (`Icons.auto_fix_high_outlined`) se
+habilita al elegir un vehículo, lista las órdenes de ese vehículo en un diálogo
+(«Orden #N · Estado» con el motivo debajo) y rellena la fecha objetivo y el
+kilometraje, que se pueden corregir antes de guardar. Mensajes: éxito «Se
+propusieron la fecha y el kilometraje; puede corregirlos antes de guardar.»; sin
+propuesta, «La orden no tiene servicios con tipo e intervalo; capture los umbrales
+manualmente.»; vehículo sin órdenes, «Este vehículo no tiene órdenes.».
+
+**Ticket: «Próximo servicio».** Fila adicional en el bloque de cliente y vehículo
+(`_fila`, mismo estilo que «Fecha») con el texto «2027-05-22 o 83,000 km» (solo la
+fecha o solo los kilómetros si el tipo tiene un único intervalo). **No se muestra**
+cuando el ticket no la trae (tickets anteriores al Sprint 7 o sin servicios con
+tipo). La versión imprimible agrega la misma fila a la tabla de cliente y vehículo.
+
 ---
 
 ## 9. Qué evitar (señales de "hecho por IA")

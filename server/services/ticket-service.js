@@ -12,7 +12,28 @@ import * as vehicleModel from '../models/vehicle.js';
 import * as paymentService from './payment-service.js';
 import { generarFolio } from './ticket-folio.js';
 import { obtenerAjustes, tallerDe } from './settings-service.js';
+import { calcularProximoServicio } from '../utils/next-service.js';
 import { errores } from '../utils/errors.js';
+
+/**
+ * «Próximo servicio» del ticket (008, FR-009, CA-14): solo para tickets CON
+ * instantánea (emitidos desde este sprint; los anteriores no cambian). Se deriva
+ * de los tipos de servicio con intervalo de las líneas de la orden: fecha =
+ * fecha local de emisión del ticket + el menor intervalo en días; kilometraje =
+ * kilometraje de entrada de la orden + el menor intervalo en km. Devuelve null
+ * (y el campo no aparece) si no hay tipos con intervalo.
+ */
+async function proximoServicioDelTicket(ticket, orden) {
+  if (ticket.shopName === null) {
+    return null;
+  }
+  const tipos = await orderModel.findServicesWithTypes(orden.id);
+  return calcularProximoServicio({
+    tipos,
+    kilometrajeBase: orden.mileageEntry,
+    fechaBase: new Date(ticket.issuedAt),
+  });
+}
 
 /**
  * Datos del taller del encabezado del ticket (008, FR-003, CA-1, CA-3): los de la
@@ -99,6 +120,8 @@ export async function obtenerContenido(orderId, usuario) {
     orderModel.findOrderParts(orderId),
   ]);
 
+  const proximoServicio = await proximoServicioDelTicket(ticket, orden);
+
   return {
     folio: ticket.folio,
     fecha: ticket.issuedAt,
@@ -141,5 +164,8 @@ export async function obtenerContenido(orderId, usuario) {
     })),
     estadoPago: resumen.estadoCobro,
     saldoPendiente: resumen.saldoPendiente,
+    // El campo se omite cuando no hay próximo servicio: los tickets anteriores
+    // y los sin tipos conservan exactamente el cuerpo de siempre.
+    ...(proximoServicio ? { proximoServicio } : {}),
   };
 }

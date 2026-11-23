@@ -1,0 +1,25 @@
+OK    inicio de sesión de admin
+OK    inicio de sesión de recepcion
+OK    inicio de sesión de mecanico
+OK    ADMIN consulta la configuración
+OK    datos del taller sembrados
+OK    márgenes de operación: 30 días, 1,000 km y 3 días
+OK    recepcion recibe 403 en la configuración
+OK    mecanico recibe 403 en la configuración
+OK    admin consulta los 4 tipos de servicio activos
+OK    recepcion consulta los 4 tipos de servicio activos
+OK    mecanico consulta los 4 tipos de servicio activos
+OK    recepcion recibe 403 al pedir inactivos
+  ticket 9001: {"folio":"TCK-2026-9001","taller":{"nombre":"Motorix","direccion":"Av. Taller 123, Col. Centro","telefono":"555-000-0000"},"proximoServicio":{"fecha":"2027-05-21","kilometraje":36200}}
+OK    recepcion abre el ticket de la orden 9001
+OK    el ticket 9001 muestra el próximo servicio (kilometraje 31,200 + 5,000)
+OK    la fecha del próximo servicio es la de emisión del ticket más 180 días
+OK    el ticket 9001 está liquidado por 950
+OK    el ticket de la orden 4 (anterior al sprint) NO muestra próximo servicio
+OK    el ticket anterior usa los datos vigentes del taller
+  propuesta 9001: {"orderId":9001,"propuesta":{"fecha":"2027-05-22","kilometraje":36200,"servicio":"Cambio de aceite"}}
+OK    la propuesta desde la orden 9001 es hoy + 180 días y 36,200 km
+OK    recepcion recibe 403 en la propuesta
+OK    la orden entregada 9001 no aparece en clientes por avisar
+OK    el centro de avisos sigue respondiendo
+Resultado: TODO OK

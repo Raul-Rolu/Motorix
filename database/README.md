@@ -44,6 +44,17 @@ durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se version
   actualiza `orderModel.setStatus`), la rellena con `updated_at` **sin alterarlo**,
   y crea `notification_reads` (lectura de avisos por usuario) y `client_notices`
   (constancia de avisos a clientes, única por `(notice_type, fact_id)`).
+- `019_create_settings.sql` — **008-configuracion-seguridad-reportes (FR-001)**:
+  tabla clave-valor `settings` (datos del taller, márgenes de mantenimiento próximo,
+  días de orden detenida y minutos de inactividad). No lleva datos: los inserta el
+  seed 010 y, sin valores, el servidor usa los valores de respaldo.
+- `020_create_service_types.sql` — **008 (FR-006, FR-007, RN-12)**: catálogo
+  `service_types` (nombre único, intervalo en días y/o km con al menos uno, activo)
+  y la columna opcional `order_services.service_type_id` (las líneas existentes
+  quedan en `NULL`). Un tipo nunca se borra, solo se desactiva.
+- `021_tickets_shop_snapshot.sql` — **008 (FR-003)**: columnas `shop_name`,
+  `shop_address` y `shop_phone` de `tickets` (instantánea del taller al emitir).
+  Los tickets existentes quedan en `NULL` **sin relleno**.
 
 ### Seeds
 
@@ -68,12 +79,33 @@ durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se version
   `client_notices`. Con los seeds 001–009 hay al menos un aviso de cada tipo
   (vencido, próximo, cita del día, stock bajo y orden detenida).
 
-> **Limitación de los datos de ejemplo.** Los seeds usan IDs fijos (por ejemplo,
-> orden 6 y mantenimiento 6). Si tu base ya tiene registros propios con esos IDs,
-> el `ON DUPLICATE KEY UPDATE` solo cambia su descripción y el hecho de ejemplo no
-> aparece como se describe (los contadores de avisos también difieren). Usa una
-> base sin datos propios para la demostración. Deuda técnica: IDs de demostración
-> en un rango alto o claves naturales.
+- `010_demo_settings_service_types.sql` — **008-configuracion-seguridad-reportes
+  (FR-029, CA-12)**: los 7 ajustes de `settings` (con
+  `ON DUPLICATE KEY UPDATE setting_key = setting_key`: **nunca pisa un valor que el
+  administrador ya cambió**), 4 tipos de servicio («Cambio de aceite» 180 días y
+  5,000 km, «Afinación», «Revisión de frenos» y «Rotación de neumáticos») y la
+  orden `9001` ENTREGADO con una línea de servicio con tipo, mano de obra, un pago
+  en efectivo por $950.00 y el ticket `TCK-AAAA-9001` **con instantánea del
+  taller**, para mostrar «Próximo servicio». Idempotente: todas sus sentencias son
+  «insertar si falta» y no reinician datos de trabajo.
+
+> **IDs de los datos de ejemplo.** Las tablas **nuevas** del Sprint 7 (`settings`,
+> `service_types`) siembran con IDs normales desde 1: no hay datos del usuario con
+> los que chocar. El seed 010 inserta además en tablas que **ya existían**
+> (`service_orders`, `order_services`, `order_labor`, `payments` y `tickets`) y ahí
+> usa IDs altos (9001) para no chocar con registros propios; a cambio, el
+> `AUTO_INCREMENT` de esas tablas pasa a 9002 en la base donde se siembra (los
+> registros nuevos continúan desde ahí). Los seeds anteriores (001–009) siguen con
+> sus IDs fijos pequeños (por ejemplo, orden 6 y mantenimiento 6): si tu base ya
+> tiene registros propios con esos IDs, el `ON DUPLICATE KEY UPDATE` solo cambia su
+> descripción y el hecho de ejemplo no aparece como se describe. Usa una base sin
+> datos propios para la demostración.
+>
+> Los seeds 003 a 009 fijan IDs de vehículos del 1 al 4: sobre una base de pruebas
+> cuyos contadores ya avanzaron (por ejemplo, tras correr las pruebas de Jest) los
+> seeds fallan por llave foránea; recrea la base o reinicia sus contadores.
+> `docs/evidencias/sprint-7-configuracion/doble-corrida-seeds-p1.mjs --vaciar` lo
+> hace **solo** sobre `motorix_test`.
 
 ### Orden obligatorio: migraciones → seeds → servidor
 
@@ -84,8 +116,17 @@ durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se version
 El servidor del Sprint 6 escribe `status_changed_at` en cada cambio de estado de
 una orden: si arranca **antes** de aplicar la migración 018, esos cambios fallan
 por columna inexistente. Y el seed 004 ajustado se detiene si falta la columna, de
-modo que los seeds 005 a 009 no se aplicarían. Haz una copia de seguridad antes
+modo que los seeds 005 a 009 no se aplicarían.
+
+El servidor del Sprint 7 (bloque P1) lee la tabla `settings` (la usan los tickets y
+los avisos) y escribe las columnas de instantánea de `tickets`: si arranca
+**antes** de aplicar las migraciones 019 a 021, emitir un ticket y consultar los
+avisos fallan por tabla o columna inexistente, y el seed 010 se detiene en su
+primera sentencia (de modo que no se aplicaría). Haz una copia de seguridad antes
 de migrar una base con datos propios.
+
+Los tickets emitidos antes de la migración 021 no tienen instantánea del taller:
+muestran los datos vigentes de la configuración y no muestran «Próximo servicio».
 
 ## Requisitos
 

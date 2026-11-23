@@ -1,0 +1,22 @@
+OK    motorix_test tiene aplicadas las migraciones 019-021
+OK    motorix_test se vació y sus contadores se reiniciaron (base de pruebas desechable)
+--- Corrida 1 de seeds 001-010 ---
+OK    los seeds se aplican sin error (corrida 1)
+{"appointments":5,"client_notices":0,"clients":3,"inventory_movements":10,"maintenance_plans":6,"notification_reads":0,"order_entries":5,"order_labor":3,"order_parts":2,"order_services":5,"parts":7,"payments":5,"schema_migrations":21,"service_orders":7,"service_types":4,"settings":7,"tickets":2,"users":3,"vehicles":4}
+--- Corrida 2 de seeds 001-010 ---
+OK    los seeds se aplican sin error (corrida 2)
+{"appointments":5,"client_notices":0,"clients":3,"inventory_movements":10,"maintenance_plans":6,"notification_reads":0,"order_entries":5,"order_labor":3,"order_parts":2,"order_services":5,"parts":7,"payments":5,"schema_migrations":21,"service_orders":7,"service_types":4,"settings":7,"tickets":2,"users":3,"vehicles":4}
+OK    los conteos por tabla son idénticos entre corridas
+OK    settings tiene 7 filas
+OK    service_types tiene 4 filas
+OK    los tipos de servicio usan IDs normales desde 1 (tabla nueva)
+OK    la orden 9001 está ENTREGADO con una línea tipo «Cambio de aceite»
+OK    el ticket 9001 tiene instantánea del taller
+OK    el ticket 1 (de un sprint anterior) sigue SIN instantánea
+--- El seed no pisa lo que cambió el administrador ---
+OK    los seeds se aplican sin error (corrida 3)
+OK    un ajuste cambiado se conserva tras volver a sembrar
+OK    un tipo editado se conserva tras volver a sembrar
+OK    los conteos siguen idénticos tras la corrida 3
+OK    motorix_test quedó vacía otra vez
+Resultado: TODO OK
