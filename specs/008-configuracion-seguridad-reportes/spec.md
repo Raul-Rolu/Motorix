@@ -107,8 +107,8 @@ Como administrador, quiero mantener un catálogo de tipos de servicio con su int
 4. **Dado** un tipo usado en órdenes, **Cuando** el administrador lo desactiva, **Entonces** deja de ofrecerse en líneas nuevas, se conserva en las líneas existentes y no se puede borrar.
 5. **Dado** un nombre repetido (sin distinguir mayúsculas), **Cuando** se intenta crear, **Entonces** se rechaza.
 6. **Dado** una línea de servicio de una orden, **Cuando** el usuario le asigna un tipo activo, **Entonces** la línea guarda `service_type_id`; las líneas anteriores quedan sin tipo y no proponen mantenimiento.
-7. **Dado** una orden con líneas con tipo e intervalo, **Cuando** el usuario abre el formulario de Mantenimientos y elige «proponer desde una orden» del vehículo, **Entonces** se proponen fecha y kilometraje (ver «Aclaraciones») y el usuario puede corregirlos antes de guardar.
-8. **Dado** un recepcionista o un mecánico, **Cuando** intenta crear, editar o desactivar tipos, **Entonces** el backend responde 403 (RECEPTIONIST y MECHANIC sí pueden elegir un tipo activo en una línea de servicio solo si ya podían editar esa orden).
+7. **Dado** una orden con líneas con tipo e intervalo, **Cuando** el administrador o el mecánico (los roles que registran mantenimientos; el mecánico solo sobre órdenes asignadas a él) abre el formulario de Mantenimientos y elige «proponer desde una orden» del vehículo, **Entonces** se proponen fecha y kilometraje (ver «Aclaraciones») y el usuario puede corregirlos antes de guardar.
+8. **Dado** un recepcionista o un mecánico, **Cuando** intenta crear, editar o desactivar tipos, **Entonces** el backend responde 403; sí pueden consultar la lista de tipos activos y elegir uno en una línea de servicio de una orden que ya podían editar.
 
 ---
 
@@ -188,7 +188,7 @@ Como usuario del taller, quiero leer y aceptar los términos y condiciones y el 
 3. **Dado** la pantalla de aceptación, **Cuando** el usuario rechaza, **Entonces** se cierra la sesión y no accede.
 4. **Dado** un usuario con la versión vigente aceptada, **Cuando** vuelve a iniciar sesión, **Entonces** no se le pide de nuevo.
 5. **Dado** una versión nueva publicada por el administrador (versión y texto), **Cuando** un usuario inicia sesión después, **Entonces** se le pide aceptar la nueva.
-6. **Dado** un usuario sin aceptación vigente, **Cuando** llama a la API sin pasar por la pantalla, **Entonces** el backend rechaza sus operaciones, excepto ver los términos, aceptar y cerrar sesión.
+6. **Dado** un usuario sin aceptación vigente, **Cuando** llama a la API sin pasar por la pantalla, **Entonces** el backend rechaza sus operaciones, excepto ver los términos, aceptar, renovar la sesión y cerrar sesión.
 7. **Dado** el administrador, **Cuando** consulta los términos, **Entonces** ve la versión vigente y la lista de aceptaciones (usuario, versión, fecha).
 8. **Dado** el texto de la versión 1, **Cuando** se lee, **Entonces** describe el uso permitido, la confidencialidad de los datos de clientes y vehículos, la responsabilidad de las cuentas personales y el aviso de privacidad, y advierte que es una plantilla a revisar por el taller.
 9. **Dado** un recepcionista o un mecánico, **Cuando** intenta publicar una versión, **Entonces** el backend responde 403.
@@ -293,19 +293,19 @@ Como administrador, quiero exportar cada reporte para compartirlo o archivarlo.
 - **FR-001** (P1, Ubicuo): El sistema deberá guardar la configuración en una tabla clave-valor `settings` con los datos del taller (nombre, dirección, teléfono), los márgenes de próximo mantenimiento (días y km), los días de orden detenida y los minutos de inactividad. (CA-1)
 - **FR-002** (P1, Evento): Cuando el administrador guarde los datos del taller, el sistema deberá validarlos (nombre obligatorio, longitudes máximas) y persistirlos, y los tickets emitidos desde ese momento deberán usarlos. (CA-1)
 - **FR-003** (P1, Evento): Cuando se emita un ticket, el sistema deberá guardar con él una instantánea del nombre, dirección y teléfono vigentes; los tickets con instantánea no cambian al editar la configuración y los emitidos antes de este sprint usan los datos vigentes (limitación documentada). (CA-1)
-- **FR-004** (P1, Ubicuo): Los márgenes de próximo mantenimiento (días y km) y los días de orden detenida deberán ser editables con límites válidos (enteros positivos dentro de un máximo definido en el plan), y el centro de notificaciones deberá usarlos en lugar de las constantes. La lista de Mantenimientos y el panel de control no cambian. (CA-2)
+- **FR-004** (P1, Ubicuo): Los márgenes de próximo mantenimiento (días y km) y los días de orden detenida deberán ser editables con límites válidos (enteros positivos dentro de un máximo definido en el plan), y el centro de notificaciones y la lista de clientes por avisar (que comparte la definición de «próximo») deberán usarlos en lugar de las constantes. La lista de Mantenimientos y el panel de control no cambian. (CA-2)
 - **FR-005** (P1, Estado): Mientras no exista un valor guardado, el sistema deberá usar los valores de respaldo (los de las constantes actuales: `Motorix`, `Av. Taller 123, Col. Centro`, `555-000-0000`, 30 días, 1,000 km, 3 días y 30 minutos), de modo que una instalación existente sigue funcionando y los resultados del Sprint 6 no cambian. (CA-3)
 - **FR-006** (P1, Ubicuo): El sistema deberá ofrecer un catálogo `service_types` (nombre único, intervalo en días y/o km con al menos uno, activo o inactivo) que el administrador crea, edita y desactiva; un tipo usado en órdenes nunca se borra. (CA-4)
 - **FR-007** (P1, Ubicuo): Las líneas de servicio de las órdenes deberán admitir un `service_type_id` opcional; las líneas existentes quedan sin tipo. (CA-4, CA-5)
 - **FR-008** (P1, Evento): Cuando el usuario pida proponer el próximo mantenimiento desde una orden de un vehículo, el sistema deberá calcular fecha (fecha de la propuesta más los días del intervalo) y kilometraje (kilometraje de la orden más los km del intervalo) con el servicio tipificado más próximo en cada dimensión, y permitir corregirlos antes de guardar. No se agregan columnas a `maintenance_plans`. (CA-5)
 - **FR-009** (P1, Estado): Mientras una orden tenga al menos una línea con tipo e intervalo, el ticket emitido después de este sprint deberá mostrar «Próximo servicio» con la fecha (fecha de emisión más días) y/o el kilometraje (kilometraje de la orden más km) calculados; si no existe tal línea, no la mostrará; los tickets previos no cambian. (CA-14)
-- **FR-010** (P1, Ubicuo): La configuración y el catálogo serán exclusivos de ADMIN, validado en el backend; RECEPTIONIST y MECHANIC recibirán 403. (CA-10)
+- **FR-010** (P1, Ubicuo): La configuración y la administración del catálogo (crear, editar y desactivar tipos) serán exclusivas de ADMIN, validado en el backend; RECEPTIONIST y MECHANIC recibirán 403. La **consulta de los tipos de servicio activos** queda abierta a los tres roles porque es necesaria para elegir el tipo de una línea de servicio. (CA-10)
 
 **Bloque P2 - Seguridad y términos**
 
 - **FR-011** (P2, Ubicuo): El sistema deberá mantener una bitácora `audit_log` (usuario, acción, entidad afectada, fecha) de solo inserción. (CA-20)
 - **FR-012** (P2, Evento): Cuando ocurra un inicio de sesión fallido, el alta, la baja o el cambio de rol de un usuario, un cambio de configuración, un cambio de precio de venta o de compra de una refacción o la publicación de una versión de términos, el sistema deberá registrar el evento. No se registran «bloqueos» ni «pagos cancelados» porque el sistema no los tiene (ver «Supuestos»). (CA-20)
-- **FR-013** (P2, Ubicuo): La bitácora no deberá contener contraseñas, hashes, tokens, datos de tarjeta ni el importe del precio de compra. (CA-21)
+- **FR-013** (P2, Ubicuo): La bitácora no deberá contener contraseñas, hashes, tokens, datos de tarjeta ni el importe del precio de compra; en un inicio de sesión fallido solo se guarda el identificador (usuario o correo) tecleado, truncado a 100 caracteres, nunca el campo de contraseña. (CA-21)
 - **FR-014** (P2, Evento): Cuando el administrador consulte la bitácora, el sistema deberá devolverla paginada de 50 en 50 con filtros por fecha, usuario y acción; no habrá edición, borrado ni exportación, y los demás roles recibirán 403. (CA-20)
 - **FR-015** (P2, Ubicuo): La política de contraseñas (8 caracteres como mínimo, con mayúscula, minúscula y número) deberá aplicarse al crear usuarios y al cambiar la contraseña con un mensaje claro, y las contraseñas se guardarán solo como hash. (CA-22)
 - **FR-016** (P2, Estado): Mientras haya actividad del usuario, el cliente deberá renovar el token; tras el periodo de inactividad configurado cerrará la sesión y pedirá iniciar sesión de nuevo. La vigencia de cada token nuevo será igual al ajuste de inactividad (límites de 5 a 120 minutos) y el backend validará siempre la expiración. La consulta periódica de notificaciones no cuenta como actividad ni renueva el token. (CA-23)
@@ -313,28 +313,28 @@ Como administrador, quiero exportar cada reporte para compartirlo o archivarlo.
 - **FR-018** (P2, Ubicuo): Las consultas deberán usar parámetros, las entradas se validarán en el backend y una prueba automática deberá comprobar intentos de inyección en los campos de búsqueda. (CA-25)
 - **FR-019** (P2, Ubicuo): El sistema deberá guardar en `terms_versions` el texto vigente de los términos y del aviso de privacidad con su versión y fecha, y en `terms_acceptances` el usuario, la versión aceptada y la fecha. (CA-17, CA-18)
 - **FR-020** (P2, Evento): Cuando un usuario inicie sesión sin haber aceptado la versión vigente, el sistema deberá mostrarle la pantalla de aceptación antes de usar el sistema; si la rechaza se cierra la sesión; si la acepta se guarda usuario, versión y fecha. (CA-16, CA-17)
-- **FR-021** (P2, Ubicuo): El backend deberá rechazar las operaciones de un usuario sin aceptación vigente, excepto ver los términos, aceptar y cerrar sesión. (CA-19)
+- **FR-021** (P2, Ubicuo): El backend deberá rechazar las operaciones de un usuario sin aceptación vigente, excepto ver los términos, aceptar, renovar la sesión y cerrar sesión. Si no existe ninguna versión publicada, no se exige aceptación. (CA-19)
 - **FR-022** (P2, Evento): Cuando el administrador publique una versión nueva (versión y texto), el sistema deberá volverla la vigente y pedir su aceptación a todos los usuarios; el administrador podrá consultar la versión vigente y las aceptaciones. (CA-17, CA-18)
 
 **Bloque P3 - Reportes (línea de corte)**
 
 - **FR-023** (P3, Ubicuo): El sistema deberá ofrecer reportes de ingresos por periodo, servicios más frecuentes, productividad por mecánico, refacciones (costo, precio y margen) y rotación de inventario, con filtro por rango libre de fechas y atajos «mes actual» y «mes anterior» (hora local del servidor). (CA-6)
 - **FR-024** (P3, Ubicuo): Los reportes se calcularán al consultar con los datos existentes (RN-10) y los importes en centavos enteros, y coincidirán con los pagos y órdenes que los originan. (CA-7)
-- **FR-025** (P3, Estado): Mientras una refacción no tenga precio de compra, el reporte de refacciones deberá excluirla del margen y marcarla «sin costo»; el precio de compra solo se mostrará a ADMIN. (CA-8)
-- **FR-026** (P3, Ubicuo): El reporte de productividad contará las órdenes terminadas o entregadas en el periodo y el importe de mano de obra de esas órdenes; la rotación será unidades salidas en el periodo entre la existencia actual, con «sin existencia» cuando sea 0. (CA-6)
+- **FR-025** (P3, Estado): Mientras una refacción no tenga precio de compra, el reporte de refacciones deberá excluirla del margen y marcarla «sin costo»; el costo de una línea es el precio de compra **vigente** de la refacción (el sistema no guarda el costo por uso); el precio de compra solo se mostrará a ADMIN. (CA-8)
+- **FR-026** (P3, Ubicuo): Los reportes de servicios, productividad y refacciones usarán las **órdenes cerradas del periodo** (estado Terminado o Entregado, con su último cambio de estado dentro del rango; las canceladas nunca cuentan); el reporte de productividad contará esas órdenes y el importe de mano de obra de ellas; la rotación será unidades salidas en el periodo entre la existencia actual, con «sin existencia» cuando sea 0. (CA-6)
 - **FR-027** (P3, Evento): Cuando el administrador exporte un reporte, el sistema deberá generar un CSV UTF-8 con BOM cuyo contenido coincida con la pantalla y que neutralice valores que Excel interpretaría como fórmula. (CA-9)
 - **FR-028** (P3, Ubicuo): Los reportes y su exportación serán exclusivos de ADMIN (403 para los demás roles) y deberán paginar o limitar el rango para responder en un tiempo razonable. (CA-10, CA-11)
 
 **Transversales**
 
-- **FR-029** (P1, P2, Evento): Cuando se carguen los datos de ejemplo del sprint, el sistema deberá incluir configuración inicial, tipos de servicio, la versión 1 de los términos y datos suficientes para mostrar la información de cada bloque entregado; la carga será idempotente, con IDs de demostración desde 9001 que no choquen con datos del usuario. (CA-12)
+- **FR-029** (P1, P2, P3, Evento): Cuando se carguen los datos de ejemplo del sprint, el sistema deberá incluir configuración inicial, tipos de servicio y una orden con ticket (P1), la versión 1 de los términos y entradas de bitácora (P2) y datos de periodos para los reportes (P3), de modo que cada bloque entregado muestre información al arrancar; la carga será idempotente, con IDs de demostración desde 9001 que no choquen con datos del usuario. (CA-12)
 - **FR-030** (P1, P2, P3, Ubicuo): Las pruebas deberán cubrir las reglas de configuración, los permisos por rol y, por cada bloque entregado, sus reglas (términos, bitácora, política de contraseñas, inactividad y no exposición de datos en P2; cálculo y exportación en P3), sin dejar rojas las suites previas. (CA-13, CA-26)
 - **FR-031** (P1, Evento): Cuando cierre el bloque P1, el equipo deberá actualizar `docs/project-context.md` y `docs/design-system.md`, y documentar en `server/.env.example` que la configuración pasó a la aplicación; se repite por cada bloque posterior entregado. (CA-15)
 
 ### Criterios de aceptación
 
 - **CA-1** (P1): El administrador edita nombre, dirección y teléfono del taller desde la aplicación y los tickets nuevos los usan; los tickets ya emitidos no cambian.
-- **CA-2** (P1): Los márgenes de «Próximo» (días y km) y los días de orden detenida se editan desde la aplicación con límites válidos y el centro de notificaciones los respeta; la lista de Mantenimientos y el panel no cambian de comportamiento.
+- **CA-2** (P1): Los márgenes de «Próximo» (días y km) y los días de orden detenida se editan desde la aplicación con límites válidos y el centro de notificaciones y la lista de clientes por avisar los respetan; la lista de Mantenimientos y el panel no cambian de comportamiento.
 - **CA-3** (P1): Si no hay valor guardado se usan los valores de respaldo (30 días, 1,000 km, 3 días y los datos actuales del taller), de modo que una instalación existente sigue funcionando y los resultados del Sprint 6 no cambian.
 - **CA-4** (P1): El catálogo de tipos de servicio se crea, edita y desactiva sin borrar tipos ya usados en órdenes.
 - **CA-5** (P1): Al proponer el próximo mantenimiento desde una orden con un tipo con intervalo, la fecha y el kilometraje se proponen y el usuario puede corregirlos.
@@ -342,7 +342,7 @@ Como administrador, quiero exportar cada reporte para compartirlo o archivarlo.
 - **CA-7** (P3): Los importes de los reportes se calculan en centavos enteros y coinciden con los pagos y órdenes que los originan.
 - **CA-8** (P3): El reporte de refacciones muestra costo, precio de venta y margen; el precio de compra solo lo ve el administrador.
 - **CA-9** (P3): Cada reporte se exporta a un archivo y su contenido coincide con la pantalla.
-- **CA-10** (P1, P3): Configuración, catálogo y reportes son exclusivos de ADMIN, validado en el backend; RECEPTIONIST y MECHANIC reciben 403.
+- **CA-10** (P1, P3): Configuración, administración del catálogo y reportes son exclusivos de ADMIN, validado en el backend; RECEPTIONIST y MECHANIC reciben 403 (solo pueden consultar los tipos de servicio activos para elegirlos en una línea).
 - **CA-11** (P3): Los reportes con muchos datos responden en un tiempo razonable y paginan o limitan el rango.
 - **CA-12** (P1, P2): Los seeds incluyen configuración inicial, tipos de servicio, la versión inicial de los términos y datos suficientes para mostrar la información; son idempotentes y usan IDs de demostración desde 9001.
 - **CA-13** (P1, P2, P3): Existen y pasan pruebas de reglas de configuración y permisos por rol y, por cada bloque entregado, de sus reglas; las suites previas siguen en verde.
@@ -351,7 +351,7 @@ Como administrador, quiero exportar cada reporte para compartirlo o archivarlo.
 - **CA-16** (P2): Al iniciar sesión, un usuario que no ha aceptado la versión vigente ve la pantalla de aceptación antes de usar el sistema; si la rechaza, se cierra la sesión y no accede.
 - **CA-17** (P2): La aceptación guarda usuario, versión y fecha; no se vuelve a pedir mientras la versión no cambie, y se pide de nuevo cuando el administrador publica una versión nueva.
 - **CA-18** (P2): Los términos describen el uso permitido, la confidencialidad de los datos de clientes y vehículos, la responsabilidad de las cuentas personales y el aviso de privacidad; el administrador consulta la versión vigente y las aceptaciones.
-- **CA-19** (P2): La aceptación se valida en backend: sin aceptación vigente la API rechaza las operaciones del usuario (excepto aceptar, ver los términos y cerrar sesión).
+- **CA-19** (P2): La aceptación se valida en backend: sin aceptación vigente la API rechaza las operaciones del usuario (excepto aceptar, ver los términos, renovar la sesión y cerrar sesión).
 - **CA-20** (P2): La bitácora registra inicios de sesión fallidos, altas, bajas y cambios de rol de usuarios, cambios de configuración y de precios y publicaciones de términos; ADMIN la consulta con filtros por fecha, usuario y acción; nadie puede editarla ni borrarla desde la aplicación.
 - **CA-21** (P2): La bitácora no guarda contraseñas, hashes, tokens ni datos de tarjeta.
 - **CA-22** (P2): La política de contraseñas se aplica al crear y al cambiar la contraseña con un mensaje claro; las contraseñas siguen guardándose solo con hash.
@@ -378,7 +378,7 @@ Como administrador, quiero exportar cada reporte para compartirlo o archivarlo.
 - **SC-001** (P1): 100 % de los tickets emitidos después del cambio de configuración muestran los datos nuevos y 0 tickets con instantánea cambian al editar la configuración.
 - **SC-002** (P1): Con una base sin configuración guardada, 100 % de los resultados del centro de notificaciones coinciden con los del Sprint 6.
 - **SC-003** (P1): 0 tipos de servicio usados en órdenes se pueden borrar; 100 % de las líneas con tipo e intervalo producen la línea «Próximo servicio» en el ticket nuevo y 0 líneas sin tipo la producen.
-- **SC-004** (P1, P2, P3): 100 % de los endpoints de configuración, catálogo, bitácora, términos (publicación) y reportes rechazan a RECEPTIONIST y MECHANIC con 403 en las pruebas.
+- **SC-004** (P1, P2, P3): 100 % de los endpoints de configuración, administración del catálogo, bitácora, términos (publicación y aceptaciones) y reportes rechazan a RECEPTIONIST y MECHANIC con 403 en las pruebas.
 - **SC-005** (P2): 100 % de los eventos auditados definidos en CA-20 generan una entrada y 0 entradas contienen contraseñas, hashes, tokens, datos de tarjeta o importes de precio de compra.
 - **SC-006** (P2): 100 % de los usuarios sin aceptación vigente son rechazados por la API en operaciones distintas de ver, aceptar y cerrar sesión, y 0 usuarios con aceptación vigente vuelven a ver la pantalla mientras la versión no cambie.
 - **SC-007** (P2): La sesión se cierra a los minutos configurados sin actividad y no se cierra antes mientras haya actividad; la consulta periódica de avisos renueva 0 veces el token.
@@ -413,6 +413,10 @@ Como administrador, quiero exportar cada reporte para compartirlo o archivarlo.
   - Las órdenes y los mantenimientos **no están enlazados**: `maintenance_plans` no tiene orden; por eso el próximo servicio se calcula desde la orden y no se enlaza (ver «Aclaraciones»).
   - Las contraseñas de las cuentas sembradas son `Admin123`, `Recepcion123` y `Mecanico123` (seed 001), no las de `docs/project-context.md` (`Admin2026!`, etc.). Todas cumplen la política y no se obliga a cambiarlas; la documentación se corrige en este sprint.
   - El ticket **no persiste su contenido**: se arma al vuelo desde la orden y sus pagos, y solo guarda folio y emisión. Por eso la instantánea de los datos del taller es una columna nueva en `tickets`.
+- **Definiciones de los reportes (P3)**: los ingresos cuentan pagos `COMPLETED` por su fecha de registro (el sistema no guarda fecha de confirmación; es el mismo criterio del panel de control); las órdenes «del periodo» son las cerradas (Terminado o Entregado) según su último cambio de estado, de modo que una orden terminada en un mes y entregada en otro cuenta en el de su último cambio; el costo de las refacciones es el precio de compra vigente (limitación: el margen histórico cambia si cambia el precio de compra; no se agrega columna de costo congelado porque alteraría los sprints 5 y 6).
+- **Ajuste de inactividad por bloque**: la clave `session.inactivity_minutes` existe desde P1 con su valor de respaldo, pero solo se expone en la API y en la pantalla (grupo «Seguridad») cuando se entrega P2, para que cortar después de P1 no deje un ajuste sin efecto.
+- **Evidencias de sprints previos**: al sembrar la versión 1 de los términos (P2), los scripts de evidencia anteriores que inician sesión y llaman a la API reciben `403` hasta aceptar; no se editan y se documenta el procedimiento (aceptar por la API primero).
+- **Roles de la propuesta de mantenimiento**: «proponer desde una orden» la usan los roles que ya registran mantenimientos (administrador y mecánico; el mecánico solo sobre sus órdenes).
 - Un tipo de servicio sin días ni km no tiene intervalo y no genera próximo servicio; se exige al menos uno al crearlo.
 - La fecha de la propuesta y la del ticket usan la fecha local del servidor; la fecha base del ticket es la de su emisión.
 - El kilometraje base de la propuesta y del ticket es el kilometraje de entrada de la orden.
