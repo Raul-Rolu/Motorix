@@ -127,9 +127,18 @@ export async function setMechanic(id, mechanicId) {
   return findById(id);
 }
 
+/**
+ * Cambia el estado de la orden. Es el ÚNICO punto que lo hace (avance, pausa,
+ * reanudación y cancelación), por lo que también actualiza `status_changed_at`
+ * —fecha del último cambio de estado, base del aviso de «orden detenida»
+ * (007-notificaciones-internas, FR-020)— en el MISMO UPDATE. Editar motivo,
+ * notas, kilometraje o el mecánico no la toca.
+ */
 export async function setStatus(id, { status, previousState = null, cancellationReason = null }) {
   await getPool().query(
-    'UPDATE service_orders SET status = ?, previous_state = ?, cancellation_reason = ? WHERE id = ?',
+    `UPDATE service_orders
+     SET status = ?, previous_state = ?, cancellation_reason = ?, status_changed_at = CURRENT_TIMESTAMP
+     WHERE id = ?`,
     [status, previousState, cancellationReason, id]
   );
   return findById(id);

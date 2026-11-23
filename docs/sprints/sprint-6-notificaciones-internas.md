@@ -1,7 +1,9 @@
 <!--
 Insumo de especificación para /speckit.specify.
 Sprint 6 post-MVP de Motorix: notificaciones internas.
-Borrador para revisión: las decisiones de la sección 9 no están resueltas.
+Versión adaptada a este repositorio: numeración de migración corregida (018),
+decisiones de la sección 9 ya acordadas para acortar la aclaración y
+referencias a documentos que sí existen en el repo.
 -->
 
 # Insumo de especificación - Sprint 6: Notificaciones internas
@@ -9,7 +11,8 @@ Borrador para revisión: las decisiones de la sección 9 no están resueltas.
 > Referencias obligatorias para el agente:
 > - Contexto maestro: `docs/project-context.md` (sección 6.12)
 > - Constitución: `docs/reglas.md` y `.specify/memory/constitution.md`
-> - Propuesta de origen: `docs/sprints/propuesta-sprints-post-mvp.md`
+> - Alcance completo del sprint del equipo: este documento (`docs/sprints/sprint-6-notificaciones-internas.md`)
+> - Specs previas para no rehacer lo ya construido: `specs/005-precio-venta-refacciones/` y `specs/006-complemento-precios-compra/`
 > - Este documento describe únicamente el alcance del Sprint 6.
 
 ## 1. Contexto del sprint
@@ -59,9 +62,9 @@ Que cada usuario vea en el encabezado un centro de notificaciones con los avisos
 | `appointments` | consultar (citas del día y próximas) |
 | `parts` | consultar (alertas de stock con el cálculo ya existente) |
 | `service_orders` y `order_status_history` | consultar para detectar órdenes detenidas |
-| `client_notices` | crear tabla: cliente, tipo de aviso, clave del hecho (orden, cita o mantenimiento), quién avisó y fecha |
+| `client_notices` | crear tabla: cliente, tipo de aviso, clave del hecho (orden, cita o mantenimiento), quién avisó, nota opcional y fecha |
 | `clients` | consultar el teléfono para la lista de clientes por avisar |
-| migración `006_...sql` y seeds del sprint | crear |
+| migración `018_...sql` y seeds del sprint | crear (las migraciones 001–017 ya existen; la 018 es la siguiente) |
 
 ## 6. Reglas de negocio aplicables
 
@@ -95,17 +98,20 @@ Que cada usuario vea en el encabezado un centro de notificaciones con los avisos
 - Preferencias por usuario sobre qué avisos recibir.
 - Historial o bitácora de avisos pasados.
 - Reportes y configuración del taller (Sprint 7).
+- Cualquier cambio a lo ya construido en los sprints 1 a 5 y su complemento, salvo lo que este sprint necesite consumir.
 
-## 9. Decisiones pendientes que deben resolverse en /speckit.clarify
+## 9. Decisiones ya acordadas (propuestas para ahorrar tiempo; confirmar o ajustar en /speckit.clarify, no reabrir sin razón)
 
-- Criterio de "orden detenida": ¿más de N días sin cambio de estado, o solo `ESPERANDO_REFACCION` por más de N días? ¿Cuánto vale N y es configurable?
-- Qué considera "cita del día": ¿solo hoy o también mañana? ¿Incluye citas pendientes sin confirmar?
-- Actualización del contador: ¿al navegar, con un intervalo de consulta (por ejemplo cada 60 segundos) o solo al abrir el panel?
-- Identidad de un aviso para la lectura: ¿por tipo y objeto (por ejemplo `STOCK:parte-12`) o por tipo y estado?
-- Si un aviso leído debe volver a aparecer cuando empeora (de Próximo a Vencido).
-- Cuántos días antes se avisa de un mantenimiento próximo y si la cita se avisa un día antes o el mismo día.
-- Si el aviso de orden terminada se da una sola vez o puede repetirse, y si el registro guarda una nota (por ejemplo, "no contestó").
-- Si el mecánico debe ver avisos de mantenimiento de los vehículos que atiende o solo de órdenes.
+- **Orden detenida:** una orden en estado activo (Recibido, Diagnóstico, En reparación o Esperando refacción; nunca Terminado, Entregado ni Cancelada) sin ningún cambio de estado desde hace más de 3 días. N = 3 días como constante en el backend; el Sprint 7 podrá volverla configurable.
+- **Cita del día:** citas de hoy, no canceladas ni completadas, tanto pendientes como confirmadas. La "cita de mañana" solo aplica a la lista de clientes por avisar (US7).
+- **Actualización del contador:** al iniciar sesión, al navegar entre pantallas y con una consulta cada 60 segundos mientras la app está abierta; sin WebSocket.
+- **Identidad de un aviso para la lectura:** por tipo, objeto y estado (por ejemplo `MANTENIMIENTO:12:VENCIDO`, `STOCK:7:AGOTADO`, `ORDEN:5:DETENIDA`). Así un aviso que empeora (de Próximo a Vencido, de stock bajo a agotado) cambia de clave y vuelve a aparecer como no leído (CA-6).
+- **Mantenimiento próximo:** se usa el margen y el cálculo que ya existen en la lista de Mantenimientos; este sprint no cambia esa regla.
+- **Cita en la lista de clientes por avisar:** se avisa un día antes (cita de mañana).
+- **Orden terminada:** el aviso al cliente se registra una sola vez por orden; el registro admite una nota opcional de hasta 255 caracteres (por ejemplo "no contestó") y, una vez marcado como avisado, el cliente sale de la lista por ese hecho.
+- **Mecánico:** solo ve avisos de órdenes asignadas a él; no ve avisos de mantenimiento ni de stock.
+
+Siguen abiertas (decidir en el plan, sin impacto funcional): textos exactos y íconos del centro de notificaciones, y cómo agrupar visualmente los avisos por tipo según `docs/design-system.md`.
 
 ## 10. Restricciones técnicas heredadas
 
@@ -119,5 +125,6 @@ Que cada usuario vea en el encabezado un centro de notificaciones con los avisos
 - Toda pantalla del frontend sigue `docs/design-system.md`.
 - Pruebas de integración contra `motorix_test`, nunca contra la base principal.
 - Los seeds del sprint DEBEN incluir datos de ejemplo suficientes para que la aplicación muestre información al arrancar. La base no puede quedar vacía tras la instalación.
-- Los seeds DEBEN ser idempotentes: si se corren de nuevo, no duplican registros.
-- Las migraciones son aditivas y numeradas (`006_...sql`); no modifican las migraciones anteriores.
+- Los seeds DEBEN ser idempotentes: si se corren de nuevo, no duplican registros ni reinician datos de trabajo (IDs fijos y `ON DUPLICATE KEY UPDATE`).
+- Los importes se calculan en centavos enteros (`server/utils/money.js`).
+- Las migraciones son aditivas y numeradas (`018_...sql`); no modifican las migraciones anteriores.

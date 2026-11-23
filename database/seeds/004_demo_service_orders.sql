@@ -5,14 +5,17 @@
 -- + ON DUPLICATE KEY UPDATE por clave primaria; sin llaves únicas ni
 -- borrados (corrección H-14). El kilometraje crece por vehículo para
 -- cumplir RN-4.
+-- Sprint 6 (007, T068): `status_changed_at` es explícito (orden 3 detenida hace
+-- 5 días; las activas, recientes; las cerradas, antiguas) y el
+-- ON DUPLICATE KEY UPDATE NO lo toca: una segunda corrida no lo reinicia.
 
 INSERT INTO service_orders
-  (id, client_id, vehicle_id, mechanic_id, status, previous_state, mileage_entry, mileage_correction, reason, notes, cancellation_reason, created_by) VALUES
-  (1, 1, 1, NULL, 'RECIBIDO', NULL, 45120, 0, 'Ruido al frenar', 'Cliente reporta vibración al frenar a alta velocidad', NULL, (SELECT id FROM users WHERE username = 'recepcion')),
-  (2, 2, 3, (SELECT id FROM users WHERE username = 'mecanico'), 'EN_REPARACION', NULL, 88300, 0, 'Mantenimiento de 60,000 km', NULL, NULL, (SELECT id FROM users WHERE username = 'recepcion')),
-  (3, 1, 2, (SELECT id FROM users WHERE username = 'mecanico'), 'ESPERANDO_REFACCION', 'EN_REPARACION', 60200, 0, 'Revisión de aire acondicionado', 'Falta el compresor en el almacén', NULL, (SELECT id FROM users WHERE username = 'recepcion')),
-  (4, 3, 4, (SELECT id FROM users WHERE username = 'mecanico'), 'ENTREGADO', NULL, 30150, 0, 'Cambio de aceite y filtros', NULL, NULL, (SELECT id FROM users WHERE username = 'recepcion')),
-  (5, 2, 1, NULL, 'CANCELADA', NULL, 45500, 0, 'Diagnóstico de falla eléctrica', NULL, 'El cliente prefirió ir a otro taller.', (SELECT id FROM users WHERE username = 'recepcion'))
+  (id, client_id, vehicle_id, mechanic_id, status, previous_state, mileage_entry, mileage_correction, reason, notes, cancellation_reason, created_by, status_changed_at) VALUES
+  (1, 1, 1, NULL, 'RECIBIDO', NULL, 45120, 0, 'Ruido al frenar', 'Cliente reporta vibración al frenar a alta velocidad', NULL, (SELECT id FROM users WHERE username = 'recepcion'), DATE_SUB(NOW(), INTERVAL 1 DAY)),
+  (2, 2, 3, (SELECT id FROM users WHERE username = 'mecanico'), 'EN_REPARACION', NULL, 88300, 0, 'Mantenimiento de 60,000 km', NULL, NULL, (SELECT id FROM users WHERE username = 'recepcion'), DATE_SUB(NOW(), INTERVAL 1 DAY)),
+  (3, 1, 2, (SELECT id FROM users WHERE username = 'mecanico'), 'ESPERANDO_REFACCION', 'EN_REPARACION', 60200, 0, 'Revisión de aire acondicionado', 'Falta el compresor en el almacén', NULL, (SELECT id FROM users WHERE username = 'recepcion'), DATE_SUB(NOW(), INTERVAL 5 DAY)),
+  (4, 3, 4, (SELECT id FROM users WHERE username = 'mecanico'), 'ENTREGADO', NULL, 30150, 0, 'Cambio de aceite y filtros', NULL, NULL, (SELECT id FROM users WHERE username = 'recepcion'), DATE_SUB(NOW(), INTERVAL 30 DAY)),
+  (5, 2, 1, NULL, 'CANCELADA', NULL, 45500, 0, 'Diagnóstico de falla eléctrica', NULL, 'El cliente prefirió ir a otro taller.', (SELECT id FROM users WHERE username = 'recepcion'), DATE_SUB(NOW(), INTERVAL 20 DAY))
 ON DUPLICATE KEY UPDATE reason = VALUES(reason);
 
 INSERT INTO order_services (id, order_id, description, amount) VALUES

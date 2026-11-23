@@ -159,4 +159,27 @@ export const errores = {
       `La operación dejaría el total de la orden por encima del máximo permitido (${Number(limite).toFixed(2)}).`,
       { limite: Number(limite) }
     ),
+  // 007-notificaciones-internas, T007 (FR-006, FR-015; contracts/api-rest.md).
+  // El aviso no existe, ya no aplica o su rol no puede verlo (marcar como leído).
+  avisoNoEncontrado: () =>
+    new AppError(
+      404,
+      'NOTIFICATION_NOT_FOUND',
+      'El aviso indicado no existe, ya no está vigente o no le corresponde.'
+    ),
+  // El hecho ya no está pendiente de avisar al cliente (p. ej. la orden se entregó).
+  avisoClienteNoPendiente: () =>
+    new AppError(
+      409,
+      'CLIENT_NOTICE_NOT_PENDING',
+      'Ese hecho ya no está pendiente de avisar al cliente; actualice la lista.'
+    ),
+  // El hecho ya se avisó (otra persona lo marcó antes); `details` informa quién y cuándo.
+  avisoClienteDuplicado: (details = undefined) =>
+    new AppError(
+      409,
+      'CLIENT_NOTICE_DUPLICATE',
+      'Ese cliente ya fue avisado por este hecho; no se registró un aviso nuevo.',
+      details
+    ),
 };

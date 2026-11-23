@@ -9,15 +9,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'config/theme.dart';
+import 'models/vehicle.dart';
 import 'providers/appointments_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/clients_provider.dart';
+import 'providers/clients_to_notify_provider.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/history_provider.dart';
 import 'providers/maintenances_provider.dart';
+import 'providers/notifications_provider.dart';
 import 'providers/orders_provider.dart';
 import 'providers/parts_provider.dart';
 import 'providers/payments_provider.dart';
+import 'providers/shell_navigation_provider.dart';
 import 'providers/ticket_provider.dart';
 import 'providers/users_provider.dart';
 import 'providers/vehicles_provider.dart';
@@ -27,9 +31,11 @@ import 'screens/dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/maintenance_form_screen.dart';
 import 'screens/order_form_screen.dart';
+import 'screens/order_detail_screen.dart';
 import 'screens/part_form_screen.dart';
 import 'screens/users_screen.dart';
 import 'screens/vehicle_form_screen.dart';
+import 'screens/vehicle_history_screen.dart';
 import 'services/api_client.dart';
 import 'widgets/app_shell.dart';
 
@@ -53,6 +59,17 @@ void main() {
         ChangeNotifierProvider(create: (_) => PaymentsProvider(api)),
         ChangeNotifierProvider(create: (_) => TicketsProvider(api)),
         ChangeNotifierProvider(create: (_) => DashboardProvider(api)),
+        // 007-notificaciones-internas: avisos del usuario; escucha la sesión para
+        // limpiarse al cerrar sesión o al entrar otro usuario.
+        ChangeNotifierProvider(
+          create: (context) => NotificationsProvider(api, context.read<AuthProvider>()),
+        ),
+        // Clientes por avisar (US7): también se limpia al cerrar sesión.
+        ChangeNotifierProvider(
+          create: (context) => ClientsToNotifyProvider(api, context.read<AuthProvider>()),
+        ),
+        // Sección del shell pedida desde un aviso (Inventario, Citas…).
+        ChangeNotifierProvider(create: (_) => ShellNavigationProvider()),
       ],
       child: const MotorixApp(),
     ),
@@ -104,6 +121,24 @@ class _MotorixAppState extends State<MotorixApp> {
         '/usuarios': (_) => const _PaginaUsuarios(),
         // Panel de control: exclusivo de administración (FR-016, RN-15).
         '/panel': (_) => const DashboardScreen(),
+      },
+      // Destinos que abre el panel de avisos con argumentos (007, US6): la orden
+      // (id) y el historial de un vehículo.
+      onGenerateRoute: (ajustes) {
+        final argumentos = ajustes.arguments;
+        if (ajustes.name == '/avisos/orden' && argumentos is int) {
+          return MaterialPageRoute<void>(
+            settings: ajustes,
+            builder: (_) => OrderDetailScreen(ordenId: argumentos),
+          );
+        }
+        if (ajustes.name == '/avisos/vehiculo' && argumentos is Vehiculo) {
+          return MaterialPageRoute<void>(
+            settings: ajustes,
+            builder: (_) => VehicleHistoryScreen(vehiculo: argumentos),
+          );
+        }
+        return null;
       },
     );
   }

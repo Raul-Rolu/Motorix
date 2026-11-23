@@ -247,6 +247,8 @@ Cerrar sesión
 ### Header
 
 Nombre de sección, buscador cuando sea útil, notificaciones, usuario actual y rol.
+Las notificaciones son la **campana de avisos** (ver 8.7), a la izquierda del
+nombre del usuario y del botón de cerrar sesión.
 
 ---
 
@@ -305,6 +307,46 @@ El diálogo debe ser breve, claro y en español. Texto sugerido:
 ### 8.6 Tarjetas
 
 Usar `Card` solo para agrupar contenido que lo necesite (indicadores del dashboard, resúmenes). **Por defecto, no usar tarjetas:** preferir tablas, listas y divisores.
+
+### 8.7 Avisos internos y «Clientes por avisar» (Sprint 6)
+
+**Campana.** `IconButton` con `Icons.notifications_outlined` y el `Badge` de
+Material con el número de avisos no leídos, en el encabezado (`AppBar`) del
+`AppShell`. El contador se oculta en 0 y muestra «99+» como máximo. Abre el panel
+de avisos. Sin dependencias nuevas: es el `Badge` de Material 3.
+
+**Panel de avisos.** `endDrawer` del `Scaffold` con el encabezado «Avisos» y una
+lista con desplazamiento, **sin tarjetas**: filas con divisores y un subtítulo
+por grupo (mayúscula pequeña y contador). Orden y color de los grupos:
+
+| Grupo | Color | Ícono |
+|---|---|---|
+| Mantenimientos vencidos | `danger` | `Icons.build_circle_outlined` |
+| Órdenes detenidas | `warning` | `Icons.assignment_late_outlined` |
+| Stock bajo o agotado | `warning` si bajo, `danger` si agotado | `Icons.inventory_2_outlined` |
+| Mantenimientos próximos | `warning` | `Icons.build_circle_outlined` |
+| Citas de hoy | `textSecondary` | `Icons.event_available_outlined` |
+
+Solo se usan `warning`, `success` y `danger` para estados (sección 5). Un aviso
+**no leído** va en peso 600 con un punto de color; uno **leído** va atenuado en
+`textSecondary` y ya no muestra el botón. La acción «Marcar como leído» es un
+`Icons.done` con tooltip; tocar la fila abre el destino (orden, historial del
+vehículo, Inventario o Citas) y lo marca como leído.
+
+Estados (8.4): **cargando**, indicador de progreso discreto que no bloquea la
+campana; **vacío**, «No tienes avisos pendientes.»; **error**, «No se pudieron
+cargar los avisos.» en `danger` con el botón «Reintentar», sin trazas.
+
+**Pantalla «Clientes por avisar».** Sección del menú lateral (`Icons.phone_in_talk_outlined`),
+visible solo para ADMIN y RECEPTIONIST. Lista densa con divisores (sin tarjetas):
+nombre del cliente en peso 600, teléfono con `Icons.phone_outlined`, vehículo
+(«PLACAS · Marca Modelo») en `textSecondary` y el motivo; a la derecha el botón
+`OutlinedButton` «Marcar como avisado». El botón abre un diálogo (8.5) con los
+datos del cliente, un campo «Nota (opcional)» de 255 caracteres como máximo con
+contador, y los botones «Cancelar» y «Confirmar». Al confirmar se muestra el
+snackbar de éxito «Cliente marcado como avisado.» y la fila sale de la lista.
+Estados: cargando, vacío («No hay clientes por avisar.») y error («No se pudo
+cargar la lista de clientes por avisar.» con «Reintentar»).
 
 ---
 

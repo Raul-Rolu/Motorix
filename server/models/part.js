@@ -6,6 +6,34 @@
 import { getPool } from '../config/db.js';
 
 /**
+ * Condición SQL de una refacción en alerta de stock: activa y con stock igual
+ * o por debajo del mínimo (Sprint 3, FR-015; RN-8). Es la ÚNICA definición:
+ * la comparten el panel de control (`dashboard.contarStockBajo`) y los avisos
+ * (`findEnAlerta`) para que sus cifras coincidan (007, FR-005, CA-5).
+ */
+export const CONDICION_STOCK_EN_ALERTA = 'is_active = 1 AND stock <= min_stock';
+
+/**
+ * Refacciones en alerta de stock (007-notificaciones-internas, T032): bajas
+ * (0 < stock <= mínimo) y agotadas (stock 0), con lo mínimo para el aviso.
+ * No incluye datos financieros (no se lee `purchase_price`).
+ */
+export async function findEnAlerta() {
+  const [filas] = await getPool().query(
+    `SELECT id, name, code, stock, min_stock FROM parts
+     WHERE ${CONDICION_STOCK_EN_ALERTA}
+     ORDER BY stock ASC, id ASC`
+  );
+  return filas.map((fila) => ({
+    id: fila.id,
+    name: fila.name,
+    code: fila.code,
+    stock: Number(fila.stock),
+    minStock: Number(fila.min_stock),
+  }));
+}
+
+/**
  * Convierte una fila de `parts` al objeto de la API.
  *
  * Falla cerrada (006, research D4): `purchasePrice` (dato financiero exclusivo

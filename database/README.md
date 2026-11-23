@@ -37,6 +37,13 @@ durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se version
 - `016_add_part_prices.sql` — **005-precio-venta-refacciones (FR-015)**: agrega
   `parts.sale_price` (precio de venta) y `order_parts.unit_price` (precio
   congelado por línea). No toca las migraciones 001–015.
+- `017_part_purchase_price_stale.sql` — 006-complemento-precios-compra.
+- `018_notifications_status_changed.sql` — **007-notificaciones-internas
+  (FR-003, FR-015, FR-020)**: agrega `service_orders.status_changed_at` (fecha del
+  último cambio de estado; la usa el aviso de «orden detenida» y solo la
+  actualiza `orderModel.setStatus`), la rellena con `updated_at` **sin alterarlo**,
+  y crea `notification_reads` (lectura de avisos por usuario) y `client_notices`
+  (constancia de avisos a clientes, única por `(notice_type, fact_id)`).
 
 ### Seeds
 
@@ -51,6 +58,34 @@ durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se version
   precios de venta de las 6 refacciones existentes, una refacción activa sin
   precio (filtro de pendientes) y los usos con precio congelado de la orden 2.
   Idempotente, con stock en valores absolutos.
+- `004_demo_service_orders.sql` (ajuste del Sprint 6) — las órdenes traen
+  `status_changed_at` explícito (la orden 3, detenida hace 5 días) y el
+  `ON DUPLICATE KEY UPDATE` no lo toca, así que una segunda corrida no lo reinicia.
+- `009_demo_notifications.sql` — **007-notificaciones-internas (CA-12)**: orden 6
+  `TERMINADO` (hecho de «vehículo listo»), mantenimiento 6 próximo (vence en 10
+  días) y un ajuste guardado de la fecha de la orden 3 para bases donde el seed 004
+  ya corrió. Idempotente; no inserta filas en `notification_reads` ni
+  `client_notices`. Con los seeds 001–009 hay al menos un aviso de cada tipo
+  (vencido, próximo, cita del día, stock bajo y orden detenida).
+
+> **Limitación de los datos de ejemplo.** Los seeds usan IDs fijos (por ejemplo,
+> orden 6 y mantenimiento 6). Si tu base ya tiene registros propios con esos IDs,
+> el `ON DUPLICATE KEY UPDATE` solo cambia su descripción y el hecho de ejemplo no
+> aparece como se describe (los contadores de avisos también difieren). Usa una
+> base sin datos propios para la demostración. Deuda técnica: IDs de demostración
+> en un rango alto o claves naturales.
+
+### Orden obligatorio: migraciones → seeds → servidor
+
+1. `node database/scripts/apply-migrations.mjs`
+2. `node database/scripts/apply-seeds.mjs`
+3. Arrancar el servidor.
+
+El servidor del Sprint 6 escribe `status_changed_at` en cada cambio de estado de
+una orden: si arranca **antes** de aplicar la migración 018, esos cambios fallan
+por columna inexistente. Y el seed 004 ajustado se detiene si falta la columna, de
+modo que los seeds 005 a 009 no se aplicarían. Haz una copia de seguridad antes
+de migrar una base con datos propios.
 
 ## Requisitos
 
