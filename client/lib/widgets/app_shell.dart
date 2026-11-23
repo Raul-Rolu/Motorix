@@ -1,9 +1,13 @@
 /// Estructura de navegación con menú lateral (T030, US1; FR-016).
 ///
-/// Secciones: Inicio, Clientes, Vehículos, Órdenes y Usuarios. Usuarios solo
-/// es visible para el rol ADMIN; Órdenes es visible para los tres roles (el
-/// mecánico ve las suyas). Ocultar opciones es solo comodidad: la
-/// autorización real se valida en el servidor (RN-15).
+/// Secciones: Inicio, Citas, Clientes, Vehículos, Mantenimientos, Inventario,
+/// Órdenes, Clientes por avisar y Usuarios. Usuarios solo es visible para el
+/// rol ADMIN; Órdenes es visible para los tres roles (el mecánico ve las
+/// suyas); Clientes por avisar es solo de ADMIN y RECEPTIONIST. El encabezado
+/// lleva la campana de avisos internos y el panel lateral de avisos
+/// (007-notificaciones-internas), que también puede pedir abrir una sección.
+/// Ocultar opciones es solo comodidad: la autorización real se valida en el
+/// servidor (RN-15).
 library;
 
 import 'package:flutter/material.dart';

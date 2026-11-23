@@ -12,7 +12,7 @@ Reunir en un solo lugar del encabezado los avisos internos que hoy están disper
 
 **Lenguaje/Versión**: JavaScript (ES Modules, `"type": "module"`) con Node.js LTS en el backend; Dart/Flutter 3.47 en el cliente.
 
-**Dependencias principales**: Express, `mysql2`, `zod` (validadores), JWT; Flutter con Material 3 y `provider`. **Sin dependencias nuevas** (la campana usa el `Badge` de Material y el temporizador usa `dart:async`).
+**Dependencias principales**: Express, `mysql2`, funciones puras de validación (`server/validators/`), JWT; Flutter con Material 3 y `provider`. **Sin dependencias nuevas** (la campana usa el `Badge` de Material y el temporizador usa `dart:async`).
 
 **Almacenamiento**: MySQL local (InnoDB, `utf8mb4`, llaves foráneas). Migración aditiva `018_notifications_status_changed.sql` (no se editan 001–017). Dos tablas nuevas y una columna nueva.
 

@@ -394,9 +394,84 @@ duplicar datos solo para estadísticas.
 
 ## 6.12 Notificaciones internas
 
-Debe contemplar avisos relacionados con: - Mantenimientos próximos. -
-Mantenimientos vencidos. - Citas. - Stock bajo. - Órdenes que requieran
-atención.
+Implementada en el Sprint 6 (`specs/007-notificaciones-internas/`). Los avisos
+son **internos** (dentro de la aplicación): no se envía nada por correo, SMS ni
+WhatsApp. Se **calculan al consultar** (RN-10) a partir de los datos vigentes;
+no se almacenan. Lo único que se guarda es qué avisos leyó cada usuario y a qué
+clientes se avisó.
+
+**Tipos de aviso** (en el orden en que se muestran):
+
+| Grupo | Cuándo aparece | Color |
+|---|---|---|
+| Mantenimiento vencido | Plan `PENDING` con fecha objetivo pasada o kilometraje alcanzado. | `danger` |
+| Orden detenida | Orden activa (`RECIBIDO`, `DIAGNOSTICO`, `EN_REPARACION`, `ESPERANDO_REFACCION`) con **3 días o más** sin cambio de estado. | `warning` |
+| Stock bajo o agotado | Refacción activa con existencias en el mínimo o por debajo (bajo) o en 0 (agotado); misma condición que la alerta del panel de control. | `warning` / `danger` |
+| Mantenimiento próximo | Plan `PENDING` no vencido que vence en **30 días o menos**, o a **1,000 km o menos** de su kilometraje objetivo. | `warning` |
+| Cita de hoy | Cita `PROGRAMADA` con la fecha de hoy. | `textSecondary` |
+
+**Visibilidad por rol** (validada en el backend; el mecánico no obtiene datos
+ajenos aunque la interfaz los ocultara):
+
+- `ADMIN`: todos los tipos.
+- `RECEPTIONIST`: mantenimientos, citas y órdenes detenidas (sin stock).
+- `MECHANIC`: solo órdenes detenidas **asignadas a él**.
+
+**Claves y lectura por usuario.** Cada aviso tiene la clave `TIPO:ID:ESTADO`
+(por ejemplo `MANTENIMIENTO:2:VENCIDO`, `ORDEN:3:DETENIDA`, `STOCK:4:AGOTADO`,
+`CITA:7:HOY`; máximo 80 caracteres). La lectura es **por usuario**: marcar un
+aviso como leído solo lo atenúa para quien lo marcó. Marcar valida la clave
+contra los avisos vigentes del propio usuario (`404 NOTIFICATION_NOT_FOUND` si no
+existe o no le corresponde). Si la condición deja de cumplirse el aviso
+desaparece; si cambia de estado (próximo → vencido, bajo → agotado) la clave
+cambia y vuelve como **no leído**.
+
+**API.** `GET /api/notifications` (lista agrupable, `total` y `noLeidos`) y
+`POST /api/notifications/reads` (marca como leído), para los tres roles. El
+cliente consulta al iniciar sesión, al cambiar de sección y cada 60 segundos; al
+cerrar sesión o entrar otro usuario descarta de inmediato la lista anterior.
+
+**Clientes por avisar** (solo `ADMIN` y `RECEPTIONIST`; el mecánico recibe
+`403 NO_AUTORIZADO`). `GET /api/client-notices/pending` lista los hechos que
+conviene avisar al cliente, con su teléfono y vehículo: orden `TERMINADO` sin
+entregar («Vehículo listo»), cita de mañana y mantenimiento vencido o próximo.
+`POST /api/client-notices` registra quién avisó, cuándo y una nota opcional
+(máximo 255). Un hecho se avisa **una sola vez** (restricción única
+`(notice_type, fact_id)`); un hecho nuevo (otra orden, otra cita u otro
+mantenimiento) sí vuelve a aparecer; un mantenimiento avisado como próximo que
+pasa a vencido es el **mismo** hecho. El sistema no contacta al cliente: la
+persona de recepción avisa por su cuenta y aquí solo queda la constancia.
+
+**Datos que agrega la migración 018.**
+
+- `service_orders.status_changed_at`: fecha del último **cambio de estado** de la
+  orden (la usa «orden detenida»). Solo la actualiza `orderModel.setStatus`;
+  editar otros campos de la orden no la reinicia.
+- `notification_reads`: `user_id`, `notification_key`, `read_at`; única por
+  `(user_id, notification_key)`.
+- `client_notices`: `client_id`, `notice_type` (`ORDEN_TERMINADA`, `CITA_MANANA`,
+  `MANTENIMIENTO`), `fact_id`, `note`, `notified_by`, `notified_at`; única por
+  `(notice_type, fact_id)`.
+
+**Compatibilidad.** La tarjeta «Alertas que requieren atención» del panel de
+control se conserva sin cambios y sus cifras coinciden con las del centro de
+avisos. No hay insignia en el ícono de Inventario.
+
+**Rendimiento.** Con 1,000 órdenes, 600 citas, 400 refacciones y 500
+mantenimientos, el máximo de 5 mediciones por rol fue de unos 21 ms (criterio:
+menos de 1,000 ms) y 8 consultas SQL por petición como máximo (criterio: 10).
+Evidencia en `docs/evidencias/sprint-6-notificaciones/`.
+
+**Limitaciones y deuda técnica conocidas.**
+
+- Los seeds 004 y 009 usan IDs fijos (orden 6 y mantenimiento 6). Si la base ya
+  tiene registros propios con esos IDs, los datos de ejemplo no se insertan o
+  no aparecen como se describe. Pendiente: IDs de demostración en un rango alto
+  o claves naturales.
+- Una corrida de `npm test` falló una vez en `notifications-calculo.test.js` y no
+  se reprodujo en tres corridas posteriores; causa sin diagnosticar (posible
+  dependencia de la hora o de la base recién sembrada).
+- No se pagina el panel de avisos ni hay notificaciones del sistema operativo.
 
 ------------------------------------------------------------------------
 
@@ -1300,8 +1375,9 @@ Antes de asumirlas como definitivas, el equipo debe decidir:
     usuario dedicado `motorix_app` creado por
     `database/scripts/crear-entorno.ps1` (las migraciones se aplican con
     `database/scripts/aplicar-migraciones.ps1`).
--   **Validación de entradas en el backend**: `zod` (esquemas en
-    `server/validators/`), con mensajes en español.
+-   **Validación de entradas en el backend**: funciones puras de validación
+    (en `server/validators/`) que devuelven la lista de mensajes de error en
+    español; no se usa `zod` (no es una dependencia del proyecto).
 -   **Hash de contraseñas**: `bcryptjs` (bcrypt en JavaScript puro, costo 10),
     para evitar compilar módulos nativos en Windows.
 -   **Sesión y bloqueo**: JWT con duración de 8 horas; el rol y el estado

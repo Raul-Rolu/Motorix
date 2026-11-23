@@ -114,6 +114,41 @@ cd client; flutter test
 2. **Esperado**: todas las suites pasan (las previas siguen verdes sin editarse); las nuevas (cálculo, roles, lectura, clientes por avisar, rendimiento, `status_changed_at` y migración) incluidas; `quickstart-005.mjs` y los escenarios de la 006 siguen válidos.
 3. Revisar `docs/project-context.md` (6.12) y `docs/design-system.md`: reflejan los tipos de aviso, los roles, la campana, el panel y «Clientes por avisar»; 0 afirmaciones desactualizadas.
 
+### Hallazgos de la ejecución real (registrados con honestidad)
+
+Al ejecutar el quickstart en una base `motorix` con datos propios y en
+`motorix_test` se encontró lo siguiente. Nada de esto cambia el código de la
+feature; son limitaciones de los datos de ejemplo y de las pruebas.
+
+1. **Seeds con IDs fijos (deuda técnica).** Los seeds 004 y 009 usan IDs fijos
+   (orden 6, mantenimiento 6). En la base `motorix` de quien probó ya existían
+   una orden #6 y una #7 y un mantenimiento con ID 6, propios de pruebas
+   anteriores. Como el `ON DUPLICATE KEY UPDATE` solo cambia descripciones, las
+   filas «Vehículo listo (orden #6)» y «Mantenimiento próximo (cambio de filtros)»
+   **no aparecieron** en Clientes por avisar con esos datos, y los contadores de
+   las capturas (administrador 13, recepción 10) difieren de los de la guía
+   (9 y 6) por esa razón. Los mismos seeds sobre una base limpia sí producen las
+   cifras de la guía: se verificó en `motorix_test` recreada (migraciones 001–018 y
+   seeds 001–009 dos veces con conteos idénticos; la API devuelve un aviso de cada
+   tipo y Clientes por avisar lista la orden 6, la cita de mañana y los
+   mantenimientos). **Pendiente**: usar IDs de demostración en un rango alto o
+   claves naturales para no chocar con datos del usuario.
+2. **Prueba intermitente sin diagnosticar.** Una corrida de `npm test` falló una
+   vez en `tests/integration/notifications-calculo.test.js` (1 prueba de 527) y
+   no se reprodujo en tres corridas posteriores (la suite aislada y dos corridas
+   completas en verde). No se guardó el detalle del fallo; la causa es
+   desconocida (posible dependencia de la hora o de la base recién sembrada). Si
+   reaparece, conservar el nombre de la prueba y el mensaje.
+3. **Validaciones sin `zod`.** Los documentos de la spec decían que las
+   validaciones usaban `zod`; el proyecto usa funciones puras de validación que
+   devuelven los mensajes en español (`server/validators/`) y `zod` no es una
+   dependencia. Se corrigió la mención en `plan.md`, `research.md`, `tasks.md` y
+   `docs/project-context.md`.
+4. **T005 parcial.** La comprobación del runner `apply-migrations.mjs` en una base
+   desechable no se hizo como tarea aislada; en la práctica el runner aplicó las
+   migraciones 001–018 sobre `motorix_test` recreada y registró la 018, y el
+   ayudante de pruebas la aplica en cada suite.
+
 ## 5. Resultado esperado global
 
 Flujo demostrable de cierre (insumo, sección 4): existen un mantenimiento vencido, una cita para hoy, una refacción con stock bajo y una orden detenida → el administrador inicia sesión y la campana muestra el total → abre el centro y ve los avisos agrupados por tipo → abre el aviso de stock y llega a Inventario → marca uno como leído y el contador baja → la recepcionista solo ve mantenimientos, citas y órdenes detenidas → el mecánico solo ve avisos de sus órdenes → recepción abre «Clientes por avisar», ve al cliente de la orden terminada con su teléfono, lo marca como avisado y el cliente sale de la lista con quién y cuándo quedaron registrados.
