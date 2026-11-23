@@ -33,7 +33,7 @@ Sin dependencias nuevas en backend ni en cliente. Sin cambios de comportamiento 
 - `GET /api/notifications` sigue por debajo de **1 s** y de **10 consultas SQL** por petición, ahora con una consulta de ajustes: ADMIN = 1 (autenticación, con la compuerta de términos unida) + 1 (ajustes) + 2 (mantenimientos y kilometraje) + 1 (citas) + 1 (órdenes detenidas) + 1 (stock) + 1 (lecturas) = **8**.
 - Cada reporte (P3) responde en **menos de 2 s** con un volumen ampliado (ver `research.md` D15).
 
-**Restricciones**: permisos solo en backend (RN-5, RN-15); sin secretos en el repo; español en docs, comentarios y pruebas; pantallas según `docs/design-system.md`; seeds idempotentes con IDs desde 9001; importes en centavos enteros (`server/utils/money.js`); `.env` solo conserva credenciales y secretos (la configuración del taller vive en `settings`).
+**Restricciones**: permisos solo en backend (RN-5, RN-15); sin secretos en el repo; español en docs, comentarios y pruebas; pantallas según `docs/design-system.md`; seeds idempotentes (IDs desde 1 en las tablas nuevas y desde 9001 solo en tablas ya existentes); importes en centavos enteros (`server/utils/money.js`); `.env` solo conserva credenciales y secretos (la configuración del taller vive en `settings`).
 
 **Escala/Alcance**: 11 historias, 31 requisitos, 26 criterios de aceptación, 5 migraciones, 3 seeds, 5 grupos de rutas nuevos (`/api/settings`, `/api/service-types`, `/api/audit-log`, `/api/terms`, `/api/reports`) más 2 rutas en recursos existentes (`GET /api/maintenances/proposal` y `POST /api/auth/renew`), 31 suites backend nuevas (6 unitarias, 19 de integración y 6 de contrato) y 13 archivos de prueba Flutter nuevos, 3 documentos de proyecto por bloque (`project-context.md`, `design-system.md`, `database/README.md`).
 
@@ -45,7 +45,7 @@ Sin dependencias nuevas en backend ni en cliente. Sin cambios de comportamiento 
 |---|---|---|
 | I. Alcance y fuente de verdad | ✅ | Solo el Sprint 7; `docs/project-context.md` y `docs/design-system.md` se actualizan **al cierre de cada bloque** (incluida la corrección de las contraseñas sembradas); las diferencias con el insumo están en «Desviaciones» |
 | II. Responsabilidades separadas | ✅ | Reglas en `server/services` (`settings-service.js`, `audit-service.js`, `terms-service.js`, `report-service.js`), acceso a datos en `server/models`, validación en `server/validators`, funciones puras en `server/utils` (`next-service.js`, `csv.js`, `report-range.js`); cliente en `providers/` y `screens/`; ningún widget calcula reglas |
-| III. Stack y base local | ✅ | ES Modules, MySQL local, migraciones aditivas numeradas desde 019, seeds con IDs desde 9001 y `ON DUPLICATE KEY UPDATE`, sin dependencias nuevas |
+| III. Stack y base local | ✅ | ES Modules, MySQL local, migraciones aditivas numeradas desde 019, seeds con IDs desde 1 en tablas nuevas y desde 9001 solo en tablas existentes, con `ON DUPLICATE KEY UPDATE`, sin dependencias nuevas |
 | IV. Seguridad | ✅ | Compuerta de términos, bitácora sin secretos, token renovable con vigencia acotada (5 a 120 min), permisos con `requireRole` y filtrado en servicio; **el precio de compra solo se muestra a ADMIN** (reportes exclusivos de ADMIN); `.env` sin secretos nuevos; sin trazas al usuario |
 | V. Integridad de reglas de negocio | ✅ | RN-12 (intervalos configurables, sin valores universales), RN-10 (reportes derivados), RN-9 (órdenes entregadas se conservan; los reportes las leen), RN-14 (nada de tarjetas en bitácora), RN-15 |
 | VI. API consistente | ✅ | Mismos envoltorios `ok/created/error` y códigos de error; rutas documentadas en `contracts/api-rest.md` |
@@ -103,7 +103,7 @@ database/
 │   ├── 022_create_audit_log.sql               # P2: bitácora
 │   └── 023_create_terms.sql                   # P2: terms_versions y terms_acceptances
 ├── seeds/
-│   ├── 010_demo_settings_service_types.sql    # P1: ajustes, tipos 9001–9004, orden 9001 entregada con ticket con instantánea
+│   ├── 010_demo_settings_service_types.sql    # P1: ajustes, tipos 1–4, orden 9001 entregada con ticket con instantánea
 │   ├── 011_demo_terms.sql                     # P2: versión 1 de los términos y entradas de bitácora de ejemplo
 │   └── 012_demo_reports.sql                   # P3: órdenes, pagos, usos y movimientos de periodos anteriores
 └── scripts/                                    # sin cambios (detectan 019–023 y 010–012)
@@ -211,7 +211,7 @@ Resuelve D1–D18: partición de migraciones por bloque (D1), `settings` (D2), c
 - **R1 — La compuerta de términos afecta a todas las rutas.** Vive en el middleware `auth`, que importan todos los routers. Mitigación: sin versión publicada no hay compuerta (las 74 suites previas no publican versión), la consulta se une a la de autenticación (sin consulta extra) y una prueba nueva cuenta las consultas. Las rutas que deben seguir abiertas (términos, cierre de sesión, renovación) usan `authBase`.
 - **R2 — Suites previas y `limpiarTablas`.** Las tablas nuevas deben vaciarse en el helper (con `FOREIGN_KEY_CHECKS = 0` ya existe), pero **solo cuando la migración correspondiente ya existe**, por eso el helper se amplía por bloque (P1 y P2) y no antes. Si no, las suites previas fallarían por tabla inexistente.
 - **R3 — Presupuesto de consultas de avisos.** La consulta de ajustes sube el máximo a 8 (límite 10). No se usa caché para no mezclar datos entre pruebas ni ocultar cambios del administrador; si el máximo llegara a 10, se evaluaría una caché con invalidación en la escritura.
-- **R4 — Salto de `AUTO_INCREMENT` por los IDs 9001+.** En una base de usuario, las órdenes, pagos y tickets nuevos continúan desde 9002 tras sembrar. Es la limitación aceptada por el insumo (rango alto para no chocar con datos propios); se documenta en `database/README.md` y en el quickstart.
+- **R4 — Salto de `AUTO_INCREMENT` por los IDs 9001+ en tablas existentes.** Solo ocurre donde un seed inserta en tablas que ya existían (órdenes, líneas, pagos, tickets…): en una base de usuario, los registros nuevos de esas tablas continúan desde 9002 tras sembrar. Las tablas nuevas del sprint usan IDs desde 1 y no tienen salto. Es la limitación aceptada por el insumo (rango alto para no chocar con datos propios); se documenta en `database/README.md` y en el quickstart.
 - **R5 — Cifras absolutas de evidencias previas.** Las órdenes y pagos del seed 010 y 012 cambian los conteos que citan `quickstart-005.mjs` y el quickstart de la 007; hay tareas explícitas de revisión que **no editan** los scripts.
 - **R6 — Scripts de evidencia anteriores y términos.** Al sembrar la versión 1 (seed 011), un login seguido de llamadas a la API devuelve `403 TERMS_NOT_ACCEPTED` hasta aceptar; se documenta cómo aceptar por la API para repetir esos scripts y la decisión de editarlos queda al usuario.
 - **R7 — La renovación depende del cliente.** El backend no puede saber si hubo actividad humana; un cliente comprometido podría renovar sin límite. Se acepta en el MVP (decisión del insumo: «el cierre lo controla el cliente») y se registra como trabajo futuro un tope absoluto de sesión.

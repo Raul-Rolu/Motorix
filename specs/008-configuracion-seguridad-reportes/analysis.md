@@ -79,7 +79,7 @@ Documentos revisados: `spec.md`, `plan.md`, `research.md`, `data-model.md`, `con
 Se cruzaron los nombres que aparecen en más de un documento; **sin diferencias pendientes** tras las correcciones:
 
 - **Migraciones**: 019 (`settings`), 020 (`service_types` + `order_services.service_type_id`), 021 (`tickets` instantánea), 022 (`audit_log`), 023 (terms); P3 ninguna y 024 condicional. Coinciden en `plan.md`, `research.md` D1, `data-model.md`, `tasks.md` y `quickstart.md`. Las migraciones existentes llegan a 018 (verificado).
-- **Seeds**: 010 (P1), 011 (P2), 012 (P3); los existentes llegan a 009 (verificado). IDs desde 9001.
+- **Seeds**: 010 (P1), 011 (P2), 012 (P3); los existentes llegan a 009 (verificado). IDs desde 1 en tablas nuevas y desde 9001 solo en tablas existentes (ajuste del 2026-11-23).
 - **Claves de `settings`**: `shop.name`, `shop.address`, `shop.phone`, `maintenance.margin_days`, `maintenance.margin_km`, `orders.stalled_days`, `session.inactivity_minutes`: iguales en `data-model.md`, `research.md` D2 y el contrato (los nombres del cuerpo JSON están en español en la API: `taller`, `operacion`, `seguridad`).
 - **Constantes**: respaldo 30 días, 1,000 km, 3 días, 30 minutos; límites 1–365, 100–50,000, 1–90, 5–120 (coinciden en `data-model.md`, `research.md`, contrato y T010); vigencia del token = ajuste (30 por omisión, antes `SESION_MINUTOS = 30`).
 - **Rutas**: `/api/settings`, `/api/service-types`, `GET /api/maintenances/proposal` (antes de `/:id`), `/api/audit-log`, `/api/terms` (`current`, `accept`, `acceptances`, `POST /`), `POST /api/auth/renew`, `/api/reports/{income,services,productivity,parts,rotation}` y `/:reporte/export`; iguales en contrato, plan, quickstart y tareas.

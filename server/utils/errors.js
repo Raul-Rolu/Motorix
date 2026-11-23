@@ -182,4 +182,20 @@ export const errores = {
       'Ese cliente ya fue avisado por este hecho; no se registró un aviso nuevo.',
       details
     ),
+  // 008-configuracion-seguridad-reportes, T012 (bloque P1; FR-006, CA-4):
+  // catálogo de tipos de servicio.
+  tipoServicioNoEncontrado: () =>
+    new AppError(404, 'SERVICE_TYPE_NOT_FOUND', 'El tipo de servicio indicado no existe.'),
+  tipoServicioDuplicado: () =>
+    new AppError(
+      409,
+      'SERVICE_TYPE_DUPLICATE',
+      'Ya existe un tipo de servicio con ese nombre.'
+    ),
+  tipoServicioInactivo: () =>
+    new AppError(
+      409,
+      'SERVICE_TYPE_INACTIVE',
+      'El tipo de servicio está inactivo y no puede asignarse a una línea nueva.'
+    ),
 };

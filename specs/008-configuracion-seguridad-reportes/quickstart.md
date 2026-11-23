@@ -28,8 +28,8 @@ cd server; npm start
 cd client; flutter run
 ```
 
-> **Los seeds usan IDs desde 9001**: en una base propia, las órdenes, pagos y tickets nuevos continúan desde 9002.
-> **Tras sembrar la versión 1 de los términos (P2)**, los scripts de evidencia anteriores que inician sesión (`quickstart-005.mjs`, `verificar-avisos-api.mjs`) reciben `403 TERMS_NOT_ACCEPTED` hasta que cada cuenta acepte: `POST /api/terms/accept` con `{ "termsVersionId": 9001 }`.
+> **IDs de los seeds**: las tablas nuevas del sprint usan IDs desde 1; solo donde se inserta en tablas que ya existían (órdenes, pagos, tickets…) se usan IDs desde 9001, por lo que sus registros nuevos continúan desde 9002.
+> **Tras sembrar la versión 1 de los términos (P2)**, los scripts de evidencia anteriores que inician sesión (`quickstart-005.mjs`, `verificar-avisos-api.mjs`) reciben `403 TERMS_NOT_ACCEPTED` hasta que cada cuenta acepte: `POST /api/terms/accept` con `{ "termsVersionId": 1 }`.
 
 ## 3. Comandos de prueba
 
@@ -55,7 +55,7 @@ cd client; flutter test; flutter analyze
 #### E1 — Migraciones y seeds idempotentes del bloque (CA-12, CA-3)
 
 1. Base limpia: migraciones 001–021 y `apply-seeds.mjs` **dos** veces.
-2. **Esperado**: conteos idénticos entre corridas; `settings` con 7 filas; `service_types` con 4 (ids 9001–9004); orden 9001 `ENTREGADO` con un ticket que tiene instantánea; si el administrador cambió un ajuste antes de la segunda corrida, **conserva su valor** (los seeds no lo pisan).
+2. **Esperado**: conteos idénticos entre corridas; `settings` con 7 filas; `service_types` con 4 (ids 1–4); orden 9001 `ENTREGADO` con un ticket que tiene instantánea; si el administrador cambió un ajuste antes de la segunda corrida, **conserva su valor** (los seeds no lo pisan).
 3. **Base con datos**: los tickets existentes tienen `shop_name` en `NULL` (sin relleno) y las líneas de servicio existentes `service_type_id` en `NULL`.
 
 #### E2 — Datos del taller en el ticket (CA-1)
@@ -109,7 +109,7 @@ cd client; flutter test; flutter analyze
 
 #### E9 — Datos de ejemplo del bloque (CA-12)
 
-1. Seeds 010 y 011 dos veces: la versión 1 de los términos y las 4 entradas de bitácora (ids 9001–9004) no se duplican; la bitácora muestra datos al arrancar.
+1. Seeds 010 y 011 dos veces: la versión 1 de los términos y las 4 entradas de bitácora (ids 1–4) no se duplican; la bitácora muestra datos al arrancar.
 
 ### BLOQUE P3 — Reportes (solo si se entrega)
 

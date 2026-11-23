@@ -327,7 +327,7 @@ Como administrador, quiero exportar cada reporte para compartirlo o archivarlo.
 
 **Transversales**
 
-- **FR-029** (P1, P2, P3, Evento): Cuando se carguen los datos de ejemplo del sprint, el sistema deberá incluir configuración inicial, tipos de servicio y una orden con ticket (P1), la versión 1 de los términos y entradas de bitácora (P2) y datos de periodos para los reportes (P3), de modo que cada bloque entregado muestre información al arrancar; la carga será idempotente, con IDs de demostración desde 9001 que no choquen con datos del usuario. (CA-12)
+- **FR-029** (P1, P2, P3, Evento): Cuando se carguen los datos de ejemplo del sprint, el sistema deberá incluir configuración inicial, tipos de servicio y una orden con ticket (P1), la versión 1 de los términos y entradas de bitácora (P2) y datos de periodos para los reportes (P3), de modo que cada bloque entregado muestre información al arrancar; la carga será idempotente, con IDs normales desde 1 en las tablas nuevas del sprint y con IDs de demostración desde 9001, que no choquen con datos del usuario, solo cuando se inserta en tablas que ya existían. (CA-12)
 - **FR-030** (P1, P2, P3, Ubicuo): Las pruebas deberán cubrir las reglas de configuración, los permisos por rol y, por cada bloque entregado, sus reglas (términos, bitácora, política de contraseñas, inactividad y no exposición de datos en P2; cálculo y exportación en P3), sin dejar rojas las suites previas. (CA-13, CA-26)
 - **FR-031** (P1, Evento): Cuando cierre el bloque P1, el equipo deberá actualizar `docs/project-context.md` y `docs/design-system.md`, y documentar en `server/.env.example` que la configuración pasó a la aplicación; se repite por cada bloque posterior entregado. (CA-15)
 
@@ -344,7 +344,7 @@ Como administrador, quiero exportar cada reporte para compartirlo o archivarlo.
 - **CA-9** (P3): Cada reporte se exporta a un archivo y su contenido coincide con la pantalla.
 - **CA-10** (P1, P3): Configuración, administración del catálogo y reportes son exclusivos de ADMIN, validado en el backend; RECEPTIONIST y MECHANIC reciben 403 (solo pueden consultar los tipos de servicio activos para elegirlos en una línea).
 - **CA-11** (P3): Los reportes con muchos datos responden en un tiempo razonable y paginan o limitan el rango.
-- **CA-12** (P1, P2): Los seeds incluyen configuración inicial, tipos de servicio, la versión inicial de los términos y datos suficientes para mostrar la información; son idempotentes y usan IDs de demostración desde 9001.
+- **CA-12** (P1, P2): Los seeds incluyen configuración inicial, tipos de servicio, la versión inicial de los términos y datos suficientes para mostrar la información; son idempotentes; usan IDs desde 1 en las tablas nuevas y desde 9001 solo en tablas que ya existían.
 - **CA-13** (P1, P2, P3): Existen y pasan pruebas de reglas de configuración y permisos por rol y, por cada bloque entregado, de sus reglas; las suites previas siguen en verde.
 - **CA-14** (P1): El ticket nuevo muestra el próximo servicio (fecha o kilometraje) cuando la orden tiene un tipo con intervalo y no lo muestra cuando no lo tiene; los tickets ya emitidos no cambian.
 - **CA-15** (P1): `docs/project-context.md` y `docs/design-system.md` se actualizan; `server/.env.example` documenta que la configuración del taller y los márgenes pasaron a la aplicación (no contiene `SHOP_*` que retirar).
@@ -423,6 +423,6 @@ Como administrador, quiero exportar cada reporte para compartirlo o archivarlo.
 - Los mecánicos y el personal de recepción siguen usando las líneas de servicio con los permisos que ya tienen; solo ADMIN administra el catálogo.
 - La renovación del token se hace con una petición explícita del cliente cuando hay actividad del usuario; los límites de 5 a 120 minutos para la inactividad son una propuesta del plan.
 - El volumen para el rendimiento de los reportes (P3) se toma del orden de cientos de órdenes y miles de movimientos, sin cifras de producción.
-- Los seeds usan IDs desde 9001; las migraciones son aditivas desde la `019_...sql` (una por tema); orden de aplicación obligatorio: migraciones, seeds, servidor.
+- Los seeds usan IDs desde 1 en las tablas nuevas y desde 9001 solo en tablas ya existentes; las migraciones son aditivas desde la `019_...sql` (una por tema); orden de aplicación obligatorio: migraciones, seeds, servidor.
 - Las restricciones técnicas heredadas se mantienen: ES Modules, solo el backend accede a MySQL, permisos en backend, sin secretos en el repositorio, MySQL con InnoDB y `utf8mb4`, login por usuario o correo, pruebas contra `motorix_test`, importes en centavos enteros (`server/utils/money.js`) y `DECIMAL(10,2)`, y pantallas conforme a `docs/design-system.md`.
 - Como el ADMIN siembra con la versión 1 de los términos sin aceptar, el primer inicio de sesión de cada cuenta de demostración mostrará la pantalla de aceptación (decisión acordada).

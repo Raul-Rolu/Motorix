@@ -55,7 +55,7 @@ Extiende el contrato base y los previos (`specs/003-…` a `specs/007-notificaci
 ## `GET /api/service-types` (FR-006; CA-4)
 
 - **Roles**: ADMIN, RECEPTIONIST, MECHANIC (la lectura de tipos **activos** es necesaria para elegir el tipo de una línea). `?incluirInactivos=true` solo para ADMIN (con otro rol → `403`).
-- **Respuesta 200**: `{ "datos": [ { "id": 9001, "nombre": "Cambio de aceite", "intervaloDias": 180, "intervaloKm": 5000, "activo": true } ] }`, ordenados por nombre.
+- **Respuesta 200**: `{ "datos": [ { "id": 1, "nombre": "Cambio de aceite", "intervaloDias": 180, "intervaloKm": 5000, "activo": true } ] }`, ordenados por nombre.
 
 ## `POST /api/service-types` (FR-006; CA-4, CA-10) — ADMIN
 
@@ -108,7 +108,7 @@ Extiende el contrato base y los previos (`specs/003-…` a `specs/007-notificaci
   "pagina": 1, "totalPaginas": 3, "total": 112,
   "datos": [
     {
-      "id": 9002, "fecha": "2026-11-20T10:15:00.000Z",
+      "id": 2, "fecha": "2026-11-20T10:15:00.000Z",
       "usuario": { "id": 1, "nombre": "Administrador del Taller" },
       "accion": "USER_ROLE_CHANGED", "entidad": "USER", "entidadId": 3,
       "detalle": "Rol: MECHANIC → RECEPTIONIST"
@@ -122,11 +122,11 @@ Extiende el contrato base y los previos (`specs/003-…` a `specs/007-notificaci
 ## `GET /api/terms/current` (FR-019, FR-020; CA-16, CA-18)
 
 - **Roles**: los tres (con `authBase`: **no** exige haber aceptado).
-- **Respuesta 200**: `{ "vigente": { "id": 9001, "version": 1, "terminos": "…", "avisoPrivacidad": "…", "publicadaEn": "…" } | null, "aceptada": true | false }`. Sin versión publicada: `{ "vigente": null, "aceptada": true }` (no hay compuerta).
+- **Respuesta 200**: `{ "vigente": { "id": 1, "version": 1, "terminos": "…", "avisoPrivacidad": "…", "publicadaEn": "…" } | null, "aceptada": true | false }`. Sin versión publicada: `{ "vigente": null, "aceptada": true }` (no hay compuerta).
 
 ## `POST /api/terms/accept` (FR-020; CA-16, CA-17)
 
-- **Roles**: los tres (`authBase`). **Cuerpo**: `{ "termsVersionId": 9001 }`.
+- **Roles**: los tres (`authBase`). **Cuerpo**: `{ "termsVersionId": 1 }`.
 - **Efecto**: guarda usuario, versión y fecha; idempotente. **Respuesta 200**: `{ "aceptada": true, "version": 1 }`.
 - **Errores**: `400 DATOS_INVALIDOS`, `409 TERMS_VERSION_OUTDATED` (no es la vigente), `404 RECURSO_NO_ENCONTRADO` (no existe).
 

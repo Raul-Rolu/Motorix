@@ -18,6 +18,12 @@ export function aObjeto(fila) {
     folio: fila.folio,
     issuedBy: fila.issued_by ?? null,
     issuedAt: fila.issued_at,
+    // 008-configuracion-seguridad-reportes (FR-003): instantánea del taller al
+    // emitir. Los tickets anteriores al sprint la tienen en null (sin relleno);
+    // `shopName` no nulo es el marcador de «ticket con instantánea».
+    shopName: fila.shop_name ?? null,
+    shopAddress: fila.shop_address ?? null,
+    shopPhone: fila.shop_phone ?? null,
   };
 }
 
@@ -30,11 +36,15 @@ export async function findByOrder(orderId) {
   return aObjeto(filas[0]);
 }
 
-/** Emite el ticket con su folio (idempotente por la UNIQUE de order_id). */
-export async function create({ orderId, folio, issuedBy = null }) {
+/**
+ * Emite el ticket con su folio (idempotente por la UNIQUE de order_id) y la
+ * instantánea del taller vigente al emitirlo (008, FR-003). El contenido
+ * (importes, líneas, pagos) NO se guarda: se deriva al consultar.
+ */
+export async function create({ orderId, folio, issuedBy = null, taller = null }) {
   const [resultado] = await getPool().query(
-    'INSERT INTO tickets (order_id, folio, issued_by) VALUES (?, ?, ?)',
-    [orderId, folio, issuedBy]
+    'INSERT INTO tickets (order_id, folio, issued_by, shop_name, shop_address, shop_phone) VALUES (?, ?, ?, ?, ?, ?)',
+    [orderId, folio, issuedBy, taller?.nombre ?? null, taller?.direccion ?? null, taller?.telefono ?? null]
   );
   const [filas] = await getPool().query('SELECT * FROM tickets WHERE id = ?', [
     resultado.insertId,
