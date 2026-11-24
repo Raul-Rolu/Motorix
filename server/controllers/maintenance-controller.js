@@ -20,6 +20,11 @@ export const proponer = asyncHandler(async (req, res) => {
 });
 
 export const listar = asyncHandler(async (req, res) => {
+  // 008 (FR-018): el filtro de vehículo debe ser un identificador válido; otro valor es un 400.
+  const vehiculo = req.query.vehicleId;
+  if (vehiculo !== undefined && vehiculo !== '' && !/^[1-9][0-9]{0,14}$/.test(String(vehiculo))) {
+    return error(res, 400, 'DATOS_INVALIDOS', 'El vehículo (vehicleId) debe ser un identificador válido.');
+  }
   const mantenimientos = await maintenanceService.listar({
     vehicleId: req.query.vehicleId,
     status: req.query.status,

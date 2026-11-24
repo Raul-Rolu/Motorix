@@ -17,6 +17,11 @@ export const login = asyncHandler(async (req, res) => {
   return ok(res, resultado);
 });
 
+/** Renueva el token con la actividad del usuario (008, FR-016); sin cuerpo. */
+export const renew = asyncHandler(async (req, res) => {
+  return ok(res, await authService.renovar(req.user));
+});
+
 export const changePassword = asyncHandler(async (req, res) => {
   const erroresDeValidacion = validarCambioContrasena(req.body);
   if (erroresDeValidacion.length > 0) {

@@ -13,7 +13,7 @@ export const consultar = asyncHandler(async (req, res) => {
 
 /** Guarda un subconjunto de ajustes; un solo error rechaza todo el guardado. */
 export const actualizar = asyncHandler(async (req, res) => {
-  const { errores, cambios } = validarAjustes(req.body);
+  const { errores, cambios } = validarAjustes(req.body, { incluirSeguridad: true });
   if (errores.length > 0) {
     return error(res, 400, 'DATOS_INVALIDOS', errores.join(' '));
   }

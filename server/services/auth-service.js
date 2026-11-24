@@ -7,6 +7,7 @@ import * as userModel from '../models/user.js';
 import { errores } from '../utils/errors.js';
 import { firmarToken } from '../middlewares/auth.js';
 import * as auditService from './audit-service.js';
+import { obtenerAjustes } from './settings-service.js';
 
 const COSTO_BCRYPT = 10;
 
@@ -40,9 +41,13 @@ export async function login(identificacion, contrasena) {
     throw errores.credencialesInvalidas();
   }
 
-  const token = firmarToken(usuario);
+  // La vigencia del token es el ajuste de inactividad (008, FR-016); el cliente
+  // la usa para cerrar la sesión por inactividad y para renovar el token.
+  const { minutosInactividad } = await obtenerAjustes();
+  const token = firmarToken(usuario, minutosInactividad);
   return {
     token,
+    inactividadMinutos: minutosInactividad,
     usuario: {
       id: usuario.id,
       username: usuario.username,
@@ -50,6 +55,22 @@ export async function login(identificacion, contrasena) {
       fullName: usuario.fullName,
       role: usuario.role,
     },
+  };
+}
+
+/**
+ * Renueva el token de la sesión (008, FR-016, CA-23): el middleware `auth` ya
+ * verificó el token vigente y que el usuario siga activo; el nuevo token toma el
+ * rol de la base (no el del token anterior) y la vigencia del ajuste vigente. Es
+ * la ÚNICA ruta que emite un token fuera del inicio de sesión: la consulta
+ * periódica de avisos nunca extiende la sesión.
+ * @param {{ id: number, username: string, role: string }} usuario `req.user`.
+ */
+export async function renovar(usuario) {
+  const { minutosInactividad } = await obtenerAjustes();
+  return {
+    token: firmarToken(usuario, minutosInactividad),
+    inactividadMinutos: minutosInactividad,
   };
 }
 

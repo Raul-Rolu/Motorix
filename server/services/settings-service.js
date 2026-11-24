@@ -54,10 +54,13 @@ export async function consultar() {
       margenProximoKm: ajustes.margenProximoKm,
       diasOrdenDetenida: ajustes.diasOrdenDetenida,
     },
+    // 008, P2 (FR-016): inactividad de la sesión, de 5 a 120 minutos.
+    seguridad: { minutosInactividad: ajustes.minutosInactividad },
     limites: {
       margenProximoDias: [...LIMITES[CLAVES.MARGEN_DIAS]],
       margenProximoKm: [...LIMITES[CLAVES.MARGEN_KM]],
       diasOrdenDetenida: [...LIMITES[CLAVES.DIAS_ORDEN_DETENIDA]],
+      minutosInactividad: [...LIMITES[CLAVES.MINUTOS_INACTIVIDAD]],
     },
   };
 }

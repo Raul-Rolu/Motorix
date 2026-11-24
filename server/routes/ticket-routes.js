@@ -7,8 +7,10 @@ import { Router } from 'express';
 import { auth } from '../middlewares/auth.js';
 import { requireRole } from '../middlewares/require-role.js';
 import * as ticketController from '../controllers/ticket-controller.js';
+import { validarIdentificadoresDeRuta } from '../middlewares/route-params.js';
 
 export const ticketRoutes = Router();
+validarIdentificadoresDeRuta(ticketRoutes);
 
 ticketRoutes.use(auth);
 
