@@ -192,6 +192,21 @@ export const errores = {
       'SERVICE_TYPE_DUPLICATE',
       'Ya existe un tipo de servicio con ese nombre.'
     ),
+  // 008-configuracion-seguridad-reportes, T064 (bloque P2; FR-021, CA-19):
+  // compuerta de términos y condiciones.
+  terminosNoAceptados: () =>
+    new AppError(
+      403,
+      'TERMS_NOT_ACCEPTED',
+      'No ha aceptado la versión vigente de los términos y condiciones.'
+    ),
+  // Se intenta aceptar una versión que ya no es la vigente (se publicó una nueva).
+  terminosVersionDesactualizada: () =>
+    new AppError(
+      409,
+      'TERMS_VERSION_OUTDATED',
+      'Esa versión de los términos y condiciones ya no es la vigente; actualice la pantalla y acepte la versión actual.'
+    ),
   tipoServicioInactivo: () =>
     new AppError(
       409,

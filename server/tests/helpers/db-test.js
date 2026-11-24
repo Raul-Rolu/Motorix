@@ -108,6 +108,11 @@ export async function limpiarTablas() {
   // `order_services` ya se vació arriba; `settings` referencia a `users`.
   await pool.query('DELETE FROM service_types');
   await pool.query('DELETE FROM settings');
+  // Sprint 7 (008, bloque P2): bitácora y términos, antes de `users` (las tres
+  // tablas referencian usuarios; las aceptaciones también las versiones).
+  await pool.query('DELETE FROM audit_log');
+  await pool.query('DELETE FROM terms_acceptances');
+  await pool.query('DELETE FROM terms_versions');
   await pool.query('DELETE FROM service_orders');
   await pool.query('DELETE FROM appointments');
   await pool.query('DELETE FROM vehicles');
