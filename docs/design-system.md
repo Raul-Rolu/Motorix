@@ -471,6 +471,66 @@ cargar los términos.» con «Reintentar») y sin permiso («No tiene permisos p
 administrar los términos.», sin reintento ni formulario). No hay botones de editar
 ni de borrar.
 
+### 8.10 Reportes (Sprint 7, bloque P3)
+
+Sección del menú lateral **«Reportes»** (`Icons.bar_chart_outlined`), visible solo
+para ADMIN (el servidor responde `403` a los demás roles; ocultarla es comodidad,
+no seguridad). Es de **solo lectura**: no se edita ni se borra nada, y el único
+efecto de escritura es guardar un archivo CSV en el equipo (8.10.3).
+
+**Estructura de la pantalla** (de arriba abajo, sin tarjetas, separadas por título
+y divisor como la bitácora, 8.9):
+
+1. Encabezado «Reportes» con el botón de ícono «Actualizar» (`Icons.refresh`).
+2. **Pestañas** (`TabBar`): «Ingresos», «Servicios», «Productividad»,
+   «Refacciones» y «Rotación». Cada tramo del bloque agrega la suya; **todas
+   comparten el mismo filtro de rango**, de modo que cambiar de pestaña consulta el
+   mismo periodo.
+3. **Filtro de rango**: tres `ChoiceChip` en una fila — «Mes actual» (elegido por
+   omisión al abrir), «Mes anterior» y «Rango libre». Con «Rango libre» aparecen
+   «Desde» y «Hasta» (`AAAA-MM-DD`, ancho 150, igual que los filtros de la
+   bitácora) y el botón `FilledButton` «Consultar». Validación en la interfaz, sin
+   consultar si falla: «Use el formato AAAA-MM-DD.», «La fecha final no puede ser
+   anterior a la inicial.» y «El rango no puede exceder 366 días.». Un solo día
+   (`desde` = `hasta`) es válido.
+4. **Resultado** de la pestaña activa.
+
+**Importes.** Siempre con signo de pesos y dos decimales, `$1234.50` (el mismo
+formato del resto de la aplicación), calculados desde **centavos enteros** que
+entrega el servidor (nunca desde un número de coma flotante). Alineados a la derecha
+y en peso 600 en las listas; el total, en `titleLarge`.
+
+**8.10.1 Pestaña «Ingresos».** Muestra el rango consultado en `textSecondary`
+(«Del 01/11/2026 al 30/11/2026»), el **total cobrado** («Total cobrado» y la cifra
+en `titleLarge`; solo cuentan los pagos confirmados) y dos listas densas con
+divisores:
+
+- «Ingresos por día» (rangos de hasta 62 días) o «Ingresos por mes» (más largos).
+  Cada fila: el día (`05/11/2026`) o el mes con su nombre en español
+  («Noviembre 2026») y el importe. Solo aparecen los periodos con cobros.
+- «Por método de pago», del mayor al menor: «Efectivo», «Tarjeta»,
+  «Transferencia» y «Mercado Pago» (un método desconocido se muestra con su código).
+
+**Estados (8.4).**
+
+| Estado | Comportamiento |
+|---|---|
+| Cargando | Indicador de progreso discreto centrado. Una respuesta lenta de un filtro anterior **nunca** pisa a la más reciente. |
+| Vacío | «No hay cobros en este rango.» en `textSecondary`, con el rango consultado. |
+| Error | «No se pudo cargar el reporte.» en `error` con «Reintentar», sin trazas. Si el servidor rechaza el rango, se muestra su mensaje en español (por ejemplo «El rango no puede exceder 366 días.»). |
+| Sin permiso | «No tiene permisos para ver los reportes.» sin botón de reintento y sin filtro. |
+
+**8.10.2 Pestañas siguientes.** «Servicios», «Productividad», «Refacciones» y
+«Rotación» usan el mismo patrón (filtro compartido, lista densa con divisores,
+importes a la derecha, los mismos estados). Su detalle (columnas, etiquetas
+«Sin tipo», «Sin asignar», «sin costo», «sin precio» y «sin existencia») se agrega
+a esta sección **antes** de construir cada pestaña.
+
+**8.10.3 Exportación.** Se documenta aquí antes de construirla (tramo de
+exportación): botón «Exportar CSV» (`OutlinedButton` con `Icons.download_outlined`)
+en el encabezado de cada pestaña, con el rango activo; confirma con un snackbar con
+la ruta del archivo guardado o muestra el error sin trazas.
+
 ---
 
 ## 9. Qué evitar (señales de "hecho por IA")

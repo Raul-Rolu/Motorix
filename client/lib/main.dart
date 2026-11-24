@@ -22,6 +22,7 @@ import 'providers/notifications_provider.dart';
 import 'providers/orders_provider.dart';
 import 'providers/parts_provider.dart';
 import 'providers/payments_provider.dart';
+import 'providers/reports_provider.dart';
 import 'providers/service_types_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/settings_provider.dart';
@@ -100,6 +101,10 @@ void main() {
         // sesión (consulta al iniciar) y el 403 TERMS_NOT_ACCEPTED de cualquier petición.
         ChangeNotifierProvider(
           create: (context) => TermsProvider(api, context.read<AuthProvider>()),
+        ),
+        // 008, bloque P3: reportes (solo ADMIN, solo lectura); se limpia al cerrar sesión.
+        ChangeNotifierProvider(
+          create: (context) => ReportsProvider(api, context.read<AuthProvider>()),
         ),
       ],
       child: const MotorixApp(),
