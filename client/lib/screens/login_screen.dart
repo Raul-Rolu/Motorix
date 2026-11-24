@@ -120,6 +120,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ],
+                      if (auth.cierrePorInactividad) ...[
+                        const SizedBox(height: MotorixEspaciados.m),
+                        const Text(
+                          'Tu sesión se cerró por inactividad.',
+                          key: Key('mensajeInactividad'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: MotorixColores.advertencia),
+                        ),
+                      ],
                       if (auth.sesionExpirada) ...[
                         const SizedBox(height: MotorixEspaciados.m),
                         const Text(

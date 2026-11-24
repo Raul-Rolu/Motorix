@@ -23,6 +23,7 @@ import 'providers/orders_provider.dart';
 import 'providers/parts_provider.dart';
 import 'providers/payments_provider.dart';
 import 'providers/service_types_provider.dart';
+import 'providers/session_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/shell_navigation_provider.dart';
 import 'providers/ticket_provider.dart';
@@ -41,6 +42,7 @@ import 'screens/vehicle_form_screen.dart';
 import 'screens/vehicle_history_screen.dart';
 import 'services/api_client.dart';
 import 'widgets/app_shell.dart';
+import 'widgets/session_activity.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -83,6 +85,11 @@ void main() {
         ChangeNotifierProvider(
           create: (context) => ServiceTypesProvider(api, context.read<AuthProvider>()),
         ),
+        // 008, bloque P2: vigilancia de la inactividad y renovación del token con la
+        // actividad del usuario (la consulta de avisos no cuenta como actividad).
+        ChangeNotifierProvider(
+          create: (context) => SessionProvider(context.read<AuthProvider>()),
+        ),
         // 008, bloque P2: bitácora de acciones sensibles (solo ADMIN, solo lectura).
         ChangeNotifierProvider(
           create: (context) => AuditProvider(api, context.read<AuthProvider>()),
@@ -120,6 +127,8 @@ class _MotorixAppState extends State<MotorixApp> {
       // Tema propio del sistema de diseño; nunca el tema por defecto (Principio VIII).
       theme: temaMotorix(),
       navigatorKey: navigatorKey,
+      // Detecta la actividad (puntero y teclado) en toda la app para la sesión.
+      builder: (context, hijo) => ActividadSesion(child: hijo ?? const SizedBox.shrink()),
       home: const LoginScreen(),
       routes: {
         // La ruta /login se usa al cerrar sesión o expirar el token.
