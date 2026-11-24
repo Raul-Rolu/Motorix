@@ -1,8 +1,9 @@
 // 008-configuracion-seguridad-reportes, T015 (bloque P1, US1; FR-001, FR-002,
 // FR-005, CA-1, CA-3): API de ajustes. Sin filas guardadas se usan los valores
 // de respaldo; `PUT` guarda un subconjunto y rechaza todo ante un error.
-// En P1 la API expone solo los grupos `taller` y `operacion`; `seguridad` se
-// habilita en P2 (por ahora se rechaza). Corre contra `motorix_test`.
+// La API expone los grupos `taller` y `operacion` (P1) y `seguridad` (P2, T082:
+// inactividad de la sesión; su validación detallada está en session-renewal.test.js).
+// Corre contra `motorix_test`.
 import request from 'supertest';
 import bcrypt from 'bcrypt';
 import { crearApp } from '../../app.js';
@@ -59,16 +60,17 @@ test('sin filas guardadas GET devuelve los valores de respaldo y los límites (C
     margenProximoDias: [1, 365],
     margenProximoKm: [100, 50000],
     diasOrdenDetenida: [1, 90],
+    minutosInactividad: [5, 120],
   });
 });
 
-test('en P1 la respuesta no incluye el grupo seguridad ni su límite', async () => {
+test('desde P2 la respuesta incluye el grupo seguridad con su límite (30 por omisión)', async () => {
   const { token } = await iniciarSesionAdmin();
 
   const respuesta = await consultar(token);
 
-  expect(respuesta.body).not.toHaveProperty('seguridad');
-  expect(respuesta.body.limites).not.toHaveProperty('minutosInactividad');
+  expect(respuesta.body.seguridad).toEqual({ minutosInactividad: 30 });
+  expect(respuesta.body.limites.minutosInactividad).toEqual([5, 120]);
 });
 
 test('PUT guarda un subconjunto, registra al autor y GET devuelve lo guardado (CA-1)', async () => {
@@ -140,7 +142,8 @@ describe('PUT rechaza todo el guardado con 400 DATOS_INVALIDOS y no guarda nada'
     ['días de orden detenida mayores al límite', { operacion: { diasOrdenDetenida: 91 } }],
     ['valor decimal', { operacion: { margenProximoDias: 2.5 } }],
     ['valor en texto', { operacion: { margenProximoDias: '15' } }],
-    ['grupo seguridad (aún no disponible en P1)', { seguridad: { minutosInactividad: 30 } }],
+    ['grupo seguridad con minutos fuera de límite', { seguridad: { minutosInactividad: 4 } }],
+    ['grupo seguridad con un ajuste desconocido', { seguridad: { otroAjuste: 30 } }],
     ['cuerpo vacío', {}],
   ])('%s', async (_nombre, cuerpo) => {
     const { token } = await iniciarSesionAdmin();

@@ -9,10 +9,12 @@
  * No hay caché: cada consulta lee la tabla (una consulta), de modo que un
  * cambio del administrador se ve de inmediato.
  *
- * En el bloque P1 la API solo expone los grupos `taller` y `operacion`; los
- * minutos de inactividad se leen internamente pero se exponen desde P2.
+ * La API expone los grupos `taller`, `operacion` y `seguridad` (los minutos de
+ * inactividad de la sesión, desde el bloque P2); el servicio de autenticación
+ * los lee con `obtenerAjustes` para fijar la vigencia del token.
  */
 import * as settingModel from '../models/setting.js';
+import * as auditService from './audit-service.js';
 import { CLAVES, LIMITES, resolverValor } from '../utils/settings-defaults.js';
 
 /**
@@ -43,7 +45,7 @@ export function tallerDe(ajustes) {
   };
 }
 
-/** Forma de la respuesta de `GET`/`PUT /api/settings` (contracts/api-rest.md, P1). */
+/** Forma de la respuesta de `GET`/`PUT /api/settings` (contracts/api-rest.md). */
 export async function consultar() {
   const ajustes = await obtenerAjustes();
   return {
@@ -53,10 +55,13 @@ export async function consultar() {
       margenProximoKm: ajustes.margenProximoKm,
       diasOrdenDetenida: ajustes.diasOrdenDetenida,
     },
+    // 008, P2 (FR-016): inactividad de la sesión, de 5 a 120 minutos.
+    seguridad: { minutosInactividad: ajustes.minutosInactividad },
     limites: {
       margenProximoDias: [...LIMITES[CLAVES.MARGEN_DIAS]],
       margenProximoKm: [...LIMITES[CLAVES.MARGEN_KM]],
       diasOrdenDetenida: [...LIMITES[CLAVES.DIAS_ORDEN_DETENIDA]],
+      minutosInactividad: [...LIMITES[CLAVES.MINUTOS_INACTIVIDAD]],
     },
   };
 }
@@ -66,6 +71,21 @@ export async function consultar() {
  * ajustes vigentes. La validación la hace el controlador con `validarAjustes`.
  */
 export async function actualizar(cambios, usuario) {
+  // Claves cuyo valor EFECTIVO realmente cambia (guardar el mismo valor, o el de
+  // respaldo cuando no había nada guardado, no es un cambio) para la bitácora.
+  const guardado = await settingModel.findAll();
+  const modificadas = Object.keys(cambios).filter(
+    (clave) => resolverValor(clave, guardado[clave]) !== cambios[clave]
+  );
+
   await settingModel.upsertMany(cambios, usuario?.id ?? null);
+
+  // Bitácora (008, FR-012): sin entrada si no cambió ningún valor.
+  if (modificadas.length > 0) {
+    await auditService.registrar('SETTINGS_UPDATED', {
+      usuarioId: usuario?.id ?? null,
+      datos: { claves: modificadas },
+    });
+  }
   return consultar();
 }

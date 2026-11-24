@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'config/theme.dart';
 import 'models/vehicle.dart';
 import 'providers/appointments_provider.dart';
+import 'providers/audit_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/clients_provider.dart';
 import 'providers/clients_to_notify_provider.dart';
@@ -22,8 +23,10 @@ import 'providers/orders_provider.dart';
 import 'providers/parts_provider.dart';
 import 'providers/payments_provider.dart';
 import 'providers/service_types_provider.dart';
+import 'providers/session_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/shell_navigation_provider.dart';
+import 'providers/terms_provider.dart';
 import 'providers/ticket_provider.dart';
 import 'providers/users_provider.dart';
 import 'providers/vehicles_provider.dart';
@@ -35,11 +38,13 @@ import 'screens/maintenance_form_screen.dart';
 import 'screens/order_form_screen.dart';
 import 'screens/order_detail_screen.dart';
 import 'screens/part_form_screen.dart';
+import 'screens/terms_acceptance_screen.dart';
 import 'screens/users_screen.dart';
 import 'screens/vehicle_form_screen.dart';
 import 'screens/vehicle_history_screen.dart';
 import 'services/api_client.dart';
 import 'widgets/app_shell.dart';
+import 'widgets/session_activity.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -82,6 +87,20 @@ void main() {
         ChangeNotifierProvider(
           create: (context) => ServiceTypesProvider(api, context.read<AuthProvider>()),
         ),
+        // 008, bloque P2: vigilancia de la inactividad y renovación del token con la
+        // actividad del usuario (la consulta de avisos no cuenta como actividad).
+        ChangeNotifierProvider(
+          create: (context) => SessionProvider(context.read<AuthProvider>()),
+        ),
+        // 008, bloque P2: bitácora de acciones sensibles (solo ADMIN, solo lectura).
+        ChangeNotifierProvider(
+          create: (context) => AuditProvider(api, context.read<AuthProvider>()),
+        ),
+        // 008, bloque P2: términos y condiciones con aviso de privacidad. Escucha la
+        // sesión (consulta al iniciar) y el 403 TERMS_NOT_ACCEPTED de cualquier petición.
+        ChangeNotifierProvider(
+          create: (context) => TermsProvider(api, context.read<AuthProvider>()),
+        ),
       ],
       child: const MotorixApp(),
     ),
@@ -104,6 +123,12 @@ class _MotorixAppState extends State<MotorixApp> {
       context.read<AuthProvider>().alExpirar = () {
         navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (r) => false);
       };
+      // `read` crea el proveedor de términos (son perezosos) para que escuche desde
+      // antes del primer inicio de sesión. Si falta aceptar, se lleva al usuario a
+      // la pantalla de aceptación desde cualquier pantalla.
+      context.read<TermsProvider>().alPendiente = () {
+        navigatorKey.currentState?.pushNamedAndRemoveUntil('/terminos', (r) => false);
+      };
     });
   }
 
@@ -115,11 +140,15 @@ class _MotorixAppState extends State<MotorixApp> {
       // Tema propio del sistema de diseño; nunca el tema por defecto (Principio VIII).
       theme: temaMotorix(),
       navigatorKey: navigatorKey,
+      // Detecta la actividad (puntero y teclado) en toda la app para la sesión.
+      builder: (context, hijo) => ActividadSesion(child: hijo ?? const SizedBox.shrink()),
       home: const LoginScreen(),
       routes: {
         // La ruta /login se usa al cerrar sesión o expirar el token.
         '/login': (_) => const LoginScreen(),
         '/inicio': (_) => const AppShell(),
+        // Aceptación de los términos y del aviso de privacidad (008, FR-020).
+        '/terminos': (_) => const TermsAcceptanceScreen(),
         '/clientes/nuevo': (_) => const ClientFormScreen(),
         '/vehiculos/nuevo': (_) => const VehicleFormScreen(),
         '/mantenimientos/nueva': (_) => const MaintenanceFormScreen(),

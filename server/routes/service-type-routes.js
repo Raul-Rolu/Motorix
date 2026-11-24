@@ -9,8 +9,10 @@ import { Router } from 'express';
 import { auth } from '../middlewares/auth.js';
 import { requireRole } from '../middlewares/require-role.js';
 import * as serviceTypeController from '../controllers/service-type-controller.js';
+import { validarIdentificadoresDeRuta } from '../middlewares/route-params.js';
 
 export const serviceTypeRoutes = Router();
+validarIdentificadoresDeRuta(serviceTypeRoutes);
 
 serviceTypeRoutes.use(auth);
 

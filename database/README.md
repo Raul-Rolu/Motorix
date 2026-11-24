@@ -55,6 +55,15 @@ durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se version
 - `021_tickets_shop_snapshot.sql` — **008 (FR-003)**: columnas `shop_name`,
   `shop_address` y `shop_phone` de `tickets` (instantánea del taller al emitir).
   Los tickets existentes quedan en `NULL` **sin relleno**.
+- `022_create_audit_log.sql` — **008 (FR-011, FR-013, CA-20)**: bitácora de acciones
+  sensibles `audit_log` (usuario opcional, acción, entidad, detalle y fecha) con
+  índices por fecha, usuario y acción. Solo se inserta y se consulta: la aplicación
+  no edita ni borra entradas. No lleva datos.
+- `023_create_terms.sql` — **008 (FR-019)**: versiones de los términos y condiciones
+  con el aviso de privacidad (`terms_versions`, `version` única) y las
+  aceptaciones (`terms_acceptances`, única por usuario y versión). No lleva
+  datos: la versión 1 la inserta el seed 011. **Sin ninguna versión publicada no
+  hay compuerta de aceptación.**
 
 ### Seeds
 
@@ -88,9 +97,21 @@ durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se version
   en efectivo por $950.00 y el ticket `TCK-AAAA-9001` **con instantánea del
   taller**, para mostrar «Próximo servicio». Idempotente: todas sus sentencias son
   «insertar si falta» y no reinician datos de trabajo.
+- `011_demo_terms.sql` — **008 (FR-029, CA-12, CA-16)**: la versión 1 de los
+  términos y del aviso de privacidad (**plantilla** en español, con la advertencia
+  de que el taller debe revisarla) y cuatro entradas de bitácora de ejemplo con
+  fechas relativas (su detalle termina en «(ejemplo)»). **No inserta aceptaciones**:
+  al sembrarlo, cada cuenta ve la pantalla de aceptación en su siguiente inicio de
+  sesión. Idempotente y respetuoso con lo que ya hiciste: la versión 1 se inserta
+  **solo si no hay ninguna versión publicada** (si ya publicaste una, no se siembra
+  otra ni se toca la tuya) y las entradas de ejemplo no se repiten ni usan ids
+  fijos (en una base con bitácora real los ids 1–4 pueden estar ocupados).
+  Se puede aplicar solo, sin volver a correr los demás seeds:
+  `mysql -u <usuario> -p --default-character-set=utf8mb4 -D <base> -e "source database/seeds/011_demo_terms.sql"`.
 
 > **IDs de los datos de ejemplo.** Las tablas **nuevas** del Sprint 7 (`settings`,
-> `service_types`) siembran con IDs normales desde 1: no hay datos del usuario con
+> `service_types`, `audit_log`, `terms_versions` y `terms_acceptances`) siembran con
+> IDs normales desde 1 (la versión 1 de los términos es el id 1): no hay datos del usuario con
 > los que chocar. El seed 010 inserta además en tablas que **ya existían**
 > (`service_orders`, `order_services`, `order_labor`, `payments` y `tickets`) y ahí
 > usa IDs altos (9001) para no chocar con registros propios; a cambio, el
@@ -127,6 +148,32 @@ de migrar una base con datos propios.
 
 Los tickets emitidos antes de la migración 021 no tienen instantánea del taller:
 muestran los datos vigentes de la configuración y no muestran «Próximo servicio».
+
+El servidor del Sprint 7 (bloque P2) escribe en `audit_log` y lee las tablas de
+términos en **cada** petición autenticada: si arranca **antes** de aplicar las
+migraciones 022 y 023, las acciones sensibles no quedan registradas (el servidor lo
+avisa al arrancar y sigue funcionando) y cualquier ruta autenticada falla por
+tabla inexistente. Aplica las migraciones y los seeds **antes** de arrancar el
+servidor.
+
+### Efecto del seed 011 sobre los scripts de evidencia anteriores
+
+Con la versión 1 de los términos sembrada y sin aceptar, la API responde
+`403 TERMS_NOT_ACCEPTED` a todo lo demás, así que los scripts de evidencia de
+sprints anteriores fallan hasta que las cuentas de ejemplo la acepten:
+
+- `docs/evidencias/aseguramiento/quickstart-005.mjs` (Sprint 5) aborta con código 2
+  y el mensaje «La API NO está conectada a motorix_test» (su marcador se consulta
+  con `GET /api/parts`).
+- `docs/evidencias/sprint-6-notificaciones/verificar-avisos-api.mjs` (Sprint 6)
+  falla en todas sus verificaciones de avisos.
+
+Para repetirlos, **acepta primero** los términos con las tres cuentas de ejemplo:
+`POST /api/terms/accept` con `{ "termsVersionId": 1 }` (con el token de cada cuenta).
+Los scripts del Sprint 7 (`verificar-p1-api.mjs` y `escenarios-p1-api.mjs`) lo hacen
+solos con la bandera `--aceptar-terminos`. La comprobación está en
+`docs/evidencias/sprint-7-configuracion/efecto-terminos-scripts-previos.txt`. Los
+scripts anteriores **no se editaron**.
 
 ## Requisitos
 

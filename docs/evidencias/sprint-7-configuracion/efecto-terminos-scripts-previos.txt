@@ -1,0 +1,65 @@
+T098 - Efecto de la versión 1 de los términos (seed 011) sobre los scripts de evidencia de sprints anteriores
+Base: motorix_test con migraciones 001-023 y seeds 001-011; API en el puerto 3056 (DB_NAME=motorix_test). Los scripts NO se editaron.
+
+=== 1) ANTES de aceptar: verificar-avisos-api.mjs (Sprint 6) ===
+OK    inicio de sesión de admin
+OK    inicio de sesión de recepcion
+OK    inicio de sesión de mecanico
+  admin: total=undefined noLeidos=undefined grupos={}
+FALLA ADMIN tiene al menos un aviso de MANTENIMIENTO_VENCIDO -> {}
+FALLA ADMIN tiene al menos un aviso de ORDEN_DETENIDA -> {}
+FALLA ADMIN tiene al menos un aviso de STOCK -> {}
+FALLA ADMIN tiene al menos un aviso de MANTENIMIENTO_PROXIMO -> {}
+FALLA ADMIN tiene al menos un aviso de CITA_DEL_DIA -> {}
+FALLA ADMIN tiene un aviso de stock BAJO -> {}
+  recepcion: total=undefined noLeidos=undefined grupos={}
+  mecanico: total=undefined noLeidos=undefined grupos={}
+  clientes por avisar (recepcion): []
+FALLA Clientes por avisar incluye la orden 6 -> []
+FALLA Clientes por avisar incluye una cita de mañana -> []
+FALLA Clientes por avisar incluye mantenimientos (vencidos y próximo) -> []
+FALLA Clientes por avisar incluye el mantenimiento 6 (próximo) -> []
+OK    MECHANIC recibe 403 en Clientes por avisar
+Código de salida del guion: 1
+
+--- Petición real que explica el fallo (cuenta admin, antes de aceptar) ---
+{"error":{"codigo":"TERMS_NOT_ACCEPTED","mensaje":"No ha aceptado la versión vigente de los términos y condiciones."}}
+HTTP 403
+
+=== 2) ANTES de aceptar: quickstart-005.mjs (Sprint 5) ===
+AVISO: el servidor debe estar arrancado con DB_NAME=motorix_test.
+       Nunca ejecutes este guion contra la base de demostración.
+
+Validación del quickstart 005 contra http://localhost:3056
+La API NO está conectada a motorix_test; detén el guion y arranca la API con DB_NAME=motorix_test
+Codigo de salida del guion: 2
+
+=== 3) Procedimiento: aceptar los términos con las tres cuentas de ejemplo (POST /api/terms/accept) ===
+admin: acepta la versión 1 -> 200
+recepcion: acepta la versión 1 -> 200
+mecanico: acepta la versión 1 -> 200
+
+=== 4) DESPUÉS de aceptar: verificar-avisos-api.mjs (Sprint 6) ===
+OK    inicio de sesión de admin
+OK    inicio de sesión de recepcion
+OK    inicio de sesión de mecanico
+  admin: total=9 noLeidos=9 grupos={"MANTENIMIENTO_VENCIDO":2,"ORDEN_DETENIDA":1,"STOCK":3,"MANTENIMIENTO_PROXIMO":1,"CITA_DEL_DIA":2}
+OK    ADMIN tiene al menos un aviso de MANTENIMIENTO_VENCIDO
+OK    ADMIN tiene al menos un aviso de ORDEN_DETENIDA
+OK    ADMIN tiene al menos un aviso de STOCK
+OK    ADMIN tiene al menos un aviso de MANTENIMIENTO_PROXIMO
+OK    ADMIN tiene al menos un aviso de CITA_DEL_DIA
+OK    ADMIN tiene un aviso de stock BAJO
+  recepcion: total=6 noLeidos=6 grupos={"MANTENIMIENTO_VENCIDO":2,"ORDEN_DETENIDA":1,"MANTENIMIENTO_PROXIMO":1,"CITA_DEL_DIA":2}
+  mecanico: total=1 noLeidos=1 grupos={"ORDEN_DETENIDA":1}
+  clientes por avisar (recepcion): ["ORDEN_TERMINADA:6","CITA_MANANA:3","MANTENIMIENTO:1","MANTENIMIENTO:2","MANTENIMIENTO:6"]
+OK    Clientes por avisar incluye la orden 6
+OK    Clientes por avisar incluye una cita de mañana
+OK    Clientes por avisar incluye mantenimientos (vencidos y próximo)
+OK    Clientes por avisar incluye el mantenimiento 6 (próximo)
+OK    MECHANIC recibe 403 en Clientes por avisar
+Código de salida del guion: 0
+
+=== 5) DESPUÉS de aceptar: quickstart-005.mjs (Sprint 5), resumen ===
+===== Resumen: 65/65 verificaciones OK =====
+Codigo de salida del guion: 0

@@ -404,6 +404,73 @@ fecha o solo los kilómetros si el tipo tiene un único intervalo). **No se mues
 cuando el ticket no la trae (tickets anteriores al Sprint 7 o sin servicios con
 tipo). La versión imprimible agrega la misma fila a la tabla de cliente y vehículo.
 
+### 8.9 Seguridad, bitácora y términos (Sprint 7, bloque P2)
+
+**Tarjeta «Seguridad» (Configuración).** Tercera sección de la pantalla de
+Configuración, con el mismo patrón que «Datos del taller» y «Operación» (título,
+divisor, sin tarjeta, botón «Guardar» a la derecha). Un solo campo: «Inactividad
+para cerrar la sesión (minutos)», con el texto de ayuda «Entre 5 y 120 minutos.» y
+la descripción «La sesión se cierra sola si no hay actividad durante este tiempo.
+Se aplica a los inicios de sesión nuevos y a las renovaciones.». Validación en la
+interfaz: «Debe ser un número entero entre 5 y 120.» (no se envía nada si no se
+cumple). Éxito: «Ajustes de seguridad guardados.» en snackbar; un rechazo del
+servidor se muestra en español, sin trazas.
+
+**Mensaje de cierre por inactividad.** En el login, bajo los campos y antes del
+botón, el texto centrado «Tu sesión se cerró por inactividad.» en color
+`advertencia` (mismo estilo que «Su sesión expiró; inicie sesión de nuevo.», que
+sigue usándose cuando el servidor responde 401 con el usuario activo). Nunca
+aparecen los dos a la vez y el mensaje se limpia al iniciar sesión.
+
+**Bitácora.** Sección del menú (`Icons.history_outlined`), solo ADMIN. Título
+«Bitácora» con el botón de ícono «Actualizar» (`Icons.refresh`) y, debajo, la fila
+de filtros: «Desde» y «Hasta» (`AAAA-MM-DD`, «Use el formato AAAA-MM-DD.» y «La
+fecha final no puede ser anterior a la inicial.»), «Usuario» y «Acción» (listas con
+«Todos» / «Todas») y los botones «Limpiar» y «Aplicar filtros». La lista es **densa
+con divisores, sin tarjetas** (8.6): fecha (`textSecondary`, `20/11/2026 10:15`),
+usuario («Sin cuenta» en un inicio de sesión fallido sin cuenta), acción en español
+en peso 600 y detalle en `textSecondary`. Pie con «Página N de M · T entradas» y los
+botones «Anterior» / «Siguiente» (50 por página). **No hay botones de editar,
+borrar ni exportar.** Estados (8.4): cargando (indicador), vacío («No hay entradas
+en la bitácora.» o «No hay entradas con esos filtros.»), error («No se pudo cargar
+la bitácora.» con «Reintentar») y sin permiso («No tiene permisos para ver la
+bitácora.», sin botón de reintento ni filtros).
+
+**Pantalla de aceptación de términos.** Ruta `/terminos`, a pantalla completa y
+**sin botón de regreso** (no se puede cerrar sin decidir). Encabezado «Términos y
+condiciones»; contenido centrado de ancho máximo 820: «Versión N», la fecha de
+publicación y la frase «Para usar Motorix debe aceptar esta versión.», y dos bloques
+con título («Términos y condiciones» y «Aviso de privacidad») en un recuadro con
+borde y texto seleccionable, dentro de un área con desplazamiento. Barra inferior
+fija con «Rechazar» (`OutlinedButton`) y «Aceptar» (`FilledButton`, único botón de
+acento) alineados a la derecha; mientras se guarda, ambos se deshabilitan y
+«Aceptar» muestra un indicador. **Rechazar** exige confirmación (8.5) con
+«Cancelar» y «Confirmar»: «Si rechaza, se cerrará su sesión y no podrá usar Motorix
+hasta aceptar la versión vigente.»; al confirmar cierra la sesión y vuelve al login.
+Errores en un recuadro `error` sobre los botones, sin trazas; si otra versión se
+publicó mientras tanto: «Se publicó una versión nueva de los términos; revise el
+texto y acepte de nuevo.» y la pantalla muestra la versión nueva. Sin textos (la
+descarga falló): indicador de carga o mensaje con «Reintentar».
+
+**Administración de términos.** Sección «Términos» del menú
+(`Icons.gavel_outlined`), solo ADMIN. De arriba abajo, separado por títulos y
+divisores (sin tarjetas): «Versión vigente: N» con «Publicada el …» y los dos
+textos en recuadros con desplazamiento propio (altura máxima 160); «Aceptaciones»
+como lista densa (usuario, «Versión N», fecha y hora) con pie «Página N de M · T
+aceptaciones» y «Anterior» / «Siguiente» (50 por página); y «Publicar una versión
+nueva» con dos campos multilínea («Términos y condiciones» y «Aviso de
+privacidad», «Entre 20 y 20,000 caracteres.», validación «Debe tener entre 20 y
+20,000 caracteres.») y el botón «Publicar versión nueva». Publicar exige confirmación
+(8.5) con «Cancelar» y «Confirmar»: «Todos los usuarios, incluido usted, deberán
+aceptar la versión N antes de seguir usando el sistema. Una versión publicada no se
+puede editar ni borrar.». Éxito: «Versión N publicada. Todos los usuarios deberán
+aceptarla.» y, como el autor también debe aceptarla, se le lleva a la pantalla de
+aceptación. Estados: cargando, vacío («Nadie ha aceptado todavía la versión
+vigente.» y «Aún no se ha publicado ninguna versión.»), error («No se pudieron
+cargar los términos.» con «Reintentar») y sin permiso («No tiene permisos para
+administrar los términos.», sin reintento ni formulario). No hay botones de editar
+ni de borrar.
+
 ---
 
 ## 9. Qué evitar (señales de "hecho por IA")

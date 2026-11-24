@@ -8,8 +8,10 @@ import { Router } from 'express';
 import { auth } from '../middlewares/auth.js';
 import { requireRole } from '../middlewares/require-role.js';
 import * as orderController from '../controllers/order-controller.js';
+import { validarIdentificadoresDeRuta } from '../middlewares/route-params.js';
 
 export const orderRoutes = Router();
+validarIdentificadoresDeRuta(orderRoutes);
 
 orderRoutes.use(auth, requireRole('ADMIN', 'RECEPTIONIST', 'MECHANIC'));
 

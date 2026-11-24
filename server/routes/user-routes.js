@@ -7,8 +7,10 @@ import { Router } from 'express';
 import { auth } from '../middlewares/auth.js';
 import { requireRole } from '../middlewares/require-role.js';
 import * as userController from '../controllers/user-controller.js';
+import { validarIdentificadoresDeRuta } from '../middlewares/route-params.js';
 
 export const userRoutes = Router();
+validarIdentificadoresDeRuta(userRoutes);
 
 userRoutes.use(auth, requireRole('ADMIN'));
 

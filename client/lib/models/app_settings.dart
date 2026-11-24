@@ -42,9 +42,20 @@ class AjustesOperacion {
       );
 }
 
+/// Ajustes de seguridad (008, P2; FR-016): minutos de inactividad de la sesión.
+class AjustesSeguridad {
+  final int minutosInactividad;
+
+  const AjustesSeguridad({required this.minutosInactividad});
+
+  factory AjustesSeguridad.desdeJson(Map<String, dynamic> json) =>
+      AjustesSeguridad(minutosInactividad: (json['minutosInactividad'] as num? ?? 30).toInt());
+}
+
 class AppSettings {
   final AjustesTaller taller;
   final AjustesOperacion operacion;
+  final AjustesSeguridad seguridad;
 
   /// Límites inclusivos `[mínimo, máximo]` por ajuste numérico, tal como los
   /// valida el servidor (p. ej. `margenProximoDias: [1, 365]`).
@@ -53,6 +64,7 @@ class AppSettings {
   const AppSettings({
     required this.taller,
     required this.operacion,
+    this.seguridad = const AjustesSeguridad(minutosInactividad: 30),
     this.limites = const {},
   });
 
@@ -61,6 +73,7 @@ class AppSettings {
     return AppSettings(
       taller: AjustesTaller.desdeJson(json['taller'] as Map<String, dynamic>? ?? {}),
       operacion: AjustesOperacion.desdeJson(json['operacion'] as Map<String, dynamic>? ?? {}),
+      seguridad: AjustesSeguridad.desdeJson(json['seguridad'] as Map<String, dynamic>? ?? {}),
       limites: {
         for (final entrada in crudos.entries)
           entrada.key: (entrada.value as List<dynamic>).map((n) => (n as num).toInt()).toList(),

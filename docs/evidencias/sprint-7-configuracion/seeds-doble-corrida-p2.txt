@@ -1,0 +1,45 @@
+OK    motorix_test tiene aplicadas las migraciones 022 y 023
+OK    motorix_test está vacía y con los contadores en 1 (base de pruebas desechable)
+--- Corrida 1 de seeds 001-011 ---
+OK    los seeds se aplican sin error (corrida 1)
+{"appointments":5,"audit_log":4,"client_notices":0,"clients":3,"inventory_movements":10,"maintenance_plans":6,"notification_reads":0,"order_entries":5,"order_labor":3,"order_parts":2,"order_services":5,"parts":7,"payments":5,"schema_migrations":23,"service_orders":7,"service_types":4,"settings":7,"terms_acceptances":0,"terms_versions":1,"tickets":2,"users":3,"vehicles":4}
+--- Corrida 2 de seeds 001-011 ---
+OK    los seeds se aplican sin error (corrida 2)
+{"appointments":5,"audit_log":4,"client_notices":0,"clients":3,"inventory_movements":10,"maintenance_plans":6,"notification_reads":0,"order_entries":5,"order_labor":3,"order_parts":2,"order_services":5,"parts":7,"payments":5,"schema_migrations":23,"service_orders":7,"service_types":4,"settings":7,"terms_acceptances":0,"terms_versions":1,"tickets":2,"users":3,"vehicles":4}
+OK    los conteos por tabla son idénticos entre corridas
+OK    una sola versión de términos: id 1, versión 1
+OK    no hay ninguna aceptación sembrada
+OK    ambos textos advierten que son una plantilla
+OK    la bitácora tiene las cuatro entradas de ejemplo con los ids 1 a 4
+OK    las entradas de ejemplo tienen fechas relativas (de los últimos 7 días)
+OK    los seeds del bloque P1 siguen intactos (7 ajustes y 4 tipos)
+--- Compuerta de términos por la API ---
+OK    admin: inicia sesión
+OK    admin: en su primer inicio de sesión recibe 403 TERMS_NOT_ACCEPTED
+OK    admin: ve la versión 1 sin aceptar
+OK    admin: la renovación del token sigue permitida sin aceptar
+OK    admin: acepta la versión 1
+OK    admin: en un inicio de sesión posterior ya no se vuelve a pedir
+OK    recepcion: inicia sesión
+OK    recepcion: en su primer inicio de sesión recibe 403 TERMS_NOT_ACCEPTED
+OK    recepcion: ve la versión 1 sin aceptar
+OK    recepcion: la renovación del token sigue permitida sin aceptar
+OK    recepcion: acepta la versión 1
+OK    recepcion: en un inicio de sesión posterior ya no se vuelve a pedir
+OK    mecanico: inicia sesión
+OK    mecanico: en su primer inicio de sesión recibe 403 TERMS_NOT_ACCEPTED
+OK    mecanico: ve la versión 1 sin aceptar
+OK    mecanico: la renovación del token sigue permitida sin aceptar
+OK    mecanico: acepta la versión 1
+OK    mecanico: en un inicio de sesión posterior ya no se vuelve a pedir
+OK    el administrador ve las cuatro entradas en la bitácora
+OK    hay tres aceptaciones (una por cuenta)
+--- El seed no pisa lo que hizo el usuario ---
+OK    los seeds se aplican sin error (corrida 3, con aceptaciones hechas)
+OK    las tres aceptaciones se conservan
+OK    la bitácora sigue con 4 entradas (sin repetir los ejemplos)
+OK    el administrador publica su versión 2
+OK    los seeds se aplican sin error (corrida 4, con una versión propia publicada)
+OK    no se siembra otra versión ni se modifica la publicada por el administrador
+OK    motorix_test quedó vacía otra vez
+Resultado: TODO OK

@@ -23,6 +23,8 @@ import { notificationRoutes } from './routes/notification-routes.js';
 import { clientNoticeRoutes } from './routes/client-notice-routes.js';
 import { settingsRoutes } from './routes/settings-routes.js';
 import { serviceTypeRoutes } from './routes/service-type-routes.js';
+import { auditRoutes } from './routes/audit-routes.js';
+import { termsRoutes } from './routes/terms-routes.js';
 
 export function crearApp() {
   const app = express();
@@ -64,6 +66,10 @@ export function crearApp() {
   app.use('/api/settings', settingsRoutes);
   // Catálogo de tipos de servicio: lectura para los tres roles, administración de ADMIN.
   app.use('/api/service-types', serviceTypeRoutes);
+  // Bitácora de acciones sensibles: solo consulta y solo ADMIN.
+  app.use('/api/audit-log', auditRoutes);
+  // Términos y condiciones con aviso de privacidad (compuerta de aceptación en `auth`).
+  app.use('/api/terms', termsRoutes);
 
   // Manejo centralizado de errores (al final de la cadena).
   app.use(errorHandler);

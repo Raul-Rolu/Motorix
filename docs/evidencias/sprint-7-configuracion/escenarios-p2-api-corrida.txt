@@ -1,0 +1,76 @@
+E5 - Términos y condiciones (CA-16 a CA-19)
+  OK    admin: sin aceptar recibe 403 TERMS_NOT_ACCEPTED
+  OK    recepcion: sin aceptar recibe 403 TERMS_NOT_ACCEPTED
+  OK    mecanico: sin aceptar recibe 403 TERMS_NOT_ACCEPTED
+  OK    recepcion sin aceptar: GET /api/clients → 403 TERMS_NOT_ACCEPTED
+  OK    recepcion sin aceptar: GET /api/orders → 403 TERMS_NOT_ACCEPTED
+  OK    recepcion sin aceptar: GET /api/notifications → 403 TERMS_NOT_ACCEPTED
+  OK    recepcion sin aceptar: GET /api/me → 403 TERMS_NOT_ACCEPTED
+  OK    mecanico sin aceptar: GET /api/terms/current responde 200
+  OK    mecanico sin aceptar: POST /api/auth/renew responde 200
+  OK    mecanico sin aceptar: POST /api/auth/logout responde 204
+  OK    admin: acepta la versión 1 (POST /api/terms/accept)
+  OK    admin: en el siguiente inicio de sesión ya no se vuelve a pedir
+  OK    recepcion: acepta la versión 1 (POST /api/terms/accept)
+  OK    recepcion: en el siguiente inicio de sesión ya no se vuelve a pedir
+  OK    mecanico: acepta la versión 1 (POST /api/terms/accept)
+  OK    mecanico: en el siguiente inicio de sesión ya no se vuelve a pedir
+  OK    la versión 1 cubre uso permitido, confidencialidad, cuentas personales y aviso de privacidad, y advierte que es plantilla
+  OK    recepcion no puede publicar términos (403 NO_AUTORIZADO)
+  OK    publicar textos de menos de 20 caracteres → 400 DATOS_INVALIDOS
+  OK    admin publica la versión 2
+  OK    admin: con la versión 2 vuelve a necesitar aceptar (incluido el autor)
+  OK    recepcion: con la versión 2 vuelve a necesitar aceptar (incluido el autor)
+  OK    mecanico: con la versión 2 vuelve a necesitar aceptar (incluido el autor)
+  OK    aceptar la versión 1 ya no es posible (409 TERMS_VERSION_OUTDATED)
+  OK    admin: acepta la versión 2
+  OK    recepcion: acepta la versión 2
+  OK    mecanico: acepta la versión 2
+  OK    admin ve la versión vigente (2) y 6 aceptaciones (3 cuentas × 2 versiones)
+  OK    recepcion no ve las aceptaciones (403)
+E6 - Bitácora (CA-20, CA-21)
+  OK    admin da de alta un usuario
+  OK    admin cambia el rol del usuario
+  OK    admin desactiva al usuario
+  OK    admin lo reactiva
+  OK    admin cambia un ajuste del taller
+  OK    admin crea una refacción
+  OK    admin cambia los precios de venta y de compra
+  OK    la bitácora muestra las 9 acciones del catálogo
+  OK    cada entrada trae fecha y usuario (null si no hay cuenta)
+  OK    el cambio del precio de compra aparece SIN importes
+  OK    el cambio del precio de venta muestra anterior → nuevo (100.00 → 120.00)
+  OK    el inicio de sesión fallido de una cuenta inexistente queda con usuario null
+  OK    ninguna entrada contiene hashes ni tokens
+  OK    ninguna entrada contiene las contraseñas usadas
+  OK    no existe POST /api/audit-log (404)
+  OK    no existe PUT /api/audit-log/1 (404)
+  OK    no existe PATCH /api/audit-log/1 (404)
+  OK    no existe DELETE /api/audit-log/1 (404)
+  OK    no existe GET /api/audit-log/export (404)
+  OK    recepcion recibe 403 en la bitácora
+  OK    mecanico recibe 403 en la bitácora
+  OK    el filtro por acción devuelve solo la publicación de términos
+  OK    un filtro de fecha inválido responde 400 DATOS_INVALIDOS
+E7 - Contraseñas y sesión por inactividad (CA-22, CA-23)
+  OK    contraseña de 7 caracteres → 400 CONTRASENA_INVALIDA
+  OK    contraseña sin mayúscula → 400 CONTRASENA_INVALIDA
+  OK    contraseña sin minúscula → 400 CONTRASENA_INVALIDA
+  OK    contraseña sin número → 400 CONTRASENA_INVALIDA
+  OK    una contraseña válida se acepta (204)
+  OK    se puede iniciar sesión con la contraseña nueva
+  OK    la contraseña anterior ya no sirve (401)
+  OK    se restaura la contraseña de ejemplo
+  OK    admin fija 5 minutos de inactividad
+  OK    4 minutos de inactividad se rechaza (rango 5 a 120)
+  OK    121 minutos de inactividad se rechaza (rango 5 a 120)
+  OK    el login informa inactividadMinutos 5 y el token dura 300 s
+  OK    POST /api/auth/renew entrega un token nuevo de 300 s
+  OK    la consulta de avisos no emite ni renueva ningún token (no mantiene la sesión)
+  OK    con el ajuste de vuelta a 30, el token vuelve a durar 1800 s
+  OK    un token inválido responde 401
+  OK    el usuario de prueba entra con su token (tras aceptar la versión 2)
+  OK    tras desactivar al usuario, su token deja de servir (401)
+  OK    tampoco puede renovarlo (401)
+  (Un token VENCIDO responde 401: lo cubre `session-renewal.test.js`; no se puede esperar la vigencia en un guion.)
+Resultado: TODO OK

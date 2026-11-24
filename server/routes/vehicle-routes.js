@@ -7,8 +7,10 @@ import { auth } from '../middlewares/auth.js';
 import { requireRole } from '../middlewares/require-role.js';
 import * as vehicleController from '../controllers/vehicle-controller.js';
 import * as orderController from '../controllers/order-controller.js';
+import { validarIdentificadoresDeRuta } from '../middlewares/route-params.js';
 
 export const vehicleRoutes = Router();
+validarIdentificadoresDeRuta(vehicleRoutes);
 
 // Historial de servicios (Sprint 3, US1): consulta del personal del taller,
 // incluye al mecánico; se registra antes de la restricción ADMIN/RECEPTIONIST.

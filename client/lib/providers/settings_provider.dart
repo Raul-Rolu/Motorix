@@ -153,6 +153,30 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
+  /// Guarda los minutos de inactividad de la sesión (solo el grupo `seguridad`;
+  /// el servidor valida el rango de 5 a 120 y los inicios de sesión y renovaciones
+  /// posteriores usan el valor nuevo).
+  Future<ResultadoAjustes> guardarSeguridad({required int minutosInactividad}) async {
+    final generacion = _generacion;
+    try {
+      final respuesta = await api.put('/settings', {
+        'seguridad': {'minutosInactividad': minutosInactividad},
+      });
+      if (generacion == _generacion) {
+        ajustes = AppSettings.desdeJson(respuesta);
+        notifyListeners();
+      }
+      return const ResultadoAjustes(true, 'Ajustes de seguridad guardados.');
+    } on ExcepcionApi catch (excepcion) {
+      if (excepcion.status == 403) {
+        return const ResultadoAjustes(false, _mensajeSinPermiso);
+      }
+      return ResultadoAjustes(false, excepcion.mensaje);
+    } catch (_) {
+      return const ResultadoAjustes(false, 'No se pudo guardar la configuración.');
+    }
+  }
+
   @override
   void dispose() {
     _liberado = true;

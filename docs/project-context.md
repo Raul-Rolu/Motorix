@@ -529,8 +529,8 @@ Un valor guardado inválido se ignora y se usa el respaldo (el servidor nunca fa
 por un dato corrupto). La lista de Mantenimientos y el panel de control **no**
 aplican margen y no cambian. Los datos del taller **no** están en `.env`
 (`SHOP_NAME`, `SHOP_ADDRESS` y `SHOP_PHONE` nunca existieron: eran la constante
-`TALLER` del código). La clave de minutos de inactividad de la sesión existe en la
-tabla con su respaldo (30) pero no se expone ni tiene efecto hasta el bloque P2.
+`TALLER` del código). La clave de minutos de inactividad de la sesión (30 por
+omisión, de 5 a 120) se administra en Configuración → Seguridad (ver 6.14).
 
 **Catálogo de tipos de servicio (`service_types`).** Cada tipo tiene un nombre
 único (sin distinguir mayúsculas) y un intervalo en días, en kilómetros o en
@@ -568,11 +568,10 @@ y columnas `tickets.shop_name`, `shop_address`, `shop_phone` (migraciones 019 a 
 **Limitaciones y trabajo futuro.**
 
 - **Seguridad y términos** (bitácora, renovación del token e inactividad
-  configurable, aceptación de términos) y **reportes** son los bloques P2 y P3 del
-  Sprint 7 y **todavía no están implementados** en esta versión.
+  configurable, aceptación de términos) se documentan en 6.14. Los **reportes**
+  (bloque P3 del Sprint 7) no están implementados.
 - **No hay bloqueo temporal por intentos fallidos de inicio de sesión ni
-  `helmet`**: el insumo del sprint los daba por existentes, pero no están en el
-  código; quedan como trabajo futuro (decisión del 2026-11-23).
+  `helmet`** (ver 6.14); quedan como trabajo futuro (decisión del 2026-11-23).
 - **Tickets anteriores al sprint** sin instantánea: muestran los datos vigentes del
   taller (si se cambia la configuración, esos tickets mostrarán el cambio) y no
   muestran «Próximo servicio».
@@ -584,6 +583,111 @@ y columnas `tickets.shop_name`, `shop_address`, `shop_phone` (migraciones 019 a 
 - Los IDs de demostración altos (9001) de los seeds hacen que los registros nuevos
   de órdenes, líneas, pagos y tickets continúen desde 9002 en la base donde se
   siembra; las tablas nuevas usan IDs desde 1.
+
+## 6.14 Seguridad y términos
+
+Implementada en el bloque P2 del Sprint 7
+(`specs/008-configuracion-seguridad-reportes/`). Todo se valida en el backend;
+ocultar opciones en la interfaz no es seguridad (RN-15).
+
+**Bitácora de acciones sensibles (`audit_log`).** Solo ADMIN la consulta
+(sección «Bitácora»); recepción y mecánico reciben `403`. Es de **solo
+inserción y consulta**: no existen rutas ni botones para editar, borrar ni
+exportar, y no se purga. Se consulta de 50 en 50, la más reciente primero, con
+filtros por fecha (`AAAA-MM-DD`), usuario y acción. El registro es *best-effort*:
+si falla la escritura, el error queda en el log del servidor y la operación
+principal sigue. Catálogo de acciones:
+
+| Acción | Cuándo | Detalle |
+|---|---|---|
+| `LOGIN_FAILED` | Inicio de sesión fallido (cuenta inexistente, contraseña errónea o cuenta inactiva) | Identificador tecleado, truncado a 100 caracteres; el usuario es `null` si no hay cuenta |
+| `USER_CREATED` | Alta de usuario | Rol |
+| `USER_DEACTIVATED` / `USER_REACTIVATED` | Cambio de estado de un usuario | — |
+| `USER_ROLE_CHANGED` | Cambio de rol | Rol anterior → nuevo |
+| `SETTINGS_UPDATED` | Guardado de configuración | Claves modificadas |
+| `PART_SALE_PRICE_CHANGED` | Cambio del precio de venta | Importe anterior → nuevo |
+| `PART_PURCHASE_PRICE_CHANGED` | Cambio del precio de compra | Solo «Precio de compra modificado», **sin importes** |
+| `TERMS_PUBLISHED` | Publicación de una versión de términos | Número de versión (nunca el texto) |
+
+El detalle lo arma una función pura con una lista permitida de campos: nunca se
+guardan contraseñas, hashes, tokens, datos de tarjeta ni el precio de compra.
+
+**Política de contraseñas (RN-17, ya existente).** Mínimo 8 caracteres con
+mayúscula, minúscula y número, en el alta de usuarios y en el cambio de
+contraseña (`400 CONTRASENA_INVALIDA`). En la base solo existe el hash.
+
+**Sesión por inactividad y renovación del token.** La vigencia del token es el
+ajuste «Inactividad para cerrar la sesión» (Configuración → Seguridad; 30 minutos
+por omisión, de 5 a 120). El login responde `inactividadMinutos`.
+`POST /api/auth/renew` es la **única** ruta que emite un token fuera del login
+(el rol se lee de la base). El cliente (`SessionProvider`) revisa cada 15 s:
+con actividad del usuario (puntero o teclado) renueva a lo sumo cada
+`vigencia/3` (mínimo 60 s) y nunca en paralelo; sin actividad durante la
+vigencia cierra la sesión y el login muestra «Tu sesión se cerró por
+inactividad.». La consulta periódica de avisos **no** cuenta como actividad ni
+renueva el token. Un 401 que llega cuando ya se cumplió (casi) la inactividad se
+trata como cierre por inactividad; un 401 con el usuario activo (token vencido,
+cuenta desactivada) sigue siendo «Su sesión expiró». Un cambio del ajuste aplica
+a los inicios de sesión y renovaciones nuevos.
+
+**Términos y condiciones y aviso de privacidad (`terms_versions`,
+`terms_acceptances`).** El administrador publica versiones desde la sección
+«Términos» (cada texto de 20 a 20,000 caracteres); el servidor las numera con
+máximo + 1 y la mayor es la vigente. Las versiones y las aceptaciones no se
+editan ni se borran. Una aceptación es única por usuario y versión (idempotente);
+aceptar una versión que ya no es la vigente responde `409 TERMS_VERSION_OUTDATED`.
+Una versión nueva obliga a **todos**, incluido el autor, a aceptarla.
+
+*Compuerta.* El middleware `auth` (todas las rutas autenticadas) responde
+`403 TERMS_NOT_ACCEPTED` al usuario que no aceptó la versión vigente. La versión
+vigente y la aceptación se leen **en la misma consulta** que autentica al usuario
+(sin consultas adicionales). **Sin ninguna versión publicada no hay compuerta.**
+Rutas exentas (`authBase`): `GET /api/terms/current`, `POST /api/terms/accept`,
+`POST /api/auth/logout` y `POST /api/auth/renew` (para que el usuario pueda leer,
+aceptar o salir sin que se le cierre la sesión). Publicar y consultar
+aceptaciones usan `auth`: un ADMIN con una versión sin aceptar debe aceptarla
+antes de publicar la siguiente (decisión del 2026-11-24).
+
+*Cliente.* Al iniciar sesión se consulta la versión vigente; si falta aceptar, se
+muestra la pantalla de aceptación (`/terminos`) con los términos y el aviso:
+«Aceptar» entra y «Rechazar» (con confirmación) cierra la sesión. Un
+`403 TERMS_NOT_ACCEPTED` de cualquier petición lleva a la misma pantalla.
+
+*Datos de ejemplo.* Seed `011_demo_terms.sql`: la versión 1 (plantilla en español
+con uso permitido, confidencialidad de clientes y vehículos, cuentas personales y
+aviso de privacidad, que **advierte que debe revisarla el taller**) solo si no hay
+ninguna versión publicada, **sin aceptaciones**, y cuatro entradas de bitácora de
+ejemplo (detalle terminado en «(ejemplo)»). Al sembrarlo, cada cuenta verá la
+pantalla de aceptación en su siguiente inicio de sesión.
+
+**No exposición e inyección de datos.** Las respuestas de usuarios, refacciones,
+órdenes, pagos y tickets no contienen hashes, tokens ni precios reservados (solo
+ADMIN ve el precio de compra), lo verifica `no-exposure.test.js`. Todas las
+consultas usan parámetros `?` (no hay SQL concatenado); los identificadores de ruta
+(`:id`, `:orderId`, `:serviceId`, `:partId`) deben ser enteros positivos y un valor
+inválido responde `400 DATOS_INVALIDOS` en lugar de un 500 (`injection-search.test.js`).
+
+**Entidades.** `audit_log`, `terms_versions` y `terms_acceptances` (migraciones 022
+y 023); clave `session.inactivity_minutes` de `settings`. Tablas nuevas con IDs
+desde 1.
+
+**Limitaciones y trabajo futuro.**
+
+- **No existen `helmet` ni el bloqueo temporal por intentos fallidos de inicio de
+  sesión.** El insumo del sprint los daba por existentes, pero no están en el
+  código; los intentos fallidos solo se **registran** en la bitácora. Son trabajo
+  futuro (decisión del 2026-11-23).
+- El cierre de sesión es del lado del cliente: el token no se revoca, solo vence
+  (o deja de servir si la cuenta se desactiva).
+- Los textos de la versión 1 son una **plantilla**: el taller debe revisarlos y
+  publicar los suyos antes de usar el sistema con datos reales.
+- La bitácora no se exporta ni se purga automáticamente.
+- Los **reportes** (bloque P3 del Sprint 7) no están implementados.
+- Los scripts de evidencia de sprints anteriores (`quickstart-005.mjs`,
+  `verificar-avisos-api.mjs`) reciben `403 TERMS_NOT_ACCEPTED` si la versión
+  sembrada no se ha aceptado: hay que aceptarla primero con las cuentas de
+  ejemplo (`POST /api/terms/accept`); los de P1 aceptan `--aceptar-terminos`
+  (`docs/evidencias/sprint-7-configuracion/efecto-terminos-scripts-previos.txt`).
 
 ------------------------------------------------------------------------
 
@@ -1492,9 +1596,11 @@ Antes de asumirlas como definitivas, el equipo debe decidir:
     español; no se usa `zod` (no es una dependencia del proyecto).
 -   **Hash de contraseñas**: `bcryptjs` (bcrypt en JavaScript puro, costo 10),
     para evitar compilar módulos nativos en Windows.
--   **Sesión y bloqueo**: JWT con duración de 8 horas; el rol y el estado
-    activo del usuario se consultan en cada petición. Tras 5 intentos de
-    inicio de sesión fallidos consecutivos la cuenta se bloquea 15 minutos.
+-   **Sesión**: JWT cuya vigencia es el ajuste de inactividad (30 minutos por
+    omisión, de 5 a 120) y que se renueva con `POST /api/auth/renew`; el rol y el
+    estado activo del usuario se consultan en cada petición. **No existe bloqueo
+    por intentos fallidos** (los intentos solo se registran en la bitácora; ver
+    6.14).
 -   **Librería complementaria de componentes de UI**: ninguna. Se usa
     Material 3 con tema propio, más `google_fonts`, `data_table_2` (versión
     2.6.0; la 3.x no es compatible con Flutter 3.47) y el set de íconos

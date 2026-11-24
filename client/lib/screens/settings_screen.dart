@@ -1,11 +1,10 @@
 /// Configuración (008-configuracion-seguridad-reportes, T022; FR-002, CA-1).
 ///
-/// Pantalla solo para ADMIN (la autorización real es del servidor, RN-15). Por
-/// ahora tiene la sección «Datos del taller» (nombre, dirección y teléfono que
-/// muestra el ticket); las secciones de operación y seguridad se agregan en las
-/// historias siguientes. Sin tarjetas (docs/design-system.md 8.6): secciones con
-/// título y divisores. Estados de carga, error y sin permiso según 8.4 y
-/// confirmación de éxito en snackbar.
+/// Pantalla solo para ADMIN (la autorización real es del servidor, RN-15). Tiene
+/// las secciones «Datos del taller» (lo que muestra el ticket), «Operación»
+/// (márgenes y órdenes detenidas) y «Seguridad» (inactividad de la sesión). Sin
+/// tarjetas (docs/design-system.md 8.6): secciones con título y divisores. Estados
+/// de carga, error y sin permiso según 8.4 y confirmación de éxito en snackbar.
 library;
 
 import 'package:flutter/material.dart';
@@ -109,6 +108,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _SeccionTaller(proveedor: proveedor),
                 const SizedBox(height: MotorixEspaciados.l),
                 _SeccionOperacion(proveedor: proveedor),
+                const SizedBox(height: MotorixEspaciados.l),
+                _SeccionSeguridad(proveedor: proveedor),
               ],
             ),
           ),
@@ -236,6 +237,112 @@ class _SeccionOperacionState extends State<_SeccionOperacion> {
             alignment: Alignment.centerRight,
             child: FilledButton(
               key: const Key('botonGuardarOperacion'),
+              onPressed: _guardando ? null : _guardar,
+              child: _guardando
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Guardar'),
+            ),
+          ),
+          const SizedBox(height: MotorixEspaciados.l),
+          const Divider(height: 1),
+        ],
+      ),
+    );
+  }
+}
+
+/// Sección «Seguridad» (008, US6): minutos de inactividad tras los cuales se
+/// cierra la sesión. También es la vigencia del token, que se renueva mientras el
+/// usuario trabaja. El cambio aplica a los inicios de sesión y renovaciones nuevos.
+class _SeccionSeguridad extends StatefulWidget {
+  final SettingsProvider proveedor;
+
+  const _SeccionSeguridad({required this.proveedor});
+
+  @override
+  State<_SeccionSeguridad> createState() => _SeccionSeguridadState();
+}
+
+class _SeccionSeguridadState extends State<_SeccionSeguridad> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _minutos;
+  bool _guardando = false;
+
+  List<int> get _limite =>
+      widget.proveedor.ajustes!.limites['minutosInactividad'] ?? const [5, 120];
+
+  @override
+  void initState() {
+    super.initState();
+    _minutos = TextEditingController(
+      text: '${widget.proveedor.ajustes!.seguridad.minutosInactividad}',
+    );
+  }
+
+  @override
+  void dispose() {
+    _minutos.dispose();
+    super.dispose();
+  }
+
+  String? _validar(String? valor) {
+    final numero = int.tryParse((valor ?? '').trim());
+    if (numero == null || numero < _limite[0] || numero > _limite[1]) {
+      return 'Debe ser un número entero entre ${_limite[0]} y ${_limite[1]}.';
+    }
+    return null;
+  }
+
+  Future<void> _guardar() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() => _guardando = true);
+    final resultado = await widget.proveedor.guardarSeguridad(
+      minutosInactividad: int.parse(_minutos.text.trim()),
+    );
+    if (!mounted) return;
+    setState(() => _guardando = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(resultado.mensaje),
+        backgroundColor: resultado.exito ? MotorixColores.exito : MotorixColores.error,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Seguridad', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: MotorixEspaciados.xs),
+          const Text(
+            'La sesión se cierra sola si no hay actividad durante este tiempo. '
+            'Se aplica a los inicios de sesión nuevos y a las renovaciones.',
+            style: TextStyle(color: MotorixColores.textoSecundario),
+          ),
+          const SizedBox(height: MotorixEspaciados.m),
+          TextFormField(
+            key: const Key('campoMinutosInactividad'),
+            controller: _minutos,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Inactividad para cerrar la sesión (minutos)',
+              helperText: 'Entre ${_limite[0]} y ${_limite[1]} minutos.',
+            ),
+            validator: _validar,
+          ),
+          const SizedBox(height: MotorixEspaciados.m),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton(
+              key: const Key('botonGuardarSeguridad'),
               onPressed: _guardando ? null : _guardar,
               child: _guardando
                   ? const SizedBox(

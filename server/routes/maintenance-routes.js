@@ -8,8 +8,10 @@ import { Router } from 'express';
 import { auth } from '../middlewares/auth.js';
 import { requireRole } from '../middlewares/require-role.js';
 import * as maintenanceController from '../controllers/maintenance-controller.js';
+import { validarIdentificadoresDeRuta } from '../middlewares/route-params.js';
 
 export const maintenanceRoutes = Router();
+validarIdentificadoresDeRuta(maintenanceRoutes);
 
 maintenanceRoutes.use(auth);
 

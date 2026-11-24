@@ -6,8 +6,10 @@ import { Router } from 'express';
 import { auth } from '../middlewares/auth.js';
 import { requireRole } from '../middlewares/require-role.js';
 import * as clientController from '../controllers/client-controller.js';
+import { validarIdentificadoresDeRuta } from '../middlewares/route-params.js';
 
 export const clientRoutes = Router();
+validarIdentificadoresDeRuta(clientRoutes);
 
 clientRoutes.use(auth, requireRole('ADMIN', 'RECEPTIONIST'));
 

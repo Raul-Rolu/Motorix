@@ -4,13 +4,18 @@
  * del Sprint 7 (008-configuracion-seguridad-reportes, T049/T057, CA-1 a CA-5,
  * CA-10, CA-12, CA-14).
  *
- * Uso: node docs/evidencias/sprint-7-configuracion/verificar-p1-api.mjs [URL_BASE]
+ * Uso: node docs/evidencias/sprint-7-configuracion/verificar-p1-api.mjs [URL_BASE] [--aceptar-terminos]
  * Precondición: la API corre contra motorix_test (o una base desechable) con las
  * migraciones 001-021 y los seeds 001-010. Las cuentas son las de ejemplo y
  * pueden cambiarse con QS_ADMIN_CLAVE, QS_RECEPCION_CLAVE y QS_MECANICO_CLAVE.
- * No escribe nada. Código de salida 0 solo si todo coincide.
+ * No escribe nada, salvo con `--aceptar-terminos` (paso opcional para bases con
+ * las migraciones 022-023 y el seed 011): cada cuenta de ejemplo acepta la
+ * versión vigente de los términos; sin la bandera, y con una versión sin aceptar,
+ * el guion se detiene explicando qué hacer. Código de salida 0 solo si todo coincide.
  */
-const base = (process.argv[2] ?? 'http://localhost:3055').replace(/\/+$/, '');
+const argumentos = process.argv.slice(2);
+const aceptarTerminos = argumentos.includes('--aceptar-terminos');
+const base = (argumentos.find((a) => !a.startsWith('--')) ?? 'http://localhost:3055').replace(/\/+$/, '');
 const cuentas = {
   admin: ['admin', process.env.QS_ADMIN_CLAVE ?? 'Admin123'],
   recepcion: ['recepcion', process.env.QS_RECEPCION_CLAVE ?? 'Recepcion123'],
@@ -21,6 +26,34 @@ let fallas = 0;
 function verificar(condicion, texto, detalle = '') {
   console.log(`${condicion ? 'OK   ' : 'FALLA'} ${texto}${condicion ? '' : ` -> ${detalle}`}`);
   if (!condicion) fallas += 1;
+}
+
+
+/**
+ * Paso opcional (008, bloque P2, compuerta de términos): con una versión vigente
+ * sin aceptar, la API responde 403 TERMS_NOT_ACCEPTED a todo lo demás. Sin la
+ * bandera `--aceptar-terminos` el guion se detiene con una explicación; con ella,
+ * cada cuenta acepta la versión vigente (POST /api/terms/accept). En una base sin
+ * versión publicada (o sin la migración 023) no hace nada.
+ */
+async function aceptarTerminosSiFalta(rol, token) {
+  const actual = await fetch(`${base}/api/terms/current`, { headers: { Authorization: `Bearer ${token}` } });
+  if (actual.status !== 200) return;
+  const { vigente, aceptada } = await actual.json();
+  if (!vigente || aceptada) return;
+  if (!aceptarTerminos) {
+    console.error(
+      `${rol} debe aceptar la versión ${vigente.version} de los términos antes de continuar. ` +
+        'Vuelva a ejecutar con --aceptar-terminos (registra la aceptación de las cuentas de ejemplo).'
+    );
+    process.exit(2);
+  }
+  const respuesta = await fetch(`${base}/api/terms/accept`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ termsVersionId: vigente.id }),
+  });
+  verificar(respuesta.status === 200, `${rol} acepta la versión ${vigente.version} de los términos`, String(respuesta.status));
 }
 
 async function api(ruta, token) {
@@ -45,6 +78,7 @@ for (const [rol, [usuario, clave]] of Object.entries(cuentas)) {
   });
   tokens[rol] = (await r.json()).token;
   verificar(Boolean(tokens[rol]), `inicio de sesión de ${rol}`);
+  await aceptarTerminosSiFalta(rol, tokens[rol]);
 }
 
 // US1/US2: configuración (solo ADMIN).

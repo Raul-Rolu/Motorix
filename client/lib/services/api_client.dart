@@ -2,7 +2,9 @@
 ///
 /// Adjunta el token de sesión en `Authorization` y notifica al cerrar la
 /// sesión cuando el servidor responde 401 (token expirado o usuario
-/// desactivado), para que el AuthProvider redirija al login.
+/// desactivado), para que el AuthProvider redirija al login. Con
+/// `403 TERMS_NOT_ACCEPTED` avisa para llevar al usuario a la pantalla de
+/// aceptación de términos (008).
 library;
 
 import 'dart:convert';
@@ -36,6 +38,10 @@ class ApiClient {
 
   /// Se invoca cuando el servidor responde 401 (sesión expirada).
   void Function()? onSesionExpirada;
+
+  /// Se invoca cuando el servidor responde `403 TERMS_NOT_ACCEPTED` (008, FR-021):
+  /// el usuario debe aceptar la versión vigente de los términos y condiciones.
+  void Function()? onTerminosPendientes;
 
   ApiClient({this.baseUrl = kBaseUrl, http.Client? httpClient})
       : _http = httpClient ?? http.Client();
@@ -94,9 +100,16 @@ class ApiClient {
     }
 
     final error = json['error'] as Map<String, dynamic>?;
+    final codigo = error?['codigo'] as String? ?? 'ERROR';
+
+    // Compuerta de términos: falta aceptar la versión vigente.
+    if (respuesta.statusCode == 403 && codigo == 'TERMS_NOT_ACCEPTED') {
+      onTerminosPendientes?.call();
+    }
+
     throw ExcepcionApi(
       respuesta.statusCode,
-      error?['codigo'] as String? ?? 'ERROR',
+      codigo,
       error?['mensaje'] as String? ?? 'No se pudo completar la operación.',
     );
   }

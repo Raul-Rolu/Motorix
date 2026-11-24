@@ -6,7 +6,12 @@
  * catálogo, línea con tipo, propuesta y «Próximo servicio» (CA-4, CA-5, CA-14) y
  * permisos por rol (CA-10).
  *
- * Uso: node docs/evidencias/sprint-7-configuracion/escenarios-p1-api.mjs [URL_BASE]
+ * Uso: node docs/evidencias/sprint-7-configuracion/escenarios-p1-api.mjs [URL_BASE] [--aceptar-terminos]
+ *
+ * Paso opcional `--aceptar-terminos` (bases con las migraciones 022-023 y el seed
+ * 011): cada cuenta de ejemplo acepta la versión vigente de los términos antes de
+ * empezar; sin la bandera, y con una versión sin aceptar, el guion se detiene
+ * explicando qué hacer.
  *
  * PRECONDICIONES: la API corre con DB_NAME=motorix_test (NUNCA contra `motorix`):
  * este guion ESCRIBE (cambia ajustes, crea una orden, tipos y un mantenimiento).
@@ -17,7 +22,9 @@
  * QS_MECANICO_CLAVE permiten cambiar sus contraseñas. Código de salida 0 solo si
  * todo coincide.
  */
-const base = (process.argv[2] ?? 'http://localhost:3055').replace(/\/+$/, '');
+const argumentos = process.argv.slice(2);
+const aceptarTerminos = argumentos.includes('--aceptar-terminos');
+const base = (argumentos.find((a) => !a.startsWith('--')) ?? 'http://localhost:3055').replace(/\/+$/, '');
 const cuentas = {
   admin: ['admin', process.env.QS_ADMIN_CLAVE ?? 'Admin123'],
   recepcion: ['recepcion', process.env.QS_RECEPCION_CLAVE ?? 'Recepcion123'],
@@ -42,6 +49,33 @@ async function api(metodo, ruta, token, cuerpo) {
   return { status: respuesta.status, cuerpo: await respuesta.json().catch(() => null) };
 }
 
+/**
+ * Paso opcional (008, bloque P2, compuerta de términos): con una versión vigente
+ * sin aceptar, la API responde 403 TERMS_NOT_ACCEPTED a todo lo demás. Sin la
+ * bandera `--aceptar-terminos` el guion se detiene con una explicación; con ella,
+ * cada cuenta acepta la versión vigente (POST /api/terms/accept). En una base sin
+ * versión publicada (o sin la migración 023) no hace nada.
+ */
+async function aceptarTerminosSiFalta(rol, token) {
+  const actual = await fetch(`${base}/api/terms/current`, { headers: { Authorization: `Bearer ${token}` } });
+  if (actual.status !== 200) return;
+  const { vigente, aceptada } = await actual.json();
+  if (!vigente || aceptada) return;
+  if (!aceptarTerminos) {
+    console.error(
+      `${rol} debe aceptar la versión ${vigente.version} de los términos antes de continuar. ` +
+        'Vuelva a ejecutar con --aceptar-terminos (registra la aceptación de las cuentas de ejemplo).'
+    );
+    process.exit(2);
+  }
+  const respuesta = await fetch(`${base}/api/terms/accept`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ termsVersionId: vigente.id }),
+  });
+  verificar(respuesta.status === 200, `${rol} acepta la versión ${vigente.version} de los términos`, String(respuesta.status));
+}
+
 function fechaLocal(dias) {
   const f = new Date();
   f.setHours(0, 0, 0, 0);
@@ -57,6 +91,7 @@ for (const [rol, [usuario, clave]] of Object.entries(cuentas)) {
     console.error(`No se pudo iniciar sesión como ${rol}.`);
     process.exit(2);
   }
+  await aceptarTerminosSiFalta(rol, t[rol]);
 }
 
 // Guardias de precondición: base sembrada y sin cambios.

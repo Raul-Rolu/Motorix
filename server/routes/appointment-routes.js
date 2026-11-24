@@ -6,8 +6,10 @@ import { Router } from 'express';
 import { auth } from '../middlewares/auth.js';
 import { requireRole } from '../middlewares/require-role.js';
 import * as appointmentController from '../controllers/appointment-controller.js';
+import { validarIdentificadoresDeRuta } from '../middlewares/route-params.js';
 
 export const appointmentRoutes = Router();
+validarIdentificadoresDeRuta(appointmentRoutes);
 
 appointmentRoutes.use(auth, requireRole('ADMIN', 'RECEPTIONIST'));
 

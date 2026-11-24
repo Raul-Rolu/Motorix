@@ -8,6 +8,7 @@
  */
 import * as partModel from '../models/part.js';
 import * as inventoryModel from '../models/inventory.js';
+import * as auditService from './audit-service.js';
 import { errores } from '../utils/errors.js';
 
 /** Mensaje no bloqueante cuando el precio de venta es menor al de compra (006, FR-004). */
@@ -124,7 +125,9 @@ export async function crear(datos, usuario) {
 
 /** Edición de metadatos; el stock solo cambia vía movimientos (FR-013). */
 export async function editar(id, datos, usuario) {
-  const parte = await partModel.findById(id);
+  // Se consulta con el precio de compra (solo uso interno para la bitácora, 008):
+  // la respuesta al usuario sigue mostrándolo únicamente a ADMIN.
+  const parte = await partModel.findById(id, null, { incluirPrecioCompra: true });
   if (!parte) {
     throw errores.parteNoEncontrada();
   }
@@ -166,6 +169,23 @@ export async function editar(id, datos, usuario) {
   // dejarlo pendiente (null) no hay precio que adoptar.
   if (resultado.salePrice !== null && resultado.salePrice !== undefined) {
     await partModel.adoptarPrecios(parte.id, resultado.salePrice);
+  }
+
+  // Bitácora (008, FR-012): solo cuando el precio realmente cambia. Del precio de
+  // compra (dato reservado) se registra únicamente que cambió, sin importes.
+  const cambio = (antes, despues) => (antes ?? null) !== (despues ?? null);
+  if (cambio(parte.salePrice, resultado.salePrice)) {
+    await auditService.registrar('PART_SALE_PRICE_CHANGED', {
+      usuarioId: usuario?.id ?? null,
+      entidadId: parte.id,
+      datos: { anterior: parte.salePrice, nuevo: resultado.salePrice },
+    });
+  }
+  if (esAdmin(usuario) && cambio(parte.purchasePrice, resultado.purchasePrice)) {
+    await auditService.registrar('PART_PURCHASE_PRICE_CHANGED', {
+      usuarioId: usuario?.id ?? null,
+      entidadId: parte.id,
+    });
   }
   return conAdvertencia(resultado, datos);
 }
