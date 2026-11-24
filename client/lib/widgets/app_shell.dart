@@ -1,9 +1,10 @@
 /// Estructura de navegación con menú lateral (T030, US1; FR-016).
 ///
 /// Secciones: Inicio, Citas, Clientes, Vehículos, Mantenimientos, Inventario,
-/// Órdenes, Clientes por avisar, Usuarios, Configuración, Catálogo de servicios y
-/// Bitácora. Usuarios, Configuración (008, datos del taller y operación), Catálogo
-/// de servicios (008, tipos con intervalo) y Bitácora (008, solo lectura) solo son
+/// Órdenes, Clientes por avisar, Usuarios, Configuración, Catálogo de servicios,
+/// Bitácora y Términos. Usuarios, Configuración (008, datos del taller y operación),
+/// Catálogo de servicios (008, tipos con intervalo), Bitácora (008, solo lectura) y
+/// Términos (008, versión vigente, aceptaciones y publicación) solo son
 /// visibles para el rol ADMIN; Órdenes es visible para los tres roles (el mecánico ve las
 /// suyas); Clientes por avisar es solo de ADMIN y RECEPTIONIST. El encabezado
 /// lleva la campana de avisos internos y el panel lateral de avisos
@@ -30,6 +31,7 @@ import '../screens/orders_screen.dart';
 import '../screens/parts_screen.dart';
 import '../screens/service_types_screen.dart';
 import '../screens/settings_screen.dart';
+import '../screens/terms_admin_screen.dart';
 import '../screens/users_screen.dart';
 import '../screens/vehicles_screen.dart';
 import 'notification_bell.dart';
@@ -95,6 +97,10 @@ class _AppShellState extends State<AppShell> {
       // 008, US5 (bloque P2): bitácora de acciones sensibles (solo ADMIN, solo lectura).
       if (esAdmin)
         const _Seccion('Bitácora', Icons.history_outlined, AuditLogScreen()),
+      // 008, US7 (bloque P2): versión vigente, aceptaciones y publicación de términos
+      // y condiciones (solo ADMIN).
+      if (esAdmin)
+        const _Seccion('Términos', Icons.gavel_outlined, TermsAdminScreen()),
     ];
 
     // Un aviso puede pedir abrir una sección (Inventario, Citas…): se atiende al

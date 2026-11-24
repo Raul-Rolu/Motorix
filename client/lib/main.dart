@@ -26,6 +26,7 @@ import 'providers/service_types_provider.dart';
 import 'providers/session_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/shell_navigation_provider.dart';
+import 'providers/terms_provider.dart';
 import 'providers/ticket_provider.dart';
 import 'providers/users_provider.dart';
 import 'providers/vehicles_provider.dart';
@@ -37,6 +38,7 @@ import 'screens/maintenance_form_screen.dart';
 import 'screens/order_form_screen.dart';
 import 'screens/order_detail_screen.dart';
 import 'screens/part_form_screen.dart';
+import 'screens/terms_acceptance_screen.dart';
 import 'screens/users_screen.dart';
 import 'screens/vehicle_form_screen.dart';
 import 'screens/vehicle_history_screen.dart';
@@ -94,6 +96,11 @@ void main() {
         ChangeNotifierProvider(
           create: (context) => AuditProvider(api, context.read<AuthProvider>()),
         ),
+        // 008, bloque P2: términos y condiciones con aviso de privacidad. Escucha la
+        // sesión (consulta al iniciar) y el 403 TERMS_NOT_ACCEPTED de cualquier petición.
+        ChangeNotifierProvider(
+          create: (context) => TermsProvider(api, context.read<AuthProvider>()),
+        ),
       ],
       child: const MotorixApp(),
     ),
@@ -116,6 +123,12 @@ class _MotorixAppState extends State<MotorixApp> {
       context.read<AuthProvider>().alExpirar = () {
         navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (r) => false);
       };
+      // `read` crea el proveedor de términos (son perezosos) para que escuche desde
+      // antes del primer inicio de sesión. Si falta aceptar, se lleva al usuario a
+      // la pantalla de aceptación desde cualquier pantalla.
+      context.read<TermsProvider>().alPendiente = () {
+        navigatorKey.currentState?.pushNamedAndRemoveUntil('/terminos', (r) => false);
+      };
     });
   }
 
@@ -134,6 +147,8 @@ class _MotorixAppState extends State<MotorixApp> {
         // La ruta /login se usa al cerrar sesión o expirar el token.
         '/login': (_) => const LoginScreen(),
         '/inicio': (_) => const AppShell(),
+        // Aceptación de los términos y del aviso de privacidad (008, FR-020).
+        '/terminos': (_) => const TermsAcceptanceScreen(),
         '/clientes/nuevo': (_) => const ClientFormScreen(),
         '/vehiculos/nuevo': (_) => const VehicleFormScreen(),
         '/mantenimientos/nueva': (_) => const MaintenanceFormScreen(),
