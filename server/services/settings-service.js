@@ -9,8 +9,9 @@
  * No hay caché: cada consulta lee la tabla (una consulta), de modo que un
  * cambio del administrador se ve de inmediato.
  *
- * En el bloque P1 la API solo expone los grupos `taller` y `operacion`; los
- * minutos de inactividad se leen internamente pero se exponen desde P2.
+ * La API expone los grupos `taller`, `operacion` y `seguridad` (los minutos de
+ * inactividad de la sesión, desde el bloque P2); el servicio de autenticación
+ * los lee con `obtenerAjustes` para fijar la vigencia del token.
  */
 import * as settingModel from '../models/setting.js';
 import * as auditService from './audit-service.js';
@@ -44,7 +45,7 @@ export function tallerDe(ajustes) {
   };
 }
 
-/** Forma de la respuesta de `GET`/`PUT /api/settings` (contracts/api-rest.md, P1). */
+/** Forma de la respuesta de `GET`/`PUT /api/settings` (contracts/api-rest.md). */
 export async function consultar() {
   const ajustes = await obtenerAjustes();
   return {

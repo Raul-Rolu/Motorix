@@ -331,7 +331,7 @@ void main() {
   });
 
   group('rechazar', () {
-    testWidgets('pide confirmación y «Volver» conserva la pantalla y la sesión', (tester) async {
+    testWidgets('pide confirmación y «Cancelar» conserva la pantalla y la sesión', (tester) async {
       final cliente = _ClienteFalso();
       final entorno = await _montar(tester, cliente);
       await _iniciarSesion(tester);

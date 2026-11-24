@@ -40,12 +40,12 @@ class TermsAcceptanceScreen extends StatelessWidget {
           TextButton(
             key: const Key('botonCancelarRechazo'),
             onPressed: () => Navigator.of(contexto).pop(false),
-            child: const Text('Volver'),
+            child: const Text('Cancelar'),
           ),
           FilledButton(
             key: const Key('botonConfirmarRechazo'),
             onPressed: () => Navigator.of(contexto).pop(true),
-            child: const Text('Rechazar y salir'),
+            child: const Text('Confirmar'),
           ),
         ],
       ),

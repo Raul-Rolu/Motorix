@@ -5,7 +5,7 @@
  *
  * El cuerpo agrupa los ajustes: `taller` (nombre, dirección, teléfono),
  * `operacion` (márgenes y días de orden detenida) y `seguridad` (minutos de
- * inactividad, que solo se habilita desde el bloque P2). Solo se validan y
+ * inactividad, bloque P2; el controlador lo habilita con `incluirSeguridad`). Solo se validan y
  * devuelven los campos enviados; un solo error invalida todo el guardado
  * (`cambios` queda vacío).
  */

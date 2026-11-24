@@ -1,0 +1,37 @@
+T105 - Corrida de suites del bloque P2 del Sprint 7 (008-configuracion-seguridad-reportes)
+Fecha: 2026-11-24. Cada suite se ejecutó sola (sin otra corrida en paralelo), contra motorix_test.
+
+Backend (server/, npm test):
+  Test Suites: 99 passed, 99 total
+  Tests:       951 passed, 951 total
+  Time:        269.382 s
+
+Frontend (client/):
+  flutter test      -> +254: All tests passed!
+  flutter analyze   -> 5 issues found (todos informativos y previos al sprint:
+                       4 use_null_aware_elements en lib/providers/parts_provider.dart:77-80
+                       y 1 unnecessary_this en test/payment_flow_test.dart:88)
+
+Referencia del cierre del tramo 3B (T086): backend 95 suites / 875 pruebas; Flutter 214 pruebas.
+Aportes de los tramos 4A a 5: 4 suites y 76 pruebas de backend (terms, terms-gate-queries,
+terms-roles y seed-terms) y 40 pruebas de Flutter (terms_acceptance_test y terms_admin_test).
+
+Revisión contra la constitución (.specify/memory/constitution.md):
+  IV Seguridad: las contraseñas solo existen como hash; la bitácora y los términos no
+    guardan contraseñas, hashes ni tokens (listas permitidas y pruebas de no exposición);
+    los permisos se validan en el backend (ADMIN para bitácora, publicar términos y
+    aceptaciones; pruebas de roles); las entradas se validan en el backend (límites de los
+    términos, filtros de la bitácora, ids de ruta enteros positivos, rango de inactividad);
+    ninguna respuesta de error expone trazas.
+  II Responsabilidades separadas: modelo / servicio / validador / controlador / ruta para
+    términos y bitácora; la compuerta vive en el middleware de autenticación.
+  VI API consistente: errores con el formato {error:{codigo,mensaje}} y códigos
+    TERMS_NOT_ACCEPTED (403) y TERMS_VERSION_OUTDATED (409) del contrato.
+  VII Pruebas: pruebas primero en cada tramo, con verificación por mutación; todo en
+    motorix_test, sin tocar la base motorix.
+  VIII UX/UI: pantallas con los tokens del tema, confirmaciones con «Cancelar» y
+    «Confirmar» para rechazar términos y publicar una versión, mensajes de éxito y error
+    y estados de carga, vacío, error y sin permiso. Observación de proceso: el sistema de
+    diseño (docs/design-system.md, sección 8.9) se actualizó al cierre del bloque (T100) y
+    no antes de construir las pantallas, como pide el principio; el contenido describe lo
+    ya implementado.

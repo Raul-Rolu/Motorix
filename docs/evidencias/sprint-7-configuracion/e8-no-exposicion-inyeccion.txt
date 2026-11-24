@@ -1,0 +1,4 @@
+PASS tests/integration/injection-search.test.js (19.024 s)
+PASS tests/contract/no-exposure.test.js (11.592 s)
+Test Suites: 2 passed, 2 total
+Tests:       52 passed, 52 total

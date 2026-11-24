@@ -10,6 +10,6 @@ export const authRoutes = Router();
 authRoutes.post('/login', authController.login);
 authRoutes.post('/change-password', auth, authController.changePassword);
 authRoutes.post('/logout', authBase, authController.logout);
-// 008 (FR-016): única ruta que renueva el token. Con `authBase` (sin compuerta de
+// 008 (FR-016): única ruta que renueva el token fuera del login. Con `authBase` (sin compuerta de
 // términos) para que la sesión siga viva mientras el usuario lee y acepta (T093).
 authRoutes.post('/renew', authBase, authController.renew);

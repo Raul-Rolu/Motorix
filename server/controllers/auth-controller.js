@@ -32,6 +32,7 @@ export const changePassword = asyncHandler(async (req, res) => {
   return noContent(res);
 });
 
-// El logout en este MVP es del lado del cliente (el token se descarta); se
-// expone el endpoint para dejar constancia del cierre de sesión.
+// El logout es del lado del cliente (el token se descarta; no se revoca y solo
+// vence con su vigencia). Se expone el endpoint, con `authBase` (sin la compuerta
+// de términos), para dejar constancia del cierre de sesión.
 export const logout = asyncHandler(async (req, res) => noContent(res));

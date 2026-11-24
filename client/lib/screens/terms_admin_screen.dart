@@ -75,7 +75,7 @@ class _TermsAdminScreenState extends State<TermsAdminScreen> {
           FilledButton(
             key: const Key('botonConfirmarPublicar'),
             onPressed: () => Navigator.of(contexto).pop(true),
-            child: const Text('Publicar'),
+            child: const Text('Confirmar'),
           ),
         ],
       ),

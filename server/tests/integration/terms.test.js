@@ -7,7 +7,7 @@
 // máximo + 1 y exige aceptar a todos (incluido el autor), las aceptaciones se
 // paginan de 50 y publicar queda en la bitácora. Corre contra `motorix_test`.
 //
-// El texto del seed `011_demo_terms.sql` se verifica en el tramo del seed (T096).
+// El texto del seed `011_demo_terms.sql` se verifica en `seed-terms.test.js` (T096).
 import request from 'supertest';
 import bcrypt from 'bcrypt';
 import { crearApp } from '../../app.js';
