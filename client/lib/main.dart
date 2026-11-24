@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'config/theme.dart';
 import 'models/vehicle.dart';
 import 'providers/appointments_provider.dart';
+import 'providers/audit_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/clients_provider.dart';
 import 'providers/clients_to_notify_provider.dart';
@@ -81,6 +82,10 @@ void main() {
         // eligen un tipo activo en las líneas de servicio.
         ChangeNotifierProvider(
           create: (context) => ServiceTypesProvider(api, context.read<AuthProvider>()),
+        ),
+        // 008, bloque P2: bitácora de acciones sensibles (solo ADMIN, solo lectura).
+        ChangeNotifierProvider(
+          create: (context) => AuditProvider(api, context.read<AuthProvider>()),
         ),
       ],
       child: const MotorixApp(),

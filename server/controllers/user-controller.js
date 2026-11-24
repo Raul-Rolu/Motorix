@@ -23,7 +23,8 @@ export const crear = asyncHandler(async (req, res) => {
   if (erroresDeValidacion.length > 0) {
     return error(res, 400, 'DATOS_INVALIDOS', erroresDeValidacion.join(' '));
   }
-  const usuario = await userService.crear(req.body);
+  // El autor (req.user) se pasa para la bitácora (008, FR-012); no cambia la respuesta.
+  const usuario = await userService.crear(req.body, req.user);
   return created(res, usuario);
 });
 
@@ -32,7 +33,7 @@ export const editar = asyncHandler(async (req, res) => {
   if (erroresDeValidacion.length > 0) {
     return error(res, 400, 'DATOS_INVALIDOS', erroresDeValidacion.join(' '));
   }
-  const usuario = await userService.editar(Number(req.params.id), req.body);
+  const usuario = await userService.editar(Number(req.params.id), req.body, req.user);
   return ok(res, usuario);
 });
 
@@ -41,6 +42,6 @@ export const cambiarEstado = asyncHandler(async (req, res) => {
   if (erroresDeValidacion.length > 0) {
     return error(res, 400, 'DATOS_INVALIDOS', erroresDeValidacion.join(' '));
   }
-  await userService.cambiarEstado(Number(req.params.id), req.body.active);
+  await userService.cambiarEstado(Number(req.params.id), req.body.active, req.user);
   return noContent(res);
 });

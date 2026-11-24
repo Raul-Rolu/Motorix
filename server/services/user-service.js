@@ -6,6 +6,7 @@
 import bcrypt from 'bcrypt';
 import * as userModel from '../models/user.js';
 import { errores } from '../utils/errors.js';
+import * as auditService from './audit-service.js';
 
 const COSTO_BCRYPT = 10;
 
@@ -31,7 +32,7 @@ export async function obtenerPorId(id) {
   return sinHash(usuario);
 }
 
-export async function crear(datos) {
+export async function crear(datos, actor = null) {
   const hash = await bcrypt.hash(datos.password, COSTO_BCRYPT);
   try {
     const usuario = await userModel.create({
@@ -40,6 +41,12 @@ export async function crear(datos) {
       passwordHash: hash,
       fullName: datos.fullName.trim(),
       role: datos.role,
+    });
+    // Bitácora (008, FR-012): quién dio de alta y con qué rol; nunca la contraseña.
+    await auditService.registrar('USER_CREATED', {
+      usuarioId: actor?.id ?? null,
+      entidadId: usuario.id,
+      datos: { rol: usuario.role },
     });
     return sinHash(usuario);
   } catch (error) {
@@ -51,7 +58,7 @@ export async function crear(datos) {
   }
 }
 
-export async function editar(id, datos) {
+export async function editar(id, datos, actor = null) {
   const existente = await userModel.findById(id);
   if (!existente) {
     throw errores.recursoNoEncontrado('El usuario');
@@ -62,6 +69,14 @@ export async function editar(id, datos) {
       fullName: datos.fullName.trim(),
       role: datos.role,
     });
+    // Bitácora (008, FR-012): solo cuando cambia el rol.
+    if (existente.role !== usuario.role) {
+      await auditService.registrar('USER_ROLE_CHANGED', {
+        usuarioId: actor?.id ?? null,
+        entidadId: id,
+        datos: { rolAnterior: existente.role, rolNuevo: usuario.role },
+      });
+    }
     return sinHash(usuario);
   } catch (error) {
     if (error?.code === 'ER_DUP_ENTRY') {
@@ -72,7 +87,7 @@ export async function editar(id, datos) {
 }
 
 /** Desactiva o reactiva sin borrado físico (FR-015); guarda al último admin. */
-export async function cambiarEstado(id, activo) {
+export async function cambiarEstado(id, activo, actor = null) {
   const usuario = await userModel.findById(id);
   if (!usuario) {
     throw errores.recursoNoEncontrado('El usuario');
@@ -83,5 +98,13 @@ export async function cambiarEstado(id, activo) {
       throw errores.ultimoAdmin();
     }
   }
-  return sinHash(await userModel.setStatus(id, activo));
+  const actualizado = await userModel.setStatus(id, activo);
+  // Bitácora (008, FR-012): solo cuando el estado realmente cambia.
+  if (usuario.active !== Boolean(activo)) {
+    await auditService.registrar(activo ? 'USER_REACTIVATED' : 'USER_DEACTIVATED', {
+      usuarioId: actor?.id ?? null,
+      entidadId: id,
+    });
+  }
+  return sinHash(actualizado);
 }

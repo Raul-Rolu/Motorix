@@ -13,6 +13,7 @@
  * minutos de inactividad se leen internamente pero se exponen desde P2.
  */
 import * as settingModel from '../models/setting.js';
+import * as auditService from './audit-service.js';
 import { CLAVES, LIMITES, resolverValor } from '../utils/settings-defaults.js';
 
 /**
@@ -66,6 +67,21 @@ export async function consultar() {
  * ajustes vigentes. La validación la hace el controlador con `validarAjustes`.
  */
 export async function actualizar(cambios, usuario) {
+  // Claves cuyo valor EFECTIVO realmente cambia (guardar el mismo valor, o el de
+  // respaldo cuando no había nada guardado, no es un cambio) para la bitácora.
+  const guardado = await settingModel.findAll();
+  const modificadas = Object.keys(cambios).filter(
+    (clave) => resolverValor(clave, guardado[clave]) !== cambios[clave]
+  );
+
   await settingModel.upsertMany(cambios, usuario?.id ?? null);
+
+  // Bitácora (008, FR-012): sin entrada si no cambió ningún valor.
+  if (modificadas.length > 0) {
+    await auditService.registrar('SETTINGS_UPDATED', {
+      usuarioId: usuario?.id ?? null,
+      datos: { claves: modificadas },
+    });
+  }
   return consultar();
 }
