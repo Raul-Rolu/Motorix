@@ -207,6 +207,13 @@ export const errores = {
       'TERMS_VERSION_OUTDATED',
       'Esa versión de los términos y condiciones ya no es la vigente; actualice la pantalla y acepte la versión actual.'
     ),
+  // 008-configuracion-seguridad-reportes, T110 (bloque P3; FR-023, FR-027, CA-6, CA-9):
+  // rango de fechas de un reporte inválido o exportación demasiado grande.
+  rangoInvalido: (mensaje = 'El rango del reporte no es válido: indique las fechas desde y hasta (AAAA-MM-DD) o un periodo, de hasta 366 días.') =>
+    new AppError(400, 'RANGO_INVALIDO', mensaje),
+  // El nombre del reporte a exportar no existe.
+  reporteNoEncontrado: () =>
+    new AppError(404, 'REPORT_NOT_FOUND', 'El reporte indicado no existe.'),
   tipoServicioInactivo: () =>
     new AppError(
       409,
