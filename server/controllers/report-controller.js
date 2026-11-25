@@ -20,3 +20,11 @@ function rangoDe(req) {
 export const ingresos = asyncHandler(async (req, res) => {
   return ok(res, await reportService.ingresos(rangoDe(req)));
 });
+
+export const servicios = asyncHandler(async (req, res) => {
+  return ok(res, await reportService.servicios(rangoDe(req)));
+});
+
+export const productividad = asyncHandler(async (req, res) => {
+  return ok(res, await reportService.productividad(rangoDe(req)));
+});

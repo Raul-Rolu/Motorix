@@ -520,11 +520,30 @@ divisores:
 | Error | «No se pudo cargar el reporte.» en `error` con «Reintentar», sin trazas. Si el servidor rechaza el rango, se muestra su mensaje en español (por ejemplo «El rango no puede exceder 366 días.»). |
 | Sin permiso | «No tiene permisos para ver los reportes.» sin botón de reintento y sin filtro. |
 
-**8.10.2 Pestañas siguientes.** «Servicios», «Productividad», «Refacciones» y
-«Rotación» usan el mismo patrón (filtro compartido, lista densa con divisores,
-importes a la derecha, los mismos estados). Su detalle (columnas, etiquetas
-«Sin tipo», «Sin asignar», «sin costo», «sin precio» y «sin existencia») se agrega
-a esta sección **antes** de construir cada pestaña.
+**8.10.2 Pestañas «Servicios» y «Productividad».** Comparten el filtro de rango
+con «Ingresos»: cambiar de pestaña consulta el **mismo** periodo, cambiar el filtro
+invalida las demás pestañas (se vuelven a consultar al abrirlas) y volver a una
+pestaña ya cargada con el mismo filtro no consulta otra vez. «Actualizar» recarga
+solo la pestaña activa. Un error o un resultado vacío de una pestaña no afecta a las
+demás; un 403 en cualquiera muestra el estado «sin permiso» de toda la sección. La
+población de ambas es la de **órdenes cerradas del periodo** (terminadas o
+entregadas, por la fecha de su último cambio de estado; nunca las canceladas).
+
+- **Servicios.** Lista densa con divisores y una fila de encabezado en
+  `textSecondary`: «Tipo de servicio», «Cantidad» e «Importe». Cada fila: el tipo en
+  texto normal («Sin tipo» para las líneas sin tipo, sin ocultarla ni cambiar su
+  lugar), la cantidad («12 servicios», «1 servicio») y el importe a la derecha en
+  peso 600. Orden: por cantidad descendente y, a igualdad, por nombre. Cierra con una
+  fila «Total» (cantidad e importe, en peso 600). Vacío: «No hay servicios en órdenes
+  cerradas en este rango.».
+- **Productividad.** Mismo patrón con «Mecánico», «Órdenes» y «Mano de obra»: el
+  nombre del mecánico, «8 órdenes» / «1 orden» y el importe de mano de obra. Orden: por
+  órdenes descendente y, a igualdad, por nombre; **«Sin asignar»** (órdenes sin
+  mecánico) siempre al final. Fila «Total» al cierre. Los mecánicos desactivados
+  conservan su nombre. Vacío: «No hay órdenes cerradas en este rango.».
+- **Refacciones** y **Rotación** (siguientes tramos): su detalle (columnas y las
+  marcas «sin costo», «sin precio» y «sin existencia») se agrega a esta sección
+  **antes** de construir cada pestaña.
 
 **8.10.3 Exportación.** Se documenta aquí antes de construirla (tramo de
 exportación): botón «Exportar CSV» (`OutlinedButton` con `Icons.download_outlined`)

@@ -14,3 +14,5 @@ export const reportRoutes = Router();
 reportRoutes.use(auth, requireRole('ADMIN'));
 
 reportRoutes.get('/income', reportController.ingresos);
+reportRoutes.get('/services', reportController.servicios);
+reportRoutes.get('/productivity', reportController.productividad);

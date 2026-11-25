@@ -99,6 +99,62 @@ describe('GET /api/reports/income', () => {
   });
 });
 
+describe.each([
+  ['services', 'servicios más frecuentes'],
+  ['productivity', 'productividad por mecánico'],
+])('GET /api/reports/%s (%s)', (reporte) => {
+  const ruta = `/api/reports/${reporte}?${RANGO}`;
+
+  test('sin token responde 401', async () => {
+    const respuesta = await request(app).get(ruta);
+
+    expect(respuesta.status).toBe(401);
+  });
+
+  test('un token inválido responde 401', async () => {
+    const respuesta = await request(app).get(ruta).set(con('no-es-un-token'));
+
+    expect(respuesta.status).toBe(401);
+  });
+
+  test('ADMIN responde 200 con rango y lista de datos', async () => {
+    const tokens = await crearTokens();
+
+    const respuesta = await request(app).get(ruta).set(con(tokens.admin));
+
+    expect(respuesta.status).toBe(200);
+    expect(respuesta.body).toEqual({ rango: { desde: '2026-11-01', hasta: '2026-11-30' }, datos: [] });
+  });
+
+  test.each(['recepcion', 'mecanico'])('%s recibe 403 NO_AUTORIZADO', async (usuario) => {
+    const tokens = await crearTokens();
+
+    const respuesta = await request(app).get(ruta).set(con(tokens[usuario]));
+
+    expect(respuesta.status).toBe(403);
+    expect(respuesta.body.error.codigo).toBe('NO_AUTORIZADO');
+    expect(Object.keys(respuesta.body)).toEqual(['error']);
+  });
+
+  test.each(['recepcion', 'mecanico'])('%s recibe 403 (no 400) aunque el rango sea inválido', async (usuario) => {
+    const tokens = await crearTokens();
+
+    const respuesta = await request(app).get(`/api/reports/${reporte}?desde=basura`).set(con(tokens[usuario]));
+
+    expect(respuesta.status).toBe(403);
+  });
+
+  test('no existen rutas de escritura', async () => {
+    const tokens = await crearTokens();
+
+    for (const metodo of ['post', 'put', 'patch', 'delete']) {
+      const respuesta = await request(app)[metodo](`/api/reports/${reporte}`).set(con(tokens.admin)).send({});
+
+      expect(respuesta.status).toBe(404);
+    }
+  });
+});
+
 describe('no hay rutas de escritura de reportes', () => {
   test.each([
     ['post', '/api/reports/income'],

@@ -39,3 +39,46 @@ export async function ingresos(rango) {
     porMetodo,
   };
 }
+
+const ETIQUETA_SIN_TIPO = 'Sin tipo';
+const comparar = (a, b) => a.localeCompare(b, 'es');
+
+/**
+ * Servicios más frecuentes de las órdenes cerradas del periodo, por tipo
+ * («Sin tipo» para las líneas sin tipo), de la mayor a la menor cantidad y, a
+ * igualdad, por nombre.
+ */
+export async function servicios(rango) {
+  const filas = await reportModel.findServicesByType(rango);
+  const datos = filas
+    .map(({ tipo, cantidad, centavos }) => ({
+      tipo: tipo ?? ETIQUETA_SIN_TIPO,
+      cantidad,
+      importeCentavos: centavos,
+      importe: deCentavos(centavos),
+    }))
+    .sort((a, b) => b.cantidad - a.cantidad || comparar(a.tipo, b.tipo));
+  return { rango: { desde: rango.desde, hasta: rango.hasta }, datos };
+}
+
+/**
+ * Productividad por mecánico de las órdenes cerradas del periodo: órdenes e
+ * importe de mano de obra. De más a menos órdenes y, a igualdad, por nombre;
+ * «Sin asignar» (`mecanico: null`) siempre al final. Del mecánico solo se
+ * expone el id y el nombre.
+ */
+export async function productividad(rango) {
+  const filas = await reportModel.findProductivityByMechanic(rango);
+  const datos = filas
+    .map(({ id, nombre, ordenes, centavos }) => ({
+      mecanico: id === null ? null : { id, nombre },
+      ordenes,
+      manoObraCentavos: centavos,
+      manoObra: deCentavos(centavos),
+    }))
+    .sort((a, b) => {
+      if (a.mecanico === null || b.mecanico === null) return (a.mecanico === null) - (b.mecanico === null);
+      return b.ordenes - a.ordenes || comparar(a.mecanico.nombre, b.mecanico.nombre);
+    });
+  return { rango: { desde: rango.desde, hasta: rango.hasta }, datos };
+}

@@ -1,11 +1,14 @@
-/// Estado de los reportes (008-configuracion-seguridad-reportes, T118; FR-023,
-/// CA-6).
+/// Estado de los reportes (008-configuracion-seguridad-reportes, T118 y T125;
+/// FR-023, CA-6).
 ///
 /// Solo ADMIN: el servidor responde 403 a los demás roles y aquí se muestra un
-/// mensaje de permisos. Todas las pestañas comparten un único filtro de rango
-/// (mes actual, mes anterior o un rango libre). Una respuesta lenta de un filtro
-/// anterior nunca pisa a la más reciente. Como es un proveedor global, escucha la
-/// sesión y descarta su estado al cerrar sesión o al entrar otro usuario.
+/// mensaje de permisos. Todas las pestañas comparten UN filtro de rango (mes
+/// actual, mes anterior o un rango libre): cambiarlo invalida los datos de todas
+/// las pestañas y consulta solo la activa; las demás se consultan al abrirlas, y
+/// volver a una pestaña ya cargada con el mismo filtro no consulta otra vez. Una
+/// respuesta lenta de un filtro anterior nunca pisa a la más reciente. Como es un
+/// proveedor global, escucha la sesión y descarta su estado al cerrar sesión o al
+/// entrar otro usuario.
 library;
 
 import 'package:flutter/foundation.dart';
@@ -16,6 +19,9 @@ import 'auth_provider.dart';
 
 /// Filtro de rango compartido por las pestañas.
 enum FiltroRango { mesActual, mesAnterior, libre }
+
+/// Pestañas de la sección «Reportes» (el orden es el de la barra de pestañas).
+enum PestanaReporte { ingresos, servicios, productividad }
 
 class ReportsProvider extends ChangeNotifier {
   final ApiClient api;
@@ -32,16 +38,21 @@ class ReportsProvider extends ChangeNotifier {
   String? desde;
   String? hasta;
 
-  // --- Ingresos ---
+  /// Pestaña activa (la que se consulta al cambiar el filtro).
+  PestanaReporte pestana = PestanaReporte.ingresos;
+
   ReporteIngresos? ingresos;
-  bool cargandoIngresos = false;
-  String? errorIngresos;
+  ReporteServicios? servicios;
+  ReporteProductividad? productividad;
 
   /// true si el servidor respondió 403 (el rol no puede ver los reportes).
   bool sinPermiso = false;
 
+  final Map<PestanaReporte, bool> _cargando = {};
+  final Map<PestanaReporte, String?> _errores = {};
+  final Map<PestanaReporte, int> _generaciones = {};
+
   int? _usuarioId;
-  int _generacion = 0;
   bool _liberado = false;
 
   static const String _mensajeError = 'No se pudo cargar el reporte.';
@@ -50,20 +61,47 @@ class ReportsProvider extends ChangeNotifier {
   static const int maximoDias = 366;
   static final RegExp _formatoFecha = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$');
 
+  bool cargando(PestanaReporte p) => _cargando[p] ?? false;
+  String? error(PestanaReporte p) => _errores[p];
+
+  /// Compatibilidad con la pestaña «Ingresos» (T118).
+  bool get cargandoIngresos => cargando(PestanaReporte.ingresos);
+  String? get errorIngresos => error(PestanaReporte.ingresos);
+
+  bool _tieneDatos(PestanaReporte p) {
+    switch (p) {
+      case PestanaReporte.ingresos:
+        return ingresos != null;
+      case PestanaReporte.servicios:
+        return servicios != null;
+      case PestanaReporte.productividad:
+        return productividad != null;
+    }
+  }
+
   void _alCambiarSesion() {
     final id = auth.usuario?.id;
     if (id == _usuarioId) return;
     _usuarioId = id;
-    // Se descarta lo del usuario anterior, incluida cualquier consulta en vuelo.
-    _generacion++;
     filtro = FiltroRango.mesActual;
     desde = null;
     hasta = null;
-    ingresos = null;
-    cargandoIngresos = false;
-    errorIngresos = null;
-    sinPermiso = false;
+    pestana = PestanaReporte.ingresos;
+    _descartarDatos();
     notifyListeners();
+  }
+
+  /// Descarta los datos de todas las pestañas y cualquier consulta en vuelo.
+  void _descartarDatos() {
+    for (final p in PestanaReporte.values) {
+      _generaciones[p] = (_generaciones[p] ?? 0) + 1;
+    }
+    _cargando.clear();
+    _errores.clear();
+    ingresos = null;
+    servicios = null;
+    productividad = null;
+    sinPermiso = false;
   }
 
   // ---------------------------------------------------------------- Validación
@@ -98,7 +136,7 @@ class ReportsProvider extends ChangeNotifier {
     return null;
   }
 
-  // ------------------------------------------------------------------- Consulta
+  // ------------------------------------------------------------------- Filtro
 
   /// Parámetros del filtro activo.
   String get _consulta {
@@ -112,14 +150,20 @@ class ReportsProvider extends ChangeNotifier {
     }
   }
 
+  /// Un filtro nuevo invalida todas las pestañas y consulta solo la activa.
+  Future<void> _aplicarFiltro() {
+    _descartarDatos();
+    return cargar();
+  }
+
   Future<void> seleccionarMesActual() {
     filtro = FiltroRango.mesActual;
-    return cargarIngresos();
+    return _aplicarFiltro();
   }
 
   Future<void> seleccionarMesAnterior() {
     filtro = FiltroRango.mesAnterior;
-    return cargarIngresos();
+    return _aplicarFiltro();
   }
 
   /// Consulta un rango libre ya validado en la interfaz.
@@ -127,42 +171,80 @@ class ReportsProvider extends ChangeNotifier {
     filtro = FiltroRango.libre;
     this.desde = desde.trim();
     this.hasta = hasta.trim();
-    return cargarIngresos();
+    return _aplicarFiltro();
   }
 
-  /// Carga (o recarga) el reporte de ingresos con el filtro actual.
-  Future<void> cargarIngresos() async {
-    if (_liberado || auth.usuario == null) return;
+  /// Cambia de pestaña: solo consulta si no tiene datos, ni los está cargando, ni
+  /// quedó con un error (el error se reintenta con el botón, no solo).
+  Future<void> seleccionarPestana(PestanaReporte nueva) async {
+    if (pestana == nueva) return;
+    pestana = nueva;
+    notifyListeners();
+    if (!_tieneDatos(nueva) && !cargando(nueva) && error(nueva) == null && !sinPermiso) {
+      await cargar(nueva);
+    }
+  }
 
-    final generacion = ++_generacion;
-    cargandoIngresos = true;
-    errorIngresos = null;
+  // ------------------------------------------------------------------ Consulta
+
+  Future<void> cargarIngresos() => cargar(PestanaReporte.ingresos);
+
+  /// Carga (o recarga) los datos de una pestaña (por omisión, la activa) con el
+  /// filtro actual.
+  Future<void> cargar([PestanaReporte? destino]) async {
+    if (_liberado || auth.usuario == null) return;
+    final p = destino ?? pestana;
+
+    final generacion = (_generaciones[p] ?? 0) + 1;
+    _generaciones[p] = generacion;
+    _cargando[p] = true;
+    _errores[p] = null;
     sinPermiso = false;
-    ingresos = null;
+    switch (p) {
+      case PestanaReporte.ingresos:
+        ingresos = null;
+      case PestanaReporte.servicios:
+        servicios = null;
+      case PestanaReporte.productividad:
+        productividad = null;
+    }
     notifyListeners();
 
+    final ruta = switch (p) {
+      PestanaReporte.ingresos => 'income',
+      PestanaReporte.servicios => 'services',
+      PestanaReporte.productividad => 'productivity',
+    };
+
     try {
-      final respuesta = await api.get('/reports/income?$_consulta');
-      if (generacion != _generacion) return;
-      ingresos = ReporteIngresos.desdeJson(respuesta);
+      final respuesta = await api.get('/reports/$ruta?$_consulta');
+      if (generacion != _generaciones[p]) return;
+      switch (p) {
+        case PestanaReporte.ingresos:
+          ingresos = ReporteIngresos.desdeJson(respuesta);
+        case PestanaReporte.servicios:
+          servicios = ReporteServicios.desdeJson(respuesta);
+        case PestanaReporte.productividad:
+          productividad = ReporteProductividad.desdeJson(respuesta);
+      }
     } on ExcepcionApi catch (excepcion) {
-      if (generacion != _generacion) return;
+      if (generacion != _generaciones[p]) return;
       if (excepcion.status == 401 || excepcion.codigo == 'TERMS_NOT_ACCEPTED') {
-        errorIngresos = null; // la sesión o la pantalla de aceptación lo gestionan
+        _errores[p] = null; // la sesión o la pantalla de aceptación lo gestionan
       } else if (excepcion.status == 403) {
         sinPermiso = true;
-        errorIngresos = _mensajeSinPermiso;
+        _errores[p] = _mensajeSinPermiso;
       } else if (excepcion.codigo == 'RANGO_INVALIDO') {
-        errorIngresos = excepcion.mensaje;
+        _errores[p] = excepcion.mensaje;
       } else {
-        errorIngresos = _mensajeError;
+        _errores[p] = _mensajeError;
       }
     } catch (_) {
-      if (generacion != _generacion) return;
-      errorIngresos = _mensajeError;
+      if (generacion != _generaciones[p]) return;
+      _errores[p] = _mensajeError;
     } finally {
-      if (generacion == _generacion && !_liberado) {
-        cargandoIngresos = false;
+      if (generacion == _generaciones[p] && !_liberado) {
+        _cargando[p] = false;
         notifyListeners();
       }
     }

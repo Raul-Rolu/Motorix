@@ -137,3 +137,99 @@ class ReporteIngresos {
 
   String get rangoTexto => 'Del ${fechaLegible(desde)} al ${fechaLegible(hasta)}';
 }
+
+String _plural(int n, String singular, String plural) => '$n ${n == 1 ? singular : plural}';
+
+/// Un tipo de servicio del reporte «Servicios» (`tipo` ya viene como «Sin tipo»
+/// cuando las líneas no tienen tipo).
+class ServicioReporte {
+  final String tipo;
+  final int cantidad;
+  final int importeCentavos;
+
+  const ServicioReporte({required this.tipo, required this.cantidad, required this.importeCentavos});
+
+  factory ServicioReporte.desdeJson(Map<String, dynamic> json) => ServicioReporte(
+        tipo: json['tipo'] as String? ?? 'Sin tipo',
+        cantidad: _entero(json['cantidad']),
+        importeCentavos: _entero(json['importeCentavos']),
+      );
+
+  String get etiquetaCantidad => _plural(cantidad, 'servicio', 'servicios');
+}
+
+/// Reporte de servicios más frecuentes (`GET /api/reports/services`).
+class ReporteServicios {
+  final String desde;
+  final String hasta;
+  final List<ServicioReporte> datos;
+
+  const ReporteServicios({required this.desde, required this.hasta, required this.datos});
+
+  factory ReporteServicios.desdeJson(Map<String, dynamic> json) {
+    final rango = json['rango'] as Map<String, dynamic>? ?? const {};
+    return ReporteServicios(
+      desde: rango['desde'] as String? ?? '',
+      hasta: rango['hasta'] as String? ?? '',
+      datos: (json['datos'] as List<dynamic>? ?? [])
+          .map((dato) => ServicioReporte.desdeJson(dato as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  bool get vacio => datos.isEmpty;
+  int get totalCantidad => datos.fold(0, (suma, fila) => suma + fila.cantidad);
+  int get totalCentavos => datos.fold(0, (suma, fila) => suma + fila.importeCentavos);
+  String get etiquetaTotalCantidad => _plural(totalCantidad, 'servicio', 'servicios');
+  String get rangoTexto => 'Del ${fechaLegible(desde)} al ${fechaLegible(hasta)}';
+}
+
+/// Productividad de un mecánico (`nombre` nulo = «Sin asignar»).
+class MecanicoReporte {
+  final int? id;
+  final String? nombre;
+  final int ordenes;
+  final int manoObraCentavos;
+
+  const MecanicoReporte({this.id, this.nombre, required this.ordenes, required this.manoObraCentavos});
+
+  factory MecanicoReporte.desdeJson(Map<String, dynamic> json) {
+    final mecanico = json['mecanico'] as Map<String, dynamic>?;
+    return MecanicoReporte(
+      id: (mecanico?['id'] as num?)?.toInt(),
+      nombre: mecanico?['nombre'] as String?,
+      ordenes: _entero(json['ordenes']),
+      manoObraCentavos: _entero(json['manoObraCentavos']),
+    );
+  }
+
+  bool get sinAsignar => nombre == null;
+  String get etiqueta => nombre ?? 'Sin asignar';
+  String get etiquetaOrdenes => _plural(ordenes, 'orden', 'órdenes');
+}
+
+/// Reporte de productividad por mecánico (`GET /api/reports/productivity`).
+class ReporteProductividad {
+  final String desde;
+  final String hasta;
+  final List<MecanicoReporte> datos;
+
+  const ReporteProductividad({required this.desde, required this.hasta, required this.datos});
+
+  factory ReporteProductividad.desdeJson(Map<String, dynamic> json) {
+    final rango = json['rango'] as Map<String, dynamic>? ?? const {};
+    return ReporteProductividad(
+      desde: rango['desde'] as String? ?? '',
+      hasta: rango['hasta'] as String? ?? '',
+      datos: (json['datos'] as List<dynamic>? ?? [])
+          .map((dato) => MecanicoReporte.desdeJson(dato as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  bool get vacio => datos.isEmpty;
+  int get totalOrdenes => datos.fold(0, (suma, fila) => suma + fila.ordenes);
+  int get totalManoObraCentavos => datos.fold(0, (suma, fila) => suma + fila.manoObraCentavos);
+  String get etiquetaTotalOrdenes => _plural(totalOrdenes, 'orden', 'órdenes');
+  String get rangoTexto => 'Del ${fechaLegible(desde)} al ${fechaLegible(hasta)}';
+}
