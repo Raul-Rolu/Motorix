@@ -1,0 +1,359 @@
+
+┌─────────────────────────────────────────────────────────┐
+│ A new version of Flutter is available!                  │
+│                                                         │
+│ To update to the latest version, run "flutter upgrade". │
+└─────────────────────────────────────────────────────────┘
+00:00 +0: loading C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart
+00:00 +0: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: lista muestra fecha, usuario, acción en español y detalle de cada entrada
+00:00 +1: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: lista muestra fecha, usuario, acción en español y detalle de cada entrada
+00:01 +2: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: lista muestra fecha, usuario, acción en español y detalle de cada entrada
+00:01 +3: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: lista muestra fecha, usuario, acción en español y detalle de cada entrada
+00:01 +4: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: lista muestra fecha, usuario, acción en español y detalle de cada entrada
+00:01 +5: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: lista muestra fecha, usuario, acción en español y detalle de cada entrada
+00:01 +6: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_alerts_compat_test.dart: la tarjeta alertasPanel sigue mostrando vencidos, stock bajo y cobros pendientes sin cambios (CA-8)
+00:01 +7: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_alerts_compat_test.dart: la tarjeta alertasPanel sigue mostrando vencidos, stock bajo y cobros pendientes sin cambios (CA-8)
+00:01 +8: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_alerts_compat_test.dart: la tarjeta alertasPanel sigue mostrando vencidos, stock bajo y cobros pendientes sin cambios (CA-8)
+00:01 +9: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_alerts_compat_test.dart: la tarjeta alertasPanel sigue mostrando vencidos, stock bajo y cobros pendientes sin cambios (CA-8)
+00:01 +10: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:01 +11: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:01 +12: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/dashboard_test.dart: la vista muestra los indicadores y las alertas destacadas
+00:01 +13: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el botón verificar
+00:01 +14: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el botón verificar
+00:01 +15: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el botón verificar
+00:02 +16: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el botón verificar
+00:02 +17: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el botón verificar
+00:02 +18: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el botón verificar
+00:02 +19: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/digital_payment_test.dart: generar el cobro digital muestra el enlace y el botón verificar
+00:02 +20: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +21: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +22: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +23: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +24: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +25: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +26: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +27: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +28: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +29: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +30: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:02 +31: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:03 +32: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: «Proponer desde una orden» está deshabilitado hasta elegir un vehículo
+00:03 +33: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +34: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +35: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +36: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +37: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +38: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +39: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +40: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +41: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +42: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +43: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +44: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +45: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +46: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +47: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +48: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +49: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +50: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +51: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +52: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:03 +53: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/notifications_panel_test.dart: grupos de próximos y de citas de hoy muestra los títulos, el ícono y el color de cada grupo
+00:04 +54: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +55: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +56: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +57: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +58: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +59: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +60: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +61: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +62: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +63: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +64: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +65: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +66: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +67: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +68: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +69: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +70: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +71: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: filtros filtra por fecha, usuario y acción y vuelve a la página 1
+00:04 +72: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el formulario de cobro muestra método, monto y saldo (escenario 1)
+00:05 +73: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el formulario de cobro muestra método, monto y saldo (escenario 1)
+00:05 +74: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/payment_flow_test.dart: el formulario de cobro muestra método, monto y saldo (escenario 1)
+00:05 +75: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: el usuario corrige el kilometraje propuesto y se guarda lo corregido
+00:05 +76: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: el usuario corrige el kilometraje propuesto y se guarda lo corregido
+00:05 +77: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: el usuario corrige el kilometraje propuesto y se guarda lo corregido
+00:05 +78: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: el usuario corrige el kilometraje propuesto y se guarda lo corregido
+00:05 +79: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: el usuario corrige el kilometraje propuesto y se guarda lo corregido
+00:06 +80: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: el formulario ofrece categoría, marca y precio de compra al administrador (CA-1)
+00:06 +81: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición el botón «Exportar CSV» está en cada pestaña
+00:06 +82: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición el botón «Exportar CSV» está en cada pestaña
+00:06 +83: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición el botón «Exportar CSV» está en cada pestaña
+00:06 +84: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición el botón «Exportar CSV» está en cada pestaña
+00:06 +85: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición el botón «Exportar CSV» está en cada pestaña
+00:06 +86: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición el botón «Exportar CSV» está en cada pestaña
+00:06 +87: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición el botón «Exportar CSV» está en cada pestaña
+00:06 +88: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición el botón «Exportar CSV» está en cada pestaña
+00:06 +89: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición el botón «Exportar CSV» está en cada pestaña
+00:06 +90: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición el botón «Exportar CSV» está en cada pestaña
+00:06 +91: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: filas abrir la pestaña consulta con el filtro compartido y la página 1
+00:06 +92: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: filas abrir la pestaña consulta con el filtro compartido y la página 1
+00:06 +93: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: filas abrir la pestaña consulta con el filtro compartido y la página 1
+00:07 +94: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: filas abrir la pestaña consulta con el filtro compartido y la página 1
+00:07 +95: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: filas abrir la pestaña consulta con el filtro compartido y la página 1
+00:07 +96: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: filas abrir la pestaña consulta con el filtro compartido y la página 1
+00:07 +97: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: filas abrir la pestaña consulta con el filtro compartido y la página 1
+00:07 +98: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: si la propuesta solo trae kilometraje no cambia la fecha
+00:07 +99: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: si la propuesta solo trae kilometraje no cambia la fecha
+00:07 +100: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:07 +101: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:07 +102: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:07 +103: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:07 +104: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:08 +105: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:08 +106: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:08 +107: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:08 +108: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:08 +109: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:08 +110: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:08 +111: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:08 +112: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:08 +113: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:09 +114: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:09 +115: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:09 +116: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:09 +117: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:09 +118: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:09 +119: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:09 +120: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/parts_category_brand_test.dart: al guardar con venta menor a compra se muestra la advertencia sin impedir el guardado (FR-004)
+00:09 +121: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición usa el filtro «Mes anterior» y el rango libre
+00:09 +122: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/audit_log_test.dart: estados de la pantalla (8.4) sin entradas con filtros lo dice y ofrece limpiarlos
+00:10 +123: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con formato incorrecto: muestra «Use el formato AAAA-MM-DD.» y no consulta
+00:10 +124: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con formato incorrecto: muestra «Use el formato AAAA-MM-DD.» y no consulta
+00:10 +125: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con formato incorrecto: muestra «Use el formato AAAA-MM-DD.» y no consulta
+00:10 +126: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con formato incorrecto: muestra «Use el formato AAAA-MM-DD.» y no consulta
+00:11 +127: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: pestañas un rango libre se consulta en la pestaña activa
+00:11 +128: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: pestañas un rango libre se consulta en la pestaña activa
+00:11 +129: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: pestañas un rango libre se consulta en la pestaña activa
+00:11 +130: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: pestañas un rango libre se consulta en la pestaña activa
+00:11 +131: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición en una pestaña paginada exporta todo el rango (sin página)
+00:11 +132: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: un error del servidor se muestra en español, sin trazas
+00:11 +133: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: un error del servidor se muestra en español, sin trazas
+00:12 +134: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: un error del servidor se muestra en español, sin trazas
+00:12 +135: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: un error del servidor se muestra en español, sin trazas
+00:12 +136: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: un error del servidor se muestra en español, sin trazas
+00:12 +137: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/maintenance_proposal_test.dart: un error del servidor se muestra en español, sin trazas
+00:12 +138: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con fecha inexistente: muestra «Use el formato AAAA-MM-DD.» y no consulta
+00:12 +139: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: pestañas «Actualizar» recarga solo la pestaña activa
+00:12 +140: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: pestañas «Actualizar» recarga solo la pestaña activa
+00:12 +141: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición exportar no recarga ni cambia el reporte que se ve
+00:12 +142: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición exportar no recarga ni cambia el reporte que se ve
+00:12 +143: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición exportar no recarga ni cambia el reporte que se ve
+00:12 +144: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición exportar no recarga ni cambia el reporte que se ve
+00:12 +145: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición exportar no recarga ni cambia el reporte que se ve
+00:13 +146: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición exportar no recarga ni cambia el reporte que se ve
+00:13 +147: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: botón y petición exportar no recarga ni cambia el reporte que se ve
+00:13 +148: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con vacío: muestra «Use el formato AAAA-MM-DD.» y no consulta
+00:13 +149: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con vacío: muestra «Use el formato AAAA-MM-DD.» y no consulta
+00:13 +150: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con vacío: muestra «Use el formato AAAA-MM-DD.» y no consulta
+00:13 +151: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con vacío: muestra «Use el formato AAAA-MM-DD.» y no consulta
+00:13 +152: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: servicios muestra el tipo, la cantidad y el importe, con «Sin tipo»
+00:13 +153: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/session_inactivity_test.dart: inactividad el login muestra «Tu sesión se cerró por inactividad.» y lo borra al iniciar de nuevo
+00:13 +154: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/session_inactivity_test.dart: inactividad el login muestra «Tu sesión se cerró por inactividad.» y lo borra al iniciar de nuevo
+00:13 +155: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/session_inactivity_test.dart: inactividad el login muestra «Tu sesión se cerró por inactividad.» y lo borra al iniciar de nuevo
+00:13 +156: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:13 +157: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:13 +158: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:13 +159: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:13 +160: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:13 +161: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:13 +162: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:13 +163: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:13 +164: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:13 +165: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:14 +166: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:14 +167: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:14 +168: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:14 +169: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:14 +170: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:14 +171: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Refacciones: totales aviso con solo sin precio (2)
+00:14 +172: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +173: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +174: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +175: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +176: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +177: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +178: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +179: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +180: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +181: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +182: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +183: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +184: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +185: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +186: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +187: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +188: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_margins_test.dart: muestra la sección «Operación» con los valores vigentes y sus límites
+00:14 +189: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con fin anterior al inicio: muestra «La fecha final no puede ser anterior a la inicial.» y no consulta
+00:14 +190: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: alta un nombre repetido muestra el error del servidor sin trazas y conserva el diálogo
+00:14 +191: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: alta un nombre repetido muestra el error del servidor sin trazas y conserva el diálogo
+00:15 +192: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: servicios los importes salen de centavos enteros sin errores de coma flotante
+00:15 +193: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: servicios los importes salen de centavos enteros sin errores de coma flotante
+00:15 +194: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: servicios los importes salen de centavos enteros sin errores de coma flotante
+00:15 +195: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con más de 366 días: muestra «El rango no puede exceder 366 días.» y no consulta
+00:15 +196: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con más de 366 días: muestra «El rango no puede exceder 366 días.» y no consulta
+00:15 +197: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con más de 366 días: muestra «El rango no puede exceder 366 días.» y no consulta
+00:15 +198: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con más de 366 días: muestra «El rango no puede exceder 366 días.» y no consulta
+00:16 +199: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con más de 366 días: muestra «El rango no puede exceder 366 días.» y no consulta
+00:16 +200: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con más de 366 días: muestra «El rango no puede exceder 366 días.» y no consulta
+00:16 +201: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_income_test.dart: filtro de rango rango libre con más de 366 días: muestra «El rango no puede exceder 366 días.» y no consulta
+00:16 +202: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación editar precarga los datos y envía PUT con los cambios
+00:16 +203: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación editar precarga los datos y envía PUT con los cambios
+00:16 +204: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_security_test.dart: muestra la sección «Seguridad» con el valor guardado y su rango
+00:16 +205: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_security_test.dart: muestra la sección «Seguridad» con el valor guardado y su rango
+00:16 +206: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_security_test.dart: muestra la sección «Seguridad» con el valor guardado y su rango
+00:16 +207: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_security_test.dart: muestra la sección «Seguridad» con el valor guardado y su rango
+00:16 +208: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_security_test.dart: muestra la sección «Seguridad» con el valor guardado y su rango
+00:16 +209: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_screen_test.dart: datos del taller guardar envía solo el grupo taller y muestra el mensaje de éxito
+00:17 +210: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación desactivar pide confirmación; «Cancelar» no cambia nada
+00:17 +211: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación desactivar pide confirmación; «Cancelar» no cambia nada
+00:17 +212: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación desactivar pide confirmación; «Cancelar» no cambia nada
+00:17 +213: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación desactivar pide confirmación; «Cancelar» no cambia nada
+00:17 +214: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación desactivar pide confirmación; «Cancelar» no cambia nada
+00:17 +215: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación desactivar pide confirmación; «Cancelar» no cambia nada
+00:17 +216: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación desactivar pide confirmación; «Cancelar» no cambia nada
+00:17 +217: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación desactivar pide confirmación; «Cancelar» no cambia nada
+00:17 +218: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: errores (sin trazas) un error del servidor muestra un mensaje genérico en rojo
+00:17 +219: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_export_test.dart: errores (sin trazas) un error del servidor muestra un mensaje genérico en rojo
+00:17 +220: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: productividad el total suma órdenes y mano de obra
+00:17 +221: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: productividad el total suma órdenes y mano de obra
+00:17 +222: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: productividad el total suma órdenes y mano de obra
+00:17 +223: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_security_test.dart: guardar envía solo el grupo seguridad y muestra el mensaje de éxito
+00:17 +224: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación el pie muestra la página, el total y los botones
+00:17 +225: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación el pie muestra la página, el total y los botones
+00:17 +226: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación el pie muestra la página, el total y los botones
+00:17 +227: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación «Confirmar» desactiva el tipo (PATCH activo=false) y lo marca como inactivo
+00:17 +228: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: edición y desactivación «Confirmar» desactiva el tipo (PATCH activo=false) y lo marca como inactivo
+00:17 +229: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: productividad sin órdenes cerradas muestra el estado vacío
+00:17 +230: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: productividad sin órdenes cerradas muestra el estado vacío
+00:18 +231: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_screen_test.dart: estados de la pantalla (8.4) mientras carga muestra un indicador de progreso
+00:18 +232: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +233: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +234: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +235: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +236: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +237: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +238: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +239: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +240: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +241: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +242: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:18 +243: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Siguiente» y «Anterior» piden la página correspondiente
+00:19 +244: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/stale_payment_chip_test.dart: un cobro desfasado muestra el chip, no ofrece verificar y sí generar uno nuevo
+00:19 +245: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/stale_payment_chip_test.dart: un cobro desfasado muestra el chip, no ofrece verificar y sí generar uno nuevo
+00:19 +246: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) ofrece solo los tipos activos, con «Sin tipo» por omisión, y los pide sin inactivos si no es ADMIN
+00:19 +247: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) ofrece solo los tipos activos, con «Sin tipo» por omisión, y los pide sin inactivos si no es ADMIN
+00:19 +248: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) ofrece solo los tipos activos, con «Sin tipo» por omisión, y los pide sin inactivos si no es ADMIN
+00:19 +249: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) ofrece solo los tipos activos, con «Sin tipo» por omisión, y los pide sin inactivos si no es ADMIN
+00:19 +250: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) ofrece solo los tipos activos, con «Sin tipo» por omisión, y los pide sin inactivos si no es ADMIN
+00:19 +251: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: estados un error en una pestaña no afecta a las demás y permite reintentar solo esa
+00:20 +252: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: estados un error en una pestaña no afecta a las demás y permite reintentar solo esa
+00:20 +253: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: estados un error en una pestaña no afecta a las demás y permite reintentar solo esa
+00:20 +254: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_security_test.dart: el valor «-5» no se envía y se muestra el rango
+00:20 +255: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_security_test.dart: el valor «-5» no se envía y se muestra el rango
+00:20 +256: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/settings_security_test.dart: el valor «-5» no se envía y se muestra el rango
+00:21 +257: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) al elegir un tipo devuelve su id junto con la descripción y el importe
+00:21 +258: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) al elegir un tipo devuelve su id junto con la descripción y el importe
+00:21 +259: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) al elegir un tipo devuelve su id junto con la descripción y el importe
+00:21 +260: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) al elegir un tipo devuelve su id junto con la descripción y el importe
+00:21 +261: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: tras el inicio de sesión con una versión sin aceptar se muestra la pantalla con términos y aviso
+00:21 +262: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: tras el inicio de sesión con una versión sin aceptar se muestra la pantalla con términos y aviso
+00:21 +263: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: tras el inicio de sesión con una versión sin aceptar se muestra la pantalla con términos y aviso
+00:21 +264: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: versión vigente y aceptaciones muestra la versión vigente con sus textos y la fecha de publicación
+00:21 +265: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: versión vigente y aceptaciones muestra la versión vigente con sus textos y la fecha de publicación
+00:21 +266: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: versión vigente y aceptaciones muestra la versión vigente con sus textos y la fecha de publicación
+00:21 +267: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: versión vigente y aceptaciones muestra la versión vigente con sus textos y la fecha de publicación
+00:21 +268: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: versión vigente y aceptaciones muestra la versión vigente con sus textos y la fecha de publicación
+00:21 +269: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: versión vigente y aceptaciones muestra la versión vigente con sus textos y la fecha de publicación
+00:21 +270: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) sin elegir tipo el servicio se agrega sin tipo (opcional)
+00:22 +271: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) sin elegir tipo el servicio se agrega sin tipo (opcional)
+00:22 +272: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) sin elegir tipo el servicio se agrega sin tipo (opcional)
+00:22 +273: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) sin elegir tipo el servicio se agrega sin tipo (opcional)
+00:22 +274: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/service_types_test.dart: diálogo «Agregar servicio» de la orden (FR-007) sin elegir tipo el servicio se agrega sin tipo (opcional)
+00:22 +275: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación cambiar de pestaña y volver conserva la página sin consultar otra vez
+00:22 +276: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación cambiar de pestaña y volver conserva la página sin consultar otra vez
+00:22 +277: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación cambiar de pestaña y volver conserva la página sin consultar otra vez
+00:22 +278: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación cambiar de pestaña y volver conserva la página sin consultar otra vez
+00:22 +279: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación cambiar de pestaña y volver conserva la página sin consultar otra vez
+00:22 +280: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación cambiar de pestaña y volver conserva la página sin consultar otra vez
+00:22 +281: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación cambiar de pestaña y volver conserva la página sin consultar otra vez
+00:22 +282: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación cambiar de pestaña y volver conserva la página sin consultar otra vez
+00:22 +283: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación cambiar de pestaña y volver conserva la página sin consultar otra vez
+00:22 +284: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: paginación de aceptaciones pide la página siguiente y la anterior
+00:22 +285: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +286: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +287: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +288: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +289: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +290: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +291: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +292: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +293: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +294: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +295: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +296: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_services_productivity_test.dart: consistencia al cerrar sesión se descartan todos los reportes
+00:23 +297: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Actualizar» recarga la página actual de la pestaña activa
+00:23 +298: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación «Actualizar» recarga la página actual de la pestaña activa
+00:23 +299: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/ticket_proximo_servicio_test.dart: pantalla del ticket muestra «Próximo servicio» con la fecha y el kilometraje
+00:24 +300: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +301: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +302: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +303: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +304: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +305: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +306: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +307: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +308: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +309: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +310: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +311: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +312: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva con textos válidos pide confirmación y, al confirmar, envía y avisa
+00:24 +313: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: aceptar si se publicó otra versión (409) muestra el aviso y la versión nueva
+00:24 +314: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: aceptar si se publicó otra versión (409) muestra el aviso y la versión nueva
+00:24 +315: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación una página lenta ya superada no pisa a la más reciente
+00:24 +316: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación una página lenta ya superada no pisa a la más reciente
+00:24 +317: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva «Cancelar» en la confirmación no envía nada y conserva lo escrito
+00:24 +318: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva «Cancelar» en la confirmación no envía nada y conserva lo escrito
+00:25 +319: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: aceptar un error del servidor se muestra sin trazas y deja reintentar
+00:25 +320: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: paginación con las dos pestañas cargadas hay un solo pie de paginación visible
+00:25 +321: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva tras publicar, se avisa de que el autor debe aceptar la versión nueva
+00:25 +322: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva tras publicar, se avisa de que el autor debe aceptar la versión nueva
+00:25 +323: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: rechazar pide confirmación y «Cancelar» conserva la pantalla y la sesión
+00:25 +324: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Rotación muestra salidas, existencia y rotación con dos decimales
+00:25 +325: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva los campos se vacían tras publicar
+00:25 +326: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva los campos se vacían tras publicar
+00:26 +327: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: rechazar al confirmar cierra la sesión y vuelve al login sin aceptar nada
+00:26 +328: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: rechazar al confirmar cierra la sesión y vuelve al login sin aceptar nada
+00:26 +329: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva los límites 20 y 20,000 caracteres se aceptan
+00:26 +330: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: Rotación no muestra precios ni costos
+00:26 +331: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: rechazar al volver a entrar sin aceptar, la pantalla aparece otra vez
+00:26 +332: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: rechazar al volver a entrar sin aceptar, la pantalla aparece otra vez
+00:27 +333: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: rechazar al volver a entrar sin aceptar, la pantalla aparece otra vez
+00:27 +334: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: rechazar al volver a entrar sin aceptar, la pantalla aparece otra vez
+00:27 +335: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: estados y consistencia un 403 en Rotación muestra «sin permiso» y oculta el filtro
+00:27 +336: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva términos con 20,001 caracteres: muestra el rango y no pide confirmación ni envía
+00:27 +337: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva términos con 20,001 caracteres: muestra el rango y no pide confirmación ni envía
+00:27 +338: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: estados y consistencia al cerrar sesión se descartan Refacciones y Rotación
+00:27 +339: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: estados y consistencia al cerrar sesión se descartan Refacciones y Rotación
+00:27 +340: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva aviso con 20,001 caracteres: muestra el rango y no pide confirmación ni envía
+00:27 +341: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva aviso con 20,001 caracteres: muestra el rango y no pide confirmación ni envía
+00:27 +342: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/reports_parts_rotation_test.dart: estados y consistencia no ofrece editar ni borrar
+00:28 +343: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: 403 TERMS_NOT_ACCEPTED en cualquier petición tras aceptar, la sesión sigue y puede volver a pasar por la compuerta
+00:28 +344: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva términos vacíos: muestra el rango y no pide confirmación ni envía
+00:28 +345: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva términos vacíos: muestra el rango y no pide confirmación ni envía
+00:28 +346: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: 403 TERMS_NOT_ACCEPTED en cualquier petición si la consulta no devuelve los textos, la pantalla ofrece reintentar
+00:28 +347: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva espacios en blanco no cuentan como texto
+00:28 +348: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: sesión al cerrar sesión se descarta el estado de términos
+00:28 +349: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_admin_test.dart: publicar una versión nueva un rechazo del servidor muestra su mensaje sin trazas
+00:28 +350: C:/Users/rulam/OneDrive/Documentos/SDD_Motorix/motorix/client/test/terms_acceptance_test.dart: sesión la pantalla no tiene botón para volver atrás
+00:29 +351: All tests passed!

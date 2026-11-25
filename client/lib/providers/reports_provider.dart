@@ -1,5 +1,5 @@
-/// Estado de los reportes (008-configuracion-seguridad-reportes, T118 y T125;
-/// FR-023, CA-6).
+/// Estado de los reportes (008-configuracion-seguridad-reportes, T118, T125, T132
+/// y T140; FR-023, FR-027, CA-6, CA-9).
 ///
 /// Solo ADMIN: el servidor responde 403 a los demás roles y aquí se muestra un
 /// mensaje de permisos. Todas las pestañas comparten UN filtro de rango (mes
@@ -8,7 +8,7 @@
 /// volver a una pestaña ya cargada con el mismo filtro no consulta otra vez. Una
 /// respuesta lenta de un filtro anterior nunca pisa a la más reciente. Como es un
 /// proveedor global, escucha la sesión y descarta su estado al cerrar sesión o al
-/// entrar otro usuario.
+/// entrar otro usuario. También exporta a CSV la pestaña activa (`exportar`).
 library;
 
 import 'package:flutter/foundation.dart';

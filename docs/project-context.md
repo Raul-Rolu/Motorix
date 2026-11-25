@@ -568,8 +568,8 @@ y columnas `tickets.shop_name`, `shop_address`, `shop_phone` (migraciones 019 a 
 **Limitaciones y trabajo futuro.**
 
 - **Seguridad y términos** (bitácora, renovación del token e inactividad
-  configurable, aceptación de términos) se documentan en 6.14. Los **reportes**
-  (bloque P3 del Sprint 7) no están implementados.
+  configurable, aceptación de términos) se documentan en 6.14 y los **reportes**
+  (bloque P3 del Sprint 7) en 6.15.
 - **No hay bloqueo temporal por intentos fallidos de inicio de sesión ni
   `helmet`** (ver 6.14); quedan como trabajo futuro (decisión del 2026-11-23).
 - **Tickets anteriores al sprint** sin instantánea: muestran los datos vigentes del
@@ -682,12 +682,89 @@ desde 1.
 - Los textos de la versión 1 son una **plantilla**: el taller debe revisarlos y
   publicar los suyos antes de usar el sistema con datos reales.
 - La bitácora no se exporta ni se purga automáticamente.
-- Los **reportes** (bloque P3 del Sprint 7) no están implementados.
+- Los **reportes** del bloque P3 sí están implementados (sección 6.15).
 - Los scripts de evidencia de sprints anteriores (`quickstart-005.mjs`,
   `verificar-avisos-api.mjs`) reciben `403 TERMS_NOT_ACCEPTED` si la versión
   sembrada no se ha aceptado: hay que aceptarla primero con las cuentas de
   ejemplo (`POST /api/terms/accept`); los de P1 aceptan `--aceptar-terminos`
   (`docs/evidencias/sprint-7-configuracion/efecto-terminos-scripts-previos.txt`).
+
+## 6.15 Reportes
+
+Implementados en el bloque P3 del Sprint 7
+(`specs/008-configuracion-seguridad-reportes/`). Son **exclusivos del
+administrador** y **de solo lectura**: recepción y mecánico no ven la sección
+«Reportes» y el servidor les responde `403` en toda la API de reportes (RN-15; ocultar
+la sección es solo comodidad). Pasan por `auth`, así que respetan la compuerta de
+términos (6.14) sin excepciones. Consultar o exportar un reporte **no** se registra
+en la bitácora.
+
+**Los cinco reportes** (pestañas de la sección «Reportes», que comparten un solo
+filtro de rango):
+
+| Reporte | Qué muestra |
+|---|---|
+| Ingresos (`/api/reports/income`) | Total cobrado, ingresos por día (rangos de hasta 62 días) o por mes (más largos) y por método de pago. Solo cuentan los pagos `COMPLETED`, el mismo criterio del panel de control. |
+| Servicios (`/services`) | Servicios más frecuentes por tipo del catálogo («Sin tipo» para las líneas sin tipo): cantidad e importe. |
+| Productividad (`/productivity`) | Por mecánico: órdenes cerradas e importe de mano de obra; «Sin asignar» siempre al final. |
+| Refacciones (`/parts`) | Una fila por **uso** de una refacción en una orden cerrada: precio de venta unitario congelado, costo y margen. Paginado de 50 en 50. |
+| Rotación (`/rotation`) | Por refacción activa: salidas del rango, existencia actual y rotación (salidas ÷ existencia, dos decimales). Paginado de 50 en 50. |
+
+**Reglas de cálculo.**
+
+- **Población «órdenes cerradas del periodo»** (Servicios, Productividad y
+  Refacciones): órdenes `TERMINADO` o `ENTREGADO` cuyo **último cambio de estado**
+  (`status_changed_at`) cae en el rango. Las canceladas y las que siguen en trabajo
+  nunca cuentan. Limitación: se usa la fecha del último cambio de estado, no la de
+  «cierre» original (una orden que se reabre y se vuelve a cerrar cuenta en la fecha
+  más reciente).
+- **Rango**: `periodo=MES_ACTUAL` o `MES_ANTERIOR` (siempre el **mes completo**), o
+  `desde` y `hasta` (`AAAA-MM-DD`, ambos inclusive, máximo **366 días**). Mezclar
+  `periodo` con `desde`/`hasta`, un parámetro vacío o un rango inválido responde
+  `400 RANGO_INVALIDO`. Las fechas se interpretan en la hora local del servidor, la
+  misma en que MySQL guarda las fechas, sin conversión de zona horaria.
+- **Importes en centavos enteros**: el servidor suma y compara enteros (como en 6.7) y
+  solo al final los presenta con dos decimales; nunca suma coma flotante.
+- **Costo vigente**: el sistema **no guarda el costo por uso**. El costo de una línea
+  es el precio de compra **vigente** de la refacción × la cantidad; si el precio de
+  compra cambió después del uso, el reporte refleja el actual. El precio de venta sí
+  es el congelado al agregar la refacción a la orden. Margen = ventas − costo.
+- **Líneas incompletas**: un uso de una refacción sin precio de compra es «sin costo»
+  y uno sin precio de venta es «sin precio»; sus importes faltantes quedan vacíos
+  (nunca 0) y la línea **no entra** en los totales de ventas, costo y margen (que
+  suman solo líneas completas), con un aviso del número de líneas excluidas.
+- **Rotación**: solo cuentan las salidas `OUT` del rango (valor absoluto de la
+  cantidad) y solo las refacciones **activas**; con existencia 0 se muestra «sin
+  existencia» (no hay rotación) y la fila va al final.
+
+**Exportación a CSV** (`GET /api/reports/:reporte/export`, mismos parámetros de rango;
+`:reporte` es `income`, `services`, `productivity`, `parts` o `rotation`, otro nombre
+responde `404 REPORT_NOT_FOUND`). Genera UTF-8 **con BOM** (Excel respeta acentos y
+eñes), filas con `
+`, encabezados en español e importes con punto y dos decimales.
+Es la misma información que la pantalla, de **todo el rango** (`pagina` y `limite` se
+ignoran) y con la fila «Total» donde la pantalla la tiene. Las celdas de texto que
+empiezan con `=`, `+`, `-`, `@`, tabulador o retorno de carro se **neutralizan**
+anteponiendo `'` (protección contra inyección de fórmulas); los importes no. Un
+rango sin datos exporta solo los encabezados y con más de **10,000 filas** de datos el
+servidor responde `400 RANGO_INVALIDO`. El nombre sugerido es
+`motorix-<reporte>-<desde>-<hasta>.csv` y la respuesta lleva `Cache-Control:
+no-store`. En la aplicación, el botón «Exportar CSV» guarda el archivo en la carpeta
+**Descargas** del usuario sin pisar archivos existentes.
+
+**Sin migración nueva.** Los reportes agregan consultas sobre las tablas existentes
+(la medición de rendimiento con volumen ampliado, de menos de 2 s por reporte, está en
+`docs/evidencias/sprint-7-configuracion/reports-performance.txt`; el índice
+`idx_orders_status_changed` ya existía). Datos de ejemplo: seed 012 (órdenes
+9101–9107; ver `database/README.md`).
+
+**Limitaciones y trabajo futuro.**
+
+- Sin gráficas, sin exportación a PDF o Excel nativo y sin reportes por cliente,
+  vehículo o proveedor; los filtros disponibles son solo el rango de fechas.
+- El costo usa el precio de compra vigente (no un costo histórico por uso).
+- La exportación no se audita ni se limita por usuario; el tope es de 10,000 filas.
+- No hay programación ni envío automático de reportes.
 
 ------------------------------------------------------------------------
 

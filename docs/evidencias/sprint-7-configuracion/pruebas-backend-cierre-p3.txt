@@ -1,0 +1,1747 @@
+
+> motorix-server@0.1.0 test
+> node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand
+
+(node:37696) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS tests/integration/notifications-calculo.test.js (16.077 s)
+  GET /api/notifications: forma de la respuesta (CA-1)
+    √ sin avisos devuelve { total: 0, noLeidos: 0, datos: [] } (368 ms)
+    √ un mantenimiento vencido por fecha genera MANTENIMIENTO:<id>:VENCIDO con el texto del contrato (327 ms)
+    √ un mantenimiento vencido por kilometraje indica los kilómetros superados (327 ms)
+    √ un mantenimiento cuyo umbral de fecha es hoy se anuncia como «vence hoy» (324 ms)
+    √ cada aviso expone solo los campos del contrato (325 ms)
+  orden y conteo (CA-1)
+    √ dentro del grupo el más vencido va primero y total = noLeidos (322 ms)
+  coincidencia con el panel de control y con la lista de Mantenimientos (CA-5)
+    √ los avisos de vencido coinciden con mantenimientos.vencidos del panel y con isOverdue de la lista (348 ms)
+  los avisos se derivan al consultar y no se copian a otra tabla (CA-2)
+    √ consultar no escribe nada: solo existe notification_reads y queda vacía (329 ms)
+    √ el aviso refleja de inmediato los datos reales: al completar el mantenimiento desaparece (319 ms)
+  mantenimiento próximo (FR-012, CA-3)
+    √ a 30 días del umbral de fecha es próximo, con el texto del contrato (321 ms)
+    √ a 31 días del umbral de fecha todavía no es próximo (322 ms)
+    √ a 1,000 km del umbral de kilometraje es próximo y a 1,001 km no (321 ms)
+    √ con ambos umbrales dentro del margen el detalle los menciona a los dos (319 ms)
+    √ un mantenimiento vencido es aviso de vencido y no de próximo (314 ms)
+    √ un mantenimiento CANCELLED cercano no genera aviso (316 ms)
+    √ un mantenimiento COMPLETED cercano no genera aviso (313 ms)
+    √ los próximos del centro son un subconjunto de mantenimientos.proximos del panel (329 ms)
+    √ dentro del grupo el más cercano va primero (315 ms)
+  cita del día (FR-011, CA-3)
+    √ una cita de hoy PROGRAMADA genera CITA:<id>:HOY con hora, cliente, placas y motivo (323 ms)
+    √ una cita de hoy CANCELADA no genera aviso (319 ms)
+    √ una cita de hoy COMPLETADA no genera aviso (316 ms)
+    √ las citas de otro día (ayer o mañana) no generan aviso de cita del día (320 ms)
+    √ las citas del día van ordenadas por hora (313 ms)
+  orden de presentación entre grupos
+    √ vencidos, próximos y citas aparecen en ese orden (319 ms)
+  stock bajo o agotado (FR-002, CA-3)
+    √ 0 < stock <= mínimo genera STOCK:<id>:BAJO con el texto del contrato (322 ms)
+    √ stock igual al mínimo ya es stock bajo (312 ms)
+    √ stock 0 genera STOCK:<id>:AGOTADO (322 ms)
+    √ una refacción inactiva o con stock por encima del mínimo no genera aviso (317 ms)
+    √ los agotados van primero y después los de menos existencias (312 ms)
+    √ al reponer el stock por encima del mínimo el aviso desaparece (321 ms)
+    √ al pasar de bajo a agotado la clave cambia (vuelve como no leído) (321 ms)
+    √ el stock va entre los vencidos y los próximos en el orden de presentación (318 ms)
+  coincidencia del stock con el panel de control y con el inventario (CA-5)
+    √ bajo + agotado = inventario.stockBajo del panel = refacciones activas con lowStock de GET /api/parts (335 ms)
+  orden detenida (FR-010, CA-3)
+    √ una orden RECIBIDO sin cambio de estado hace 5 días genera ORDEN:<id>:DETENIDA (314 ms)
+    √ una orden DIAGNOSTICO sin cambio de estado hace 5 días genera ORDEN:<id>:DETENIDA (316 ms)
+    √ una orden EN_REPARACION sin cambio de estado hace 5 días genera ORDEN:<id>:DETENIDA (353 ms)
+    √ una orden ESPERANDO_REFACCION sin cambio de estado hace 5 días genera ORDEN:<id>:DETENIDA (318 ms)
+    √ el plazo es estrictamente de más de 3 días (72 horas) (316 ms)
+    √ una orden TERMINADO nunca genera aviso de orden detenida (325 ms)
+    √ una orden ENTREGADO nunca genera aviso de orden detenida (313 ms)
+    √ una orden CANCELADA nunca genera aviso de orden detenida (314 ms)
+    √ cambiar el estado de la orden quita el aviso (327 ms)
+    √ editar motivo, notas o kilometraje no reinicia el plazo: el aviso sigue (325 ms)
+    √ reasignar el mecánico tampoco reinicia el plazo (321 ms)
+    √ la más antigua va primero dentro del grupo (311 ms)
+    √ las órdenes detenidas van entre los vencidos y el stock en el orden de presentación (327 ms)
+
+PASS tests/integration/terms.test.js (15.979 s)
+  sin versión publicada
+    √ no hay compuerta: la vigente es null y las rutas de los módulos responden como antes (378 ms)
+  compuerta con una versión vigente
+    √ sin aceptación: 403 TERMS_NOT_ACCEPTED en una ruta de cada módulo (326 ms)
+    √ la compuerta también protege las rutas de escritura y las de ADMIN (328 ms)
+    √ las rutas exentas no exigen la aceptación (332 ms)
+    √ tras aceptar, las rutas responden normalmente y la compuerta es por usuario (384 ms)
+    √ sin token sigue siendo 401 y con token inválido también (356 ms)
+  GET /api/terms/current
+    √ devuelve la versión vigente con sus textos y si el usuario la aceptó (412 ms)
+    √ haber aceptado una versión anterior no cuenta para la vigente (359 ms)
+  POST /api/terms/accept
+    √ guarda usuario, versión y fecha (376 ms)
+    √ es idempotente: aceptar dos veces deja una sola aceptación (366 ms)
+    √ una versión anterior a la vigente responde 409 TERMS_VERSION_OUTDATED (358 ms)
+    √ una versión inexistente responde 404 RECURSO_NO_ENCONTRADO (361 ms)
+    √ el identificador undefined responde 400 DATOS_INVALIDOS (332 ms)
+    √ el identificador null responde 400 DATOS_INVALIDOS (369 ms)
+    √ el identificador 0 responde 400 DATOS_INVALIDOS (355 ms)
+    √ el identificador -1 responde 400 DATOS_INVALIDOS (356 ms)
+    √ el identificador 1.5 responde 400 DATOS_INVALIDOS (332 ms)
+    √ el identificador "1" responde 400 DATOS_INVALIDOS (422 ms)
+    √ el identificador "abc" responde 400 DATOS_INVALIDOS (356 ms)
+    √ el identificador true responde 400 DATOS_INVALIDOS (353 ms)
+    √ sin cuerpo responde 400 DATOS_INVALIDOS (335 ms)
+    √ sin versión publicada no hay nada que aceptar (404) (328 ms)
+  POST /api/terms (publicar)
+    √ numera con máximo + 1, responde 201 y deja la nueva como vigente (338 ms)
+    √ la primera versión es la 1 (344 ms)
+    √ exige aceptarla a todos, incluido el autor (375 ms)
+    √ con la compuerta activa, publicar exige que el ADMIN haya aceptado la vigente (312 ms)
+    √ registra TERMS_PUBLISHED en la bitácora con la versión y el autor (319 ms)
+    √ límites de longitud: 20 y 20,000 se aceptan (320 ms)
+    √ términos con 19 caracteres → 400 DATOS_INVALIDOS y no se guarda nada (313 ms)
+    √ aviso con 19 caracteres → 400 DATOS_INVALIDOS y no se guarda nada (318 ms)
+    √ términos con 20,001 caracteres → 400 DATOS_INVALIDOS y no se guarda nada (309 ms)
+    √ aviso con 20,001 caracteres → 400 DATOS_INVALIDOS y no se guarda nada (311 ms)
+    √ términos solo con espacios → 400 DATOS_INVALIDOS y no se guarda nada (312 ms)
+    √ sin términos → 400 DATOS_INVALIDOS y no se guarda nada (325 ms)
+    √ sin aviso → 400 DATOS_INVALIDOS y no se guarda nada (306 ms)
+    √ términos que no son texto → 400 DATOS_INVALIDOS y no se guarda nada (310 ms)
+    √ cuerpo vacío → 400 DATOS_INVALIDOS y no se guarda nada (308 ms)
+  GET /api/terms/acceptances
+    √ lista las aceptaciones con usuario, versión y fecha, y la vigente (317 ms)
+    √ sin aceptaciones ni versiones: lista vacía y vigente null (316 ms)
+    √ pagina de 50 en 50 (376 ms)
+    √ la página "0" responde 400 DATOS_INVALIDOS (307 ms)
+    √ la página "-1" responde 400 DATOS_INVALIDOS (316 ms)
+    √ la página "abc" responde 400 DATOS_INVALIDOS (310 ms)
+    √ la página "1.5" responde 400 DATOS_INVALIDOS (314 ms)
+  seguridad del cierre de sesión y de la renovación
+    √ un usuario desactivado sigue recibiendo 401 en las rutas exentas (324 ms)
+
+PASS tests/integration/audit-log.test.js (14.333 s)
+  inicios de sesión fallidos (LOGIN_FAILED)
+    √ cuenta inexistente: usuario nulo y el identificador tecleado; la respuesta no cambia (341 ms)
+    √ cuenta existente con contraseña incorrecta: queda el usuario de la cuenta (394 ms)
+    √ cuenta inactiva: también se registra, con el usuario de la cuenta (327 ms)
+    √ un inicio de sesión correcto NO genera entrada (393 ms)
+    √ un identificador de 100 caracteres se registra completo y la contraseña nunca se guarda (318 ms)
+    √ un identificador de más de 100 caracteres ya lo rechaza la validación del login (400) y no es un fallo de credenciales (313 ms)
+  usuarios
+    √ el alta registra USER_CREATED con quién y el rol, sin la contraseña ni el hash (380 ms)
+    √ una alta rechazada (contraseña inválida o duplicado) no genera entrada (394 ms)
+    √ baja y reactivación registran USER_DEACTIVATED y USER_REACTIVATED; repetir el mismo estado no registra (335 ms)
+    √ un cambio de rol registra USER_ROLE_CHANGED; editar sin cambiar el rol no registra (318 ms)
+  configuración
+    √ registra SETTINGS_UPDATED con las claves modificadas (320 ms)
+    √ guardar valores que no cambian (incluido el respaldo) no registra nada; solo cuentan las claves que sí cambiaron (328 ms)
+    √ un guardado rechazado (400) no registra nada (317 ms)
+  precios de refacciones
+    √ un cambio del precio de venta registra anterior → nuevo (328 ms)
+    √ un cambio del precio de compra registra que cambió SIN importes (324 ms)
+    √ cambiar ambos precios registra dos entradas; guardar los mismos valores o editar otros campos no registra (341 ms)
+    √ dejar el precio de venta pendiente (null) se registra como «sin precio» (327 ms)
+    √ el alta de una refacción con precios no genera entrada (317 ms)
+  consulta de la bitácora
+    √ forma de la respuesta: página, total, usuario con nombre y entidad (313 ms)
+    √ sin entradas: lista vacía y una sola página (314 ms)
+    √ pagina de 50 en 50 con el orden de más reciente a más antiguo (324 ms)
+    √ filtra por rango de fechas inclusivo (hora local) (340 ms)
+    √ filtra por usuario y por acción (327 ms)
+    √ un filtro inválido ?desde=ayer responde 400 DATOS_INVALIDOS (306 ms)
+    √ un filtro inválido ?hasta=2026-13-45 responde 400 DATOS_INVALIDOS (307 ms)
+    √ un filtro inválido ?desde=2026-11-20&hasta=2026-11-01 responde 400 DATOS_INVALIDOS (309 ms)
+    √ un filtro inválido ?usuarioId=abc responde 400 DATOS_INVALIDOS (310 ms)
+    √ un filtro inválido ?usuarioId=0 responde 400 DATOS_INVALIDOS (311 ms)
+    √ un filtro inválido ?accion=BORRAR_TODO responde 400 DATOS_INVALIDOS (315 ms)
+    √ un filtro inválido ?pagina=0 responde 400 DATOS_INVALIDOS (307 ms)
+    √ un filtro inválido ?pagina=-1 responde 400 DATOS_INVALIDOS (311 ms)
+    √ un filtro inválido ?pagina=uno responde 400 DATOS_INVALIDOS (318 ms)
+  la bitácora no se edita, borra ni exporta
+    √ post /api/audit-log no existe (404) (312 ms)
+    √ put /api/audit-log/1 no existe (404) (314 ms)
+    √ patch /api/audit-log/1 no existe (404) (309 ms)
+    √ delete /api/audit-log/1 no existe (404) (322 ms)
+    √ delete /api/audit-log no existe (404) (309 ms)
+    √ get /api/audit-log/export no existe (404) (313 ms)
+    √ get /api/audit-log/1 no existe (404) (312 ms)
+  ningún secreto llega a la bitácora (CA-21)
+    √ tras recorrer todas las acciones, ninguna entrada contiene contraseñas, hashes ni tokens (499 ms)
+  fallas al escribir la bitácora
+    √ registrar nunca lanza: ante un error de base de datos lo registra en el log del servidor (12 ms)
+    √ si la bitácora falla, la operación principal sigue funcionando (417 ms)
+
+PASS tests/contract/notifications-roles.test.js (12.49 s)
+  autenticación
+    √ sin token responde 401 (19 ms)
+    √ con un token inválido responde 401 (9 ms)
+  forma de la respuesta por rol
+    √ admin recibe 200 con { total, noLeidos, datos } (370 ms)
+    √ recepcion recibe 200 con { total, noLeidos, datos } (312 ms)
+    √ mecanico recibe 200 con { total, noLeidos, datos } (314 ms)
+    √ admin recibe el mantenimiento vencido (320 ms)
+    √ recepcion recibe el mantenimiento vencido (323 ms)
+    √ el mecánico no recibe avisos de mantenimiento (solo los de sus órdenes) (312 ms)
+  recepción: mantenimientos y citas, nunca stock (CA-4)
+    √ RECEPTIONIST recibe vencido, próximo y cita del día (326 ms)
+    √ RECEPTIONIST no recibe ninguna clave STOCK: aunque existan refacciones en alerta (328 ms)
+    √ ADMIN recibe los mismos mantenimientos y citas que recepción (325 ms)
+    √ el mecánico no recibe mantenimientos ni citas (324 ms)
+  stock: ADMIN lo ve; RECEPTIONIST y MECHANIC no lo reciben ni se calcula para ellos (CA-4)
+    √ ADMIN recibe los avisos de stock bajo y agotado (329 ms)
+    √ recepcion no recibe ningún aviso de stock (322 ms)
+    √ mecanico no recibe ningún aviso de stock (323 ms)
+    √ para RECEPTIONIST y MECHANIC ni siquiera se consulta la tabla de refacciones (331 ms)
+  órdenes detenidas: ADMIN y RECEPTIONIST reciben todas (CA-4)
+    √ admin recibe las órdenes detenidas de cualquier mecánico y las no asignadas (397 ms)
+    √ recepcion recibe las órdenes detenidas de cualquier mecánico y las no asignadas (400 ms)
+    √ una orden reciente (3 días o menos) no se envía a nadie (341 ms)
+  mecánico: solo órdenes detenidas asignadas a él (CA-4)
+    √ recibe solo las órdenes detenidas asignadas a él y ningún otro tipo de aviso (501 ms)
+    √ cada mecánico recibe solo las suyas (493 ms)
+    √ una orden detenida sin mecánico no se devuelve a ningún mecánico (478 ms)
+    √ reasignar la orden cambia el destinatario del aviso (491 ms)
+    √ sin órdenes propias detenidas recibe una lista vacía (318 ms)
+    √ para el mecánico no se ejecutan las consultas de otros tipos de aviso (487 ms)
+  clientes por avisar: MECHANIC recibe 403 validado en el backend (CA-10)
+    √ sin token responde 401 en ambas rutas (25 ms)
+    √ MECHANIC recibe 403 NO_AUTORIZADO al listar y al marcar, y no se registra nada (325 ms)
+    √ admin está autorizado a listar (317 ms)
+    √ recepcion está autorizado a listar (323 ms)
+    √ admin está autorizado a marcar (un hecho inexistente responde 409, no 403) (323 ms)
+    √ recepcion está autorizado a marcar (un hecho inexistente responde 409, no 403) (316 ms)
+    √ el rol sale solo del token: un rol en la petición no abre la ruta al mecánico (318 ms)
+  el rol y el usuario se toman solo del token (nada de la petición los cambia)
+    √ admin recibe lo mismo con parámetros, cabeceras o cuerpo que pretenden otro rol (350 ms)
+    √ recepcion recibe lo mismo con parámetros, cabeceras o cuerpo que pretenden otro rol (342 ms)
+    √ mecanico recibe lo mismo con parámetros, cabeceras o cuerpo que pretenden otro rol (365 ms)
+    √ el mecánico no obtiene avisos de administración aunque lo pida de varias formas (316 ms)
+
+PASS tests/integration/service-types.test.js (10.726 s)
+  alta, edición y consulta
+    √ el administrador crea un tipo con días y km y queda activo (354 ms)
+    √ se aceptan tipos con solo días o solo km (320 ms)
+    √ un nombre repetido, sin distinguir mayúsculas, responde 409 SERVICE_TYPE_DUPLICATE (323 ms)
+    √ sin ningún intervalo → 400 DATOS_INVALIDOS y no se guarda (318 ms)
+    √ intervalos nulos → 400 DATOS_INVALIDOS y no se guarda (312 ms)
+    √ nombre vacío → 400 DATOS_INVALIDOS y no se guarda (312 ms)
+    √ nombre de más de 80 caracteres → 400 DATOS_INVALIDOS y no se guarda (311 ms)
+    √ días en cero → 400 DATOS_INVALIDOS y no se guarda (319 ms)
+    √ días negativos → 400 DATOS_INVALIDOS y no se guarda (314 ms)
+    √ días mayores a 3,650 → 400 DATOS_INVALIDOS y no se guarda (311 ms)
+    √ km mayores a 500,000 → 400 DATOS_INVALIDOS y no se guarda (313 ms)
+    √ días decimales → 400 DATOS_INVALIDOS y no se guarda (313 ms)
+    √ km en texto → 400 DATOS_INVALIDOS y no se guarda (310 ms)
+    √ PUT edita el tipo; un tipo inexistente responde 404 SERVICE_TYPE_NOT_FOUND (333 ms)
+    √ editar a un nombre que ya tiene otro tipo responde 409; conservar el propio nombre es válido (327 ms)
+  desactivación y consulta por rol
+    √ desactivar y reactivar con PATCH; el tipo no se borra y no existe DELETE (331 ms)
+    √ PATCH con un valor que no es booleano responde 400 (312 ms)
+    √ GET devuelve solo los activos por omisión, ordenados por nombre, a los tres roles (347 ms)
+    √ con ?incluirInactivos=true el administrador ve también los inactivos (320 ms)
+  líneas de servicio con tipo (FR-007)
+    √ una línea de servicio guarda un tipo activo y el detalle de la orden lo expone (345 ms)
+    √ el mecánico asignado también puede elegir un tipo activo en su orden (339 ms)
+    √ las líneas sin tipo NO incluyen serviceTypeId (respuestas existentes sin cambios) (326 ms)
+    √ un tipo inexistente responde 404 SERVICE_TYPE_NOT_FOUND y no agrega la línea (314 ms)
+    √ un tipo inactivo responde 409 SERVICE_TYPE_INACTIVE (327 ms)
+    √ un tipo en una línea de mano de obra se rechaza con 400 (320 ms)
+    √ un serviceTypeId inválido ("abc") responde 400 (318 ms)
+    √ un serviceTypeId inválido (0) responde 400 (320 ms)
+    √ un serviceTypeId inválido (-1) responde 400 (316 ms)
+    √ un serviceTypeId inválido (1.5) responde 400 (313 ms)
+    √ desactivar un tipo usado conserva el tipo en las líneas existentes (340 ms)
+    √ editar un tipo no altera las líneas ya registradas (340 ms)
+
+PASS tests/integration/client-notices.test.js (9.13 s)
+  lista de clientes por avisar (FR-014, CA-10)
+    √ incluye orden terminada, cita de mañana y mantenimiento con cliente, teléfono, vehículo y motivo (363 ms)
+    √ ADMIN también ve la lista (327 ms)
+    √ sin hechos devuelve una lista vacía (312 ms)
+    √ solo cuentan las órdenes TERMINADO (no entregadas, canceladas ni en trabajo) (330 ms)
+    √ solo cuentan las citas PROGRAMADAS de mañana (no hoy, ayer, pasado mañana ni canceladas o completadas) (330 ms)
+    √ solo cuentan los mantenimientos pendientes vencidos o próximos (324 ms)
+    √ si la orden terminada se entrega antes de avisar al cliente, el motivo desaparece (336 ms)
+  marcar a un cliente como avisado (FR-015, CA-11)
+    √ guarda quién, cuándo y la nota, y saca el hecho de la lista (324 ms)
+    √ la nota es opcional (sin nota queda en null) y admite hasta 255 caracteres (322 ms)
+    √ una nota de 256 caracteres se rechaza (400) y no se registra nada (316 ms)
+    √ rechaza sin cuerpo con 400 DATOS_INVALIDOS (315 ms)
+    √ rechaza sin tipo con 400 DATOS_INVALIDOS (322 ms)
+    √ rechaza tipo fuera del catálogo con 400 DATOS_INVALIDOS (306 ms)
+    √ rechaza sin hechoId con 400 DATOS_INVALIDOS (313 ms)
+    √ rechaza hechoId no numérico con 400 DATOS_INVALIDOS (308 ms)
+    √ rechaza hechoId cero con 400 DATOS_INVALIDOS (309 ms)
+    √ rechaza hechoId negativo con 400 DATOS_INVALIDOS (319 ms)
+    √ rechaza nota que no es texto con 400 DATOS_INVALIDOS (312 ms)
+    √ avisar dos veces el mismo hecho responde 409 CLIENT_NOTICE_DUPLICATE con quién y cuándo, sin duplicar (324 ms)
+    √ dos solicitudes simultáneas del mismo hecho producen un solo registro (restricción única) (327 ms)
+    √ un hecho que no está pendiente responde 409 CLIENT_NOTICE_NOT_PENDING y no se registra (348 ms)
+    √ el tipo del aviso debe corresponder al hecho: una orden no se avisa como cita (316 ms)
+  qué cuenta como el mismo hecho y qué como un hecho nuevo (CA-11)
+    √ un mantenimiento avisado como próximo que pasa a vencido es el mismo hecho: no vuelve a la lista (332 ms)
+    √ un mantenimiento nuevo (otro registro) del mismo vehículo sí aparece (320 ms)
+    √ otra orden terminada o otra cita del mismo cliente reaparecen como hechos nuevos (338 ms)
+    √ un aviso de un tipo no afecta a un hecho de otro tipo con el mismo identificador (327 ms)
+
+PASS tests/integration/injection-search.test.js (9.852 s)
+  parámetros de búsqueda (consulta)
+    √ citas: texto (255 ms)
+    √ citas: fecha (220 ms)
+    √ órdenes: texto (219 ms)
+    √ órdenes: estado (212 ms)
+    √ refacciones: q (297 ms)
+    √ refacciones: pending-price (296 ms)
+    √ mantenimientos: vehicleId (283 ms)
+    √ mantenimientos: status (214 ms)
+    √ clientes: incluirInactivos (208 ms)
+    √ catálogo: incluirInactivos (213 ms)
+    √ bitácora: accion (214 ms)
+    √ bitácora: usuarioId (214 ms)
+    √ bitácora: desde (212 ms)
+    √ bitácora: pagina (216 ms)
+    √ propuesta: orderId (206 ms)
+    √ el historial del vehículo: order (217 ms)
+    √ una búsqueda legítima SÍ encuentra lo que existe (la protección no rompe la búsqueda) (185 ms)
+  parámetros de ruta (:id)
+    √ cliente (209 ms)
+    √ vehículo (210 ms)
+    √ historial del vehículo (218 ms)
+    √ orden (224 ms)
+    √ pagos de la orden (229 ms)
+    √ cita (302 ms)
+    √ usuario (299 ms)
+    √ movimientos de la refacción (224 ms)
+    √ ticket (238 ms)
+    √ pago (207 ms)
+  inicio de sesión y cuerpos de peticiones
+    √ una inyección en el usuario o la contraseña NUNCA inicia sesión (1276 ms)
+    √ un texto con comillas y SQL se guarda literalmente (parámetros) y las tablas quedan intactas (268 ms)
+    √ un cuerpo JSON mal formado responde 400 sin trazas (14 ms)
+  filtros con formato incorrecto
+    √ /api/appointments?fecha=2026-13-45 responde 400 sin error interno (176 ms)
+    √ /api/appointments?fecha=2026-02-31 responde 400 sin error interno (180 ms)
+    √ /api/appointments?fecha=ayer responde 400 sin error interno (167 ms)
+    √ /api/maintenances?vehicleId=abc responde 400 sin error interno (178 ms)
+    √ /api/orders/0 responde 400 sin error interno (182 ms)
+    √ /api/orders/-1 responde 400 sin error interno (175 ms)
+    √ /api/orders/1.5 responde 400 sin error interno (166 ms)
+    √ /api/clients/99999999999999999999 responde 400 sin error interno (169 ms)
+
+PASS tests/integration/notifications-lectura.test.js (7.397 s)
+  marcar un aviso como leído
+    √ guarda la lectura para el usuario autenticado y baja el contador (367 ms)
+    √ la lectura es por usuario: otro usuario sigue viendo el aviso como no leído (330 ms)
+    √ la lectura persiste: una nueva sesión del mismo usuario la conserva (403 ms)
+    √ es idempotente: marcar dos veces no duplica ni falla (358 ms)
+    √ el usuario sale solo del token: un userId en el cuerpo o en la consulta no cambia de quién es la lectura (331 ms)
+    √ sin token responde 401 (7 ms)
+  validación de la clave (400 DATOS_INVALIDOS)
+    √ rechaza sin cuerpo (330 ms)
+    √ rechaza sin clave (313 ms)
+    √ rechaza clave vacía (310 ms)
+    √ rechaza clave que no es texto (315 ms)
+    √ rechaza clave sin el formato TIPO:ID:ESTADO (311 ms)
+    √ rechaza clave de más de 80 caracteres (323 ms)
+    √ rechaza tipo desconocido (318 ms)
+  la clave debe ser un aviso vigente del propio usuario (404 NOTIFICATION_NOT_FOUND)
+    √ una clave inexistente no se guarda (320 ms)
+    √ un aviso que ya no aplica (mantenimiento completado) no se puede marcar (322 ms)
+    √ un aviso con el estado equivocado no existe (el mantenimiento es próximo, no vencido) (334 ms)
+    √ un aviso de un tipo que el rol no ve no se puede marcar (mecánico y mantenimiento; recepción y stock) (327 ms)
+    √ el mecánico puede marcar los avisos de sus órdenes pero no los de otro mecánico (400 ms)
+  vigencia de la lectura (CA-6)
+    √ si la condición deja de cumplirse el aviso desaparece; si reaparece con el mismo estado sigue leído (335 ms)
+    √ si el aviso cambia de estado (próximo → vencido) vuelve como no leído (330 ms)
+    √ si el stock pasa de bajo a agotado el aviso vuelve como no leído (335 ms)
+
+PASS tests/contract/no-exposure.test.js (6.54 s)
+  √ el inicio de sesión devuelve un token pero nunca el hash ni la contraseña (619 ms)
+  √ la renovación devuelve solo el token nuevo y la vigencia (353 ms)
+  lecturas con cada rol
+    √ admin: ninguna respuesta expone hashes, tokens ni (salvo ADMIN) el precio de compra (474 ms)
+    √ recepcion: ninguna respuesta expone hashes, tokens ni (salvo ADMIN) el precio de compra (443 ms)
+    √ mecanico: ninguna respuesta expone hashes, tokens ni (salvo ADMIN) el precio de compra (425 ms)
+    √ prueba no vacía: ADMIN sí ve el precio de compra y los demás roles lo reciben sin él (357 ms)
+    √ los permisos: usuarios solo ADMIN; tickets solo ADMIN y RECEPTIONIST (376 ms)
+    √ el mecánico asignado ve su orden con las refacciones y sus precios de venta, pero no el de compra (346 ms)
+  altas y cambios (respuestas de escritura)
+    √ ADMIN: crear, editar y desactivar usuarios no devuelve hash ni contraseña (441 ms)
+    √ ADMIN: crear y editar refacciones responde con el precio de compra solo a ADMIN (y nunca hashes ni tokens) (366 ms)
+    √ recepcion no puede crear ni editar refacciones ni usuarios (403) y el rechazo no filtra datos (368 ms)
+    √ mecanico no puede crear ni editar refacciones ni usuarios (403) y el rechazo no filtra datos (352 ms)
+    √ cambiar la contraseña responde sin cuerpo (204) y no devuelve la nueva ni el hash (502 ms)
+  errores
+    √ un error de autenticación o de datos no expone trazas, hashes ni tokens (432 ms)
+
+PASS tests/integration/maintenance-proposal.test.js (5.559 s)
+  √ propone fecha (hoy + días) y kilometraje (entrada + km) del tipo de la orden (428 ms)
+  √ un tipo solo con días propone solo fecha y uno solo con km propone solo kilometraje (406 ms)
+  √ con varios tipos toma el menor intervalo de cada dimensión y nombra el de menor intervalo en días (404 ms)
+  √ un tipo ya desactivado sigue proponiendo (es el tipo de la línea) (399 ms)
+  √ una orden sin tipos (líneas sin tipo o sin líneas) responde propuesta null (397 ms)
+  √ no crea ningún mantenimiento (422 ms)
+  validación y permisos
+    √ orderId ausente o no numérico responde 400 DATOS_INVALIDOS (411 ms)
+    √ una orden inexistente responde 404 ORDEN_NO_ENCONTRADA (440 ms)
+    √ el mecánico asignado puede proponer desde su orden (410 ms)
+    √ otro mecánico recibe 403 FORBIDDEN_ORDER (414 ms)
+    √ la recepción recibe 403 NO_AUTORIZADO y sin token es 401 (398 ms)
+  la ruta no interfiere con las existentes
+    √ GET /api/maintenances y el alta siguen funcionando y el alta no requiere la propuesta (401 ms)
+
+PASS tests/integration/password-policy.test.js (5.499 s)
+  al crear un usuario
+    √ rechaza una contraseña menos de 8 caracteres con 400 y el mensaje de la regla; no crea al usuario (188 ms)
+    √ rechaza una contraseña sin mayúscula con 400 y el mensaje de la regla; no crea al usuario (162 ms)
+    √ rechaza una contraseña sin minúscula con 400 y el mensaje de la regla; no crea al usuario (163 ms)
+    √ rechaza una contraseña sin número con 400 y el mensaje de la regla; no crea al usuario (168 ms)
+    √ rechaza una contraseña solo números con 400 y el mensaje de la regla; no crea al usuario (166 ms)
+    √ rechaza una contraseña solo espacios y letras minúsculas con 400 y el mensaje de la regla; no crea al usuario (160 ms)
+    √ rechaza una contraseña ausente o que no es texto (undefined) (163 ms)
+    √ rechaza una contraseña ausente o que no es texto (null) (158 ms)
+    √ rechaza una contraseña ausente o que no es texto ("") (163 ms)
+    √ rechaza una contraseña ausente o que no es texto (12345678) (158 ms)
+    √ rechaza una contraseña ausente o que no es texto (["Abcdefg123"]) (157 ms)
+    √ acepta una contraseña válida y en la base queda solo su hash bcrypt, distinto del texto (381 ms)
+    √ el límite exacto: 8 caracteres con las tres clases es válido (237 ms)
+  al cambiar la contraseña propia
+    √ rechaza una contraseña nueva menos de 8 caracteres con 400 CONTRASENA_INVALIDA y el mensaje de la regla (237 ms)
+    √ rechaza una contraseña nueva sin mayúscula con 400 CONTRASENA_INVALIDA y el mensaje de la regla (234 ms)
+    √ rechaza una contraseña nueva sin minúscula con 400 CONTRASENA_INVALIDA y el mensaje de la regla (231 ms)
+    √ rechaza una contraseña nueva sin número con 400 CONTRASENA_INVALIDA y el mensaje de la regla (239 ms)
+    √ rechaza una contraseña nueva solo números con 400 CONTRASENA_INVALIDA y el mensaje de la regla (232 ms)
+    √ rechaza una contraseña nueva solo espacios y letras minúsculas con 400 CONTRASENA_INVALIDA y el mensaje de la regla (231 ms)
+    √ con una contraseña válida responde 204, guarda solo el hash y la anterior deja de servir (455 ms)
+    √ con la contraseña actual incorrecta responde 401 y no cambia nada (314 ms)
+  cuentas sembradas
+    √ las contraseñas documentadas cumplen la política (no se obliga a cambiarlas) (4 ms)
+    √ el seed 001 guarda hashes bcrypt que corresponden a esas contraseñas (222 ms)
+
+PASS tests/integration/session-renewal.test.js (5.237 s)
+  vigencia del token en el inicio de sesión
+    √ sin ajuste guardado el token dura 30 minutos y el login informa inactividadMinutos: 30 (181 ms)
+    √ con el ajuste en 10 minutos el token dura 10 minutos (158 ms)
+    √ un valor guardado inválido en la base cae al respaldo de 30 minutos (el login no falla) (157 ms)
+    √ el payload del token conserva solo sub, username y role (161 ms)
+  el administrador cambia la inactividad (grupo seguridad de /api/settings)
+    √ GET /api/settings ya expone el grupo seguridad y su límite (164 ms)
+    √ PUT guarda el valor y los inicios de sesión posteriores usan esa vigencia (248 ms)
+    √ los tokens ya emitidos conservan su vencimiento original (178 ms)
+    √ un valor fuera de límites o inválido (4) responde 400 y no se guarda (156 ms)
+    √ un valor fuera de límites o inválido (121) responde 400 y no se guarda (164 ms)
+    √ un valor fuera de límites o inválido (0) responde 400 y no se guarda (165 ms)
+    √ un valor fuera de límites o inválido (-5) responde 400 y no se guarda (168 ms)
+    √ un valor fuera de límites o inválido (30.5) responde 400 y no se guarda (159 ms)
+    √ un valor fuera de límites o inválido ("30") responde 400 y no se guarda (163 ms)
+    √ los límites inclusivos (5) se aceptan (173 ms)
+    √ los límites inclusivos (120) se aceptan (169 ms)
+    √ un rol sin permiso no puede cambiar la inactividad (403) (164 ms)
+  POST /api/auth/renew
+    √ con un token vigente entrega un token nuevo del mismo usuario y la vigencia del ajuste (177 ms)
+    √ la vigencia del token renovado sigue el ajuste vigente, no el del token anterior (246 ms)
+    √ la renovación vale para los tres roles (324 ms)
+    √ sin token responde 401 NO_AUTENTICADO (8 ms)
+    √ un token vencido responde 401 SESION_EXPIRADA y no entrega token (87 ms)
+    √ un token firmado con otro secreto responde 401 (84 ms)
+    √ un usuario desactivado ya no puede renovar aunque su token no haya vencido (166 ms)
+    √ una renovación no cambia el rol del token: el rol sale de la base, no del token anterior (165 ms)
+  ninguna otra ruta renueva ni emite token (CA-23)
+    √ la consulta periódica de avisos y las demás rutas no devuelven token ni cabeceras de sesión (190 ms)
+    √ el backend sigue rechazando un token vencido en cualquier ruta (401 SESION_EXPIRADA) (92 ms)
+    √ un token recién emitido con vigencia mínima (5 minutos) sigue siendo válido (251 ms)
+
+PASS tests/integration/notifications-margenes.test.js (5.1 s)
+  sin valores guardados: los resultados del Sprint 6 (CA-3)
+    √ próximo a 30 días o 1,000 km y orden detenida a más de 3 días (366 ms)
+  con márgenes guardados el centro de notificaciones los respeta (CA-2)
+    √ 15 días, 500 km y 5 días de orden detenida (340 ms)
+    √ un margen mayor amplía lo que es próximo (336 ms)
+    √ el detalle del aviso próximo solo menciona los umbrales dentro del margen configurado (331 ms)
+    √ la recepción y el mecánico ven los mismos resultados configurados (345 ms)
+  la lista de clientes por avisar usa los mismos márgenes (CA-2)
+    √ el mantenimiento a 25 días está en la lista con 30 días y sale con 15 (341 ms)
+  la lista de Mantenimientos y el panel de control no cambian (CA-2)
+    √ cambiar los márgenes no modifica GET /api/maintenances ni GET /api/dashboard (360 ms)
+  límites de los ajustes (CA-2)
+    √ PUT {"margenProximoDias":0} se rechaza con 400 y no cambia el centro (331 ms)
+    √ PUT {"margenProximoDias":366} se rechaza con 400 y no cambia el centro (350 ms)
+    √ PUT {"margenProximoKm":99} se rechaza con 400 y no cambia el centro (331 ms)
+    √ PUT {"margenProximoKm":50001} se rechaza con 400 y no cambia el centro (334 ms)
+    √ PUT {"diasOrdenDetenida":0} se rechaza con 400 y no cambia el centro (326 ms)
+    √ PUT {"diasOrdenDetenida":91} se rechaza con 400 y no cambia el centro (339 ms)
+
+PASS tests/integration/order-parts.test.js
+  √ agregar una refacción descuenta el stock y registra el OUT con la orden (RN-6) (469 ms)
+  √ stock insuficiente se rechaza con PART_SIN_STOCK sin modificar el stock (RN-7) (435 ms)
+  √ una orden ENTREGADO o CANCELADA rechaza refacciones con ORDER_CLOSED (427 ms)
+  √ una orden en pausa ESPERANDO_REFACCION sí permite agregar refacciones (424 ms)
+  √ un mecánico no puede usar refacciones en la orden de otro mecánico (FORBIDDEN_ORDER) (412 ms)
+  √ retirar una refacción genera la devolución IN y restaura el stock (RN-8) (442 ms)
+  √ retirar una refacción que no está en la orden responde ORDER_PART_NOT_FOUND (424 ms)
+  √ recepción no gestiona refacciones de órdenes (solo ADMIN y el mecánico dueño) (420 ms)
+  √ una refacción inactiva no puede agregarse a una orden (PART_INACTIVE) (425 ms)
+
+PASS tests/integration/payments-stale.test.js
+  T032: un cobro digital se desfasa cuando cambia el saldo
+    √ cambio de total por agregar una refacción: el cobro se devuelve STALE al listar (236 ms)
+    √ un cobro desfasado no cuenta como cobrado ni descuenta del saldo (197 ms)
+    √ verificar un cobro cuyo importe ya no coincide lo deja STALE sin confirmarlo (199 ms)
+    √ verificar o confirmar un cobro que ya es STALE responde 409 PAYMENT_NOT_MODIFIABLE (196 ms)
+    √ con un cobro STALE se puede crear uno nuevo por el saldo (sin PAYMENT_DUPLICATE_PENDING) (211 ms)
+    √ con el total sin cambio el cobro permanece PENDING (199 ms)
+    √ los pagos manuales y COMPLETED nunca pasan a STALE (204 ms)
+    √ si el total vuelve a coincidir, un cobro ya STALE sigue STALE (terminal) (206 ms)
+    √ un cobro digital parcial creado por la API queda STALE en la siguiente consulta (D6) y crear no lo marca (190 ms)
+    √ el marcado ocurre una sola vez: listar varias veces no cambia nada (204 ms)
+  T033 (E6b): el desfase se compara contra el saldo pendiente, no contra el total
+    √ pago parcial previo con cobro por el saldo: NO se marca STALE y se confirma (213 ms)
+    √ caso contrario: otro pago manual de $100 desfasa el cobro de $1,200 (214 ms)
+
+PASS tests/integration/settings.test.js
+  √ sin filas guardadas GET devuelve los valores de respaldo y los límites (CA-3) (186 ms)
+  √ desde P2 la respuesta incluye el grupo seguridad con su límite (30 por omisión) (162 ms)
+  √ PUT guarda un subconjunto, registra al autor y GET devuelve lo guardado (CA-1) (170 ms)
+  √ PUT guarda también los márgenes y los días de orden detenida (162 ms)
+  √ guardar dos veces actualiza la fila y no la duplica (171 ms)
+  √ un valor guardado inválido en la base se ignora y se usa el respaldo (el servidor no falla) (162 ms)
+  PUT rechaza todo el guardado con 400 DATOS_INVALIDOS y no guarda nada
+    √ nombre vacío (160 ms)
+    √ nombre de más de 100 caracteres (159 ms)
+    √ dirección de más de 150 caracteres (159 ms)
+    √ teléfono con letras (162 ms)
+    √ campo desconocido (154 ms)
+    √ grupo desconocido (162 ms)
+    √ margen de días en cero (159 ms)
+    √ margen de días mayor al límite (155 ms)
+    √ margen de km menor al límite (159 ms)
+    √ días de orden detenida mayores al límite (159 ms)
+    √ valor decimal (158 ms)
+    √ valor en texto (160 ms)
+    √ grupo seguridad con minutos fuera de límite (160 ms)
+    √ grupo seguridad con un ajuste desconocido (160 ms)
+    √ cuerpo vacío (156 ms)
+    √ un error en un grupo impide guardar los campos válidos de otro (160 ms)
+
+PASS tests/contract/parts-role-visibility.test.js
+  GET /api/parts: el precio de compra solo llega al administrador (CA-3)
+    √ el listado (390 ms)
+    √ el filtro ?pending-price=true (363 ms)
+    √ la búsqueda ?q= (364 ms)
+    √ el administrador recibe el valor del precio de compra (363 ms)
+  otras rutas que devuelven datos de refacciones (CA-3)
+    √ el detalle de orden no incluye el precio de compra con ningún rol (396 ms)
+    √ POST y DELETE /api/orders/:id/parts no devuelven el precio de compra (362 ms)
+    √ el ticket no incluye el precio de compra (ADMIN y RECEPTIONIST; el mecánico no lo consulta) (382 ms)
+    √ el historial de movimientos es solo de administración y no filtra el precio de compra (394 ms)
+  escritura de categoría, marca y precio de compra solo para ADMIN (CA-4)
+    √ recepcion no puede dar de alta ni modificar esos datos (403 NO_AUTORIZADO) (397 ms)
+    √ mecanico no puede dar de alta ni modificar esos datos (403 NO_AUTORIZADO) (396 ms)
+
+PASS tests/integration/order-status-changed.test.js
+  cada transición de estado actualiza status_changed_at (FR-020)
+    √ avance: RECIBIDO → DIAGNOSTICO (363 ms)
+    √ pausa: pasar a ESPERANDO_REFACCION (352 ms)
+    √ reanudación: salir de ESPERANDO_REFACCION al estado de origen (344 ms)
+    √ cancelación (369 ms)
+    √ una transición rechazada no toca la fecha (337 ms)
+  el alta de una orden inicia la fecha en su creación
+    √ status_changed_at es la hora de creación (325 ms)
+  las demás ediciones NO modifican status_changed_at
+    √ editar motivo, notas y kilometraje (334 ms)
+    √ asignar y liberar mecánico (333 ms)
+  ninguna respuesta existente de órdenes expone la columna ni cambia de forma
+    √ detalle, listado, edición y cambio de estado no incluyen status_changed_at (353 ms)
+
+PASS tests/integration/maintenances.test.js
+  √ el mecánico registra un mantenimiento con ambos umbrales (345 ms)
+  √ el registro acepta un solo umbral (solo fecha o solo kilometraje) (339 ms)
+  √ el registro sin ningún umbral responde MAINTENANCE_INVALID_THRESHOLD (422) (326 ms)
+  √ un vehículo admite varios mantenimientos pendientes simultáneos (340 ms)
+  √ un mantenimiento se completa manualmente y deja de estar PENDING (336 ms)
+  √ entregar una orden del vehículo NO completa automáticamente los mantenimientos (Q1) (355 ms)
+  √ la cancelación es exclusiva de administración y exige motivo (330 ms)
+  √ un mantenimiento inexistente responde MAINTENANCE_NOT_FOUND (404) (324 ms)
+  √ el registro de mantenimientos restringe el rol en el servidor (RN-15) (327 ms)
+
+PASS tests/contract/terms-roles.test.js
+  sin token → 401
+    √ get /api/terms/current (30 ms)
+    √ post /api/terms/accept (9 ms)
+    √ post /api/terms (8 ms)
+    √ get /api/terms/acceptances (11 ms)
+  RECEPTIONIST y MECHANIC
+    √ recepcion no publica ni consulta aceptaciones (403 NO_AUTORIZADO) (328 ms)
+    √ mecanico no publica ni consulta aceptaciones (403 NO_AUTORIZADO) (312 ms)
+    √ recepcion sí consulta la vigente y la acepta (322 ms)
+    √ mecanico sí consulta la vigente y la acepta (319 ms)
+  ADMIN
+    √ consulta la vigente, la acepta, publica y consulta las aceptaciones (334 ms)
+  no hay rutas de edición ni borrado
+    √ put /api/terms no existe (404) (306 ms)
+    √ patch /api/terms/1 no existe (404) (310 ms)
+    √ delete /api/terms/1 no existe (404) (305 ms)
+    √ delete /api/terms/acceptances no existe (404) (304 ms)
+
+PASS tests/contract/reports-roles.test.js
+  GET /api/reports/income
+    √ sin token responde 401 (17 ms)
+    √ un token inválido responde 401 (7 ms)
+    √ ADMIN responde 200 con la forma del contrato (69 ms)
+    √ recepcion recibe 403 NO_AUTORIZADO (45 ms)
+    √ mecanico recibe 403 NO_AUTORIZADO (34 ms)
+    √ recepcion recibe 403 (no 400) aunque el rango sea inválido (32 ms)
+    √ mecanico recibe 403 (no 400) aunque el rango sea inválido (29 ms)
+  GET /api/reports/services (servicios más frecuentes)
+    √ sin token responde 401 (6 ms)
+    √ un token inválido responde 401 (6 ms)
+    √ ADMIN responde 200 con rango y lista de datos (30 ms)
+    √ recepcion recibe 403 NO_AUTORIZADO (30 ms)
+    √ mecanico recibe 403 NO_AUTORIZADO (29 ms)
+    √ recepcion recibe 403 (no 400) aunque el rango sea inválido (32 ms)
+    √ mecanico recibe 403 (no 400) aunque el rango sea inválido (31 ms)
+    √ no existen rutas de escritura (44 ms)
+  GET /api/reports/productivity (productividad por mecánico)
+    √ sin token responde 401 (6 ms)
+    √ un token inválido responde 401 (7 ms)
+    √ ADMIN responde 200 con rango y lista de datos (37 ms)
+    √ recepcion recibe 403 NO_AUTORIZADO (36 ms)
+    √ mecanico recibe 403 NO_AUTORIZADO (31 ms)
+    √ recepcion recibe 403 (no 400) aunque el rango sea inválido (29 ms)
+    √ mecanico recibe 403 (no 400) aunque el rango sea inválido (33 ms)
+    √ no existen rutas de escritura (47 ms)
+  GET /api/reports/parts (refacciones (costo y margen))
+    √ sin token responde 401 (6 ms)
+    √ un token inválido responde 401 (6 ms)
+    √ ADMIN responde 200 con rango, paginación y datos (37 ms)
+    √ recepcion recibe 403 NO_AUTORIZADO (33 ms)
+    √ mecanico recibe 403 NO_AUTORIZADO (32 ms)
+    √ recepcion recibe 403 (no 400) aunque el rango o la paginación sean inválidos (34 ms)
+    √ mecanico recibe 403 (no 400) aunque el rango o la paginación sean inválidos (36 ms)
+    √ recepcion no recibe precios de compra ni importes de compra (aun con datos reservados) (47 ms)
+    √ mecanico no recibe precios de compra ni importes de compra (aun con datos reservados) (49 ms)
+    √ ADMIN sí ve los datos del reporte con los datos sembrados (55 ms)
+    √ no existen rutas de escritura (46 ms)
+  GET /api/reports/rotation (rotación de inventario)
+    √ sin token responde 401 (7 ms)
+    √ un token inválido responde 401 (7 ms)
+    √ ADMIN responde 200 con rango, paginación y datos (29 ms)
+    √ recepcion recibe 403 NO_AUTORIZADO (28 ms)
+    √ mecanico recibe 403 NO_AUTORIZADO (28 ms)
+    √ recepcion recibe 403 (no 400) aunque el rango o la paginación sean inválidos (28 ms)
+    √ mecanico recibe 403 (no 400) aunque el rango o la paginación sean inválidos (28 ms)
+    √ recepcion no recibe precios de compra ni importes de compra (aun con datos reservados) (38 ms)
+    √ mecanico no recibe precios de compra ni importes de compra (aun con datos reservados) (48 ms)
+    √ ADMIN sí ve los datos del reporte con los datos sembrados (51 ms)
+    √ no existen rutas de escritura (42 ms)
+  GET /api/reports/income/export
+    √ sin token responde 401 (5 ms)
+    √ un token inválido responde 401 (6 ms)
+    √ ADMIN responde 200 con un CSV y su cabecera de descarga (29 ms)
+    √ recepcion recibe 403 NO_AUTORIZADO y ningún archivo (31 ms)
+    √ mecanico recibe 403 NO_AUTORIZADO y ningún archivo (27 ms)
+    √ recepcion recibe 403 (no 400) aunque el rango sea inválido (32 ms)
+    √ mecanico recibe 403 (no 400) aunque el rango sea inválido (32 ms)
+    √ no existen rutas de escritura de la exportación (55 ms)
+  GET /api/reports/services/export
+    √ sin token responde 401 (7 ms)
+    √ un token inválido responde 401 (8 ms)
+    √ ADMIN responde 200 con un CSV y su cabecera de descarga (52 ms)
+    √ recepcion recibe 403 NO_AUTORIZADO y ningún archivo (35 ms)
+    √ mecanico recibe 403 NO_AUTORIZADO y ningún archivo (26 ms)
+    √ recepcion recibe 403 (no 400) aunque el rango sea inválido (28 ms)
+    √ mecanico recibe 403 (no 400) aunque el rango sea inválido (25 ms)
+    √ no existen rutas de escritura de la exportación (43 ms)
+  GET /api/reports/productivity/export
+    √ sin token responde 401 (9 ms)
+    √ un token inválido responde 401 (7 ms)
+    √ ADMIN responde 200 con un CSV y su cabecera de descarga (30 ms)
+    √ recepcion recibe 403 NO_AUTORIZADO y ningún archivo (35 ms)
+    √ mecanico recibe 403 NO_AUTORIZADO y ningún archivo (35 ms)
+    √ recepcion recibe 403 (no 400) aunque el rango sea inválido (34 ms)
+    √ mecanico recibe 403 (no 400) aunque el rango sea inválido (35 ms)
+    √ no existen rutas de escritura de la exportación (48 ms)
+  GET /api/reports/parts/export
+    √ sin token responde 401 (10 ms)
+    √ un token inválido responde 401 (8 ms)
+    √ ADMIN responde 200 con un CSV y su cabecera de descarga (32 ms)
+    √ recepcion recibe 403 NO_AUTORIZADO y ningún archivo (30 ms)
+    √ mecanico recibe 403 NO_AUTORIZADO y ningún archivo (31 ms)
+    √ recepcion recibe 403 (no 400) aunque el rango sea inválido (31 ms)
+    √ mecanico recibe 403 (no 400) aunque el rango sea inválido (28 ms)
+    √ no existen rutas de escritura de la exportación (33 ms)
+  GET /api/reports/rotation/export
+    √ sin token responde 401 (5 ms)
+    √ un token inválido responde 401 (6 ms)
+    √ ADMIN responde 200 con un CSV y su cabecera de descarga (27 ms)
+    √ recepcion recibe 403 NO_AUTORIZADO y ningún archivo (27 ms)
+    √ mecanico recibe 403 NO_AUTORIZADO y ningún archivo (28 ms)
+    √ recepcion recibe 403 (no 400) aunque el rango sea inválido (28 ms)
+    √ mecanico recibe 403 (no 400) aunque el rango sea inválido (29 ms)
+    √ no existen rutas de escritura de la exportación (36 ms)
+  exportación de un reporte inexistente
+    √ ADMIN recibe 404 REPORT_NOT_FOUND (27 ms)
+    √ recepcion recibe 403 (el rol se valida antes que el nombre) (28 ms)
+    √ mecanico recibe 403 (el rol se valida antes que el nombre) (35 ms)
+  no hay rutas de escritura de reportes
+    √ post /api/reports/income no existe (404) (36 ms)
+    √ put /api/reports/income no existe (404) (36 ms)
+    √ patch /api/reports/income no existe (404) (37 ms)
+    √ delete /api/reports/income no existe (404) (33 ms)
+
+PASS tests/contract/service-types-roles.test.js
+  √ sin token todas las rutas responden 401 (40 ms)
+  √ recepcion consulta los tipos activos (200) (327 ms)
+  √ mecanico consulta los tipos activos (200) (332 ms)
+  √ recepcion recibe 403 NO_AUTORIZADO al administrar el catálogo y no cambia nada (328 ms)
+  √ mecanico recibe 403 NO_AUTORIZADO al administrar el catálogo y no cambia nada (321 ms)
+  √ recepcion recibe 403 con ?incluirInactivos=true (312 ms)
+  √ mecanico recibe 403 con ?incluirInactivos=true (305 ms)
+  √ ADMIN administra y consulta con inactivos (200 y 201) (311 ms)
+
+PASS tests/integration/reports-export.test.js
+  cabeceras y formato
+    √ income: 200 con text/csv UTF-8, BOM, CRLF y el nombre de archivo del contrato (173 ms)
+    √ services: 200 con text/csv UTF-8, BOM, CRLF y el nombre de archivo del contrato (106 ms)
+    √ productivity: 200 con text/csv UTF-8, BOM, CRLF y el nombre de archivo del contrato (110 ms)
+    √ parts: 200 con text/csv UTF-8, BOM, CRLF y el nombre de archivo del contrato (96 ms)
+    √ rotation: 200 con text/csv UTF-8, BOM, CRLF y el nombre de archivo del contrato (85 ms)
+    √ el nombre de archivo usa el rango resuelto cuando se pide un periodo (37 ms)
+    √ conserva acentos y eñes (UTF-8) (120 ms)
+  coincide con la consulta JSON del mismo rango
+    √ income: total, periodos y métodos (97 ms)
+    √ services: una fila por tipo y la fila «Total» de la pantalla (97 ms)
+    √ productivity: una fila por mecánico («Sin asignar») y «Total» (94 ms)
+    √ parts: una fila por uso con el precio de compra, la observación y los totales (85 ms)
+    √ parts incluye el precio de compra de la refacción (solo ADMIN llega aquí) (69 ms)
+    √ rotation: una fila por refacción activa con «sin existencia» (73 ms)
+  inyección de fórmulas
+    √ las celdas de texto peligrosas salen con una comilla simple delante (85 ms)
+    √ los importes negativos (margen) NO se neutralizan: siguen siendo números (72 ms)
+    √ comas, comillas y saltos de línea dentro de una celda se escapan (70 ms)
+  rango, paginación y errores
+    √ ignora pagina y limite (incluso inválidos) y exporta todo el rango (72 ms)
+    √ «users» no es un reporte → 404 REPORT_NOT_FOUND (42 ms)
+    √ «INCOME» no es un reporte → 404 REPORT_NOT_FOUND (34 ms)
+    √ «ingresos» no es un reporte → 404 REPORT_NOT_FOUND (33 ms)
+    √ «constructor» no es un reporte → 404 REPORT_NOT_FOUND (40 ms)
+    √ «__proto__» no es un reporte → 404 REPORT_NOT_FOUND (42 ms)
+    √ «toString» no es un reporte → 404 REPORT_NOT_FOUND (44 ms)
+    √ «income;» no es un reporte → 404 REPORT_NOT_FOUND (39 ms)
+    √ income: sin rango o con rango inválido → 400 RANGO_INVALIDO (53 ms)
+    √ services: sin rango o con rango inválido → 400 RANGO_INVALIDO (55 ms)
+    √ productivity: sin rango o con rango inválido → 400 RANGO_INVALIDO (52 ms)
+    √ parts: sin rango o con rango inválido → 400 RANGO_INVALIDO (53 ms)
+    √ rotation: sin rango o con rango inválido → 400 RANGO_INVALIDO (53 ms)
+    √ un rango sin datos exporta solo los encabezados (sin fila de totales) (66 ms)
+    √ con 10,000 filas exporta; con 10,001 responde 400 RANGO_INVALIDO (853 ms)
+  seguridad
+    √ exportar no escribe en la bitácora (110 ms)
+    √ con una versión de términos sin aceptar responde 403 TERMS_NOT_ACCEPTED (49 ms)
+
+PASS tests/integration/audit-login-servidor-real.test.js
+  arranque del servidor real
+    √ informa la base de datos conectada y que la tabla de la bitácora está disponible (799 ms)
+    √ si falta la tabla de la bitácora (migración 022 sin aplicar) lo grita al arrancar (806 ms)
+  inicios de sesión fallidos contra el proceso real
+    √ una cuenta inexistente y una contraseña incorrecta quedan en audit_log y el servidor no registra errores (989 ms)
+    √ un inicio de sesión correcto no registra nada (972 ms)
+
+PASS tests/integration/tickets-proximo-servicio.test.js
+  √ una orden con «Cambio de aceite» (180 días y 5,000 km) muestra fecha y kilometraje del próximo servicio (323 ms)
+  √ un tipo solo con días muestra solo la fecha y uno solo con km muestra solo el kilometraje (294 ms)
+  √ con varios tipos muestra la fecha menor y el kilometraje menor (276 ms)
+  √ un tipo ya desactivado sigue contando (es el tipo de la línea) (277 ms)
+  √ sin líneas con tipo el campo proximoServicio NO aparece y el cuerpo conserva sus claves de siempre (273 ms)
+  √ un ticket anterior al sprint (sin instantánea) no muestra el próximo servicio aunque la orden tenga tipos (265 ms)
+  √ el resto del contenido del ticket (folio, importes y pagos) no cambia (261 ms)
+  √ la fecha base es la de emisión del ticket: no se mueve al volver a consultarlo (308 ms)
+  √ si se agrega una línea con tipo después de emitir, el ticket con instantánea la refleja al consultarlo (361 ms)
+
+PASS tests/integration/appointments.test.js
+  √ la recepción crea una cita PROGRAMADA (FR-001, CA-1) (590 ms)
+  √ rechaza una cita con fecha anterior a hoy (FR-002) (422 ms)
+  √ rechaza una cita duplicada del vehículo en la misma fecha y hora (CA-1) (443 ms)
+  √ el mecánico no tiene acceso a las citas (RN-15) (397 ms)
+  √ editar funciona solo con citas PROGRAMADA (FR-002) (460 ms)
+  √ completar y cancelar con motivo; cancelar sin motivo se rechaza (FR-003) (471 ms)
+  √ no se agenda una cita para un vehículo que no pertenezca al cliente (RN-2) (440 ms)
+  √ el listado acepta los filtros de fecha y texto (454 ms)
+
+PASS tests/integration/seed-reports.test.js (6.848 s)
+  contenido sembrado
+    √ siembra las siete órdenes 9101–9107 con sus estados y mecánicos (137 ms)
+    √ las fechas caen en el mes anterior (9101–9103) y en el actual (9104–9107), sin futuro (132 ms)
+    √ crea un segundo mecánico INACTIVO sin contraseña utilizable (191 ms)
+    √ conteos: 7 órdenes, 11 servicios, 6 manos de obra, 10 usos, 9 pagos y 20 movimientos (122 ms)
+    √ la existencia de las refacciones existentes no cambia y todas siguen cuadrando con sus movimientos (SC-004) (109 ms)
+    √ la refacción nueva no tiene precio de compra pero sí de venta (no crea pendientes de precio) (128 ms)
+  cifras de los cinco reportes (ADMIN, por la API)
+    √ ingresos del mes anterior: solo pagos COMPLETED, por método (436 ms)
+    √ ingresos del mes actual (275 ms)
+    √ servicios del mes anterior y del actual (con y sin tipo) (385 ms)
+    √ productividad: dos mecánicos y «Sin asignar», sin contar la orden cancelada (413 ms)
+    √ refacciones del mes anterior: una línea sin costo y una sin precio quedan fuera de los totales (255 ms)
+    √ refacciones del mes actual: todas las líneas completas y con inactiva incluida (254 ms)
+    √ rotación del mes anterior: la refacción nueva y la sin precio de venta salen primero (260 ms)
+    √ rotación del mes actual (268 ms)
+    √ la exportación CSV de cada reporte se genera con los datos sembrados (308 ms)
+  idempotencia y respeto a lo existente
+    √ aplicarlo dos veces no duplica nada (130 ms)
+    √ si la orden 9101 ya existe, se omite TODO lo suyo y se siembran las demás completas (125 ms)
+    √ si la orden 9102 ya existe, se omite TODO lo suyo y se siembran las demás completas (139 ms)
+    √ si la orden 9103 ya existe, se omite TODO lo suyo y se siembran las demás completas (150 ms)
+    √ si la orden 9104 ya existe, se omite TODO lo suyo y se siembran las demás completas (127 ms)
+    √ si la orden 9105 ya existe, se omite TODO lo suyo y se siembran las demás completas (130 ms)
+    √ si la orden 9106 ya existe, se omite TODO lo suyo y se siembran las demás completas (123 ms)
+    √ si la orden 9107 ya existe, se omite TODO lo suyo y se siembran las demás completas (125 ms)
+    √ lo que el usuario borró de una orden sembrada no regresa al volver a sembrar (116 ms)
+    √ conserva lo que el usuario cambió en una orden sembrada (109 ms)
+    √ no pisa un mecánico real llamado mecanico2 ni su estado (220 ms)
+    √ no se rompe si faltan refacciones de los seeds previos: se omiten solo esas líneas (113 ms)
+
+PASS tests/integration/maintenances-list.test.js (5.897 s)
+  √ los vencidos aparecen primero y los pendientes por proximidad del umbral (Q5) (707 ms)
+  √ los vencidos por fecha también encabezan la lista (646 ms)
+  √ los cancelados no aparecen por defecto y el filtro status los consulta (641 ms)
+  √ el filtro vehicleId limita la lista a un vehículo (612 ms)
+  √ el listado incluye los datos de cliente y vehículo para el aviso (FR-007) (570 ms)
+  √ el listado es solo de recepción y administración (RN-15) (680 ms)
+
+PASS tests/integration/orders-work.test.js
+  √ el mecánico dueño agrega diagnósticos y partidas con sus totales (FR-011, CA-4) (642 ms)
+  √ no se agregan partidas antes de avanzar a diagnóstico (FR-011) (458 ms)
+  √ las órdenes cerradas no admiten partidas ni entradas (RN-9) (413 ms)
+  √ el mecánico no trabaja órdenes ajenas (RN-15) (400 ms)
+  √ una partida se puede borrar antes de entregar y ya no después (FR-011) (479 ms)
+  √ las entradas rechazan tipo o contenido inválidos (FR-011) (443 ms)
+  √ la recepción edita motivo, notas y kilometraje en estados de trabajo (PUT del contrato) (454 ms)
+
+PASS tests/contract/maintenances.contract.test.js
+  √ el listado de mantenimientos sigue la forma del contrato sin datos sensibles (574 ms)
+  √ el alta responde la forma del contrato y el detalle coincide (538 ms)
+  √ el cumplimiento y la cancelación devuelven la forma del contrato (552 ms)
+  √ los errores del catálogo siguen el formato centralizado (706 ms)
+  √ el filtro status=CANCELLED consulta cancelados y por defecto se excluyen (599 ms)
+
+PASS tests/integration/orders.test.js
+  √ la recepción crea una orden en RECIBIDO con el cliente derivado (RN-2, CA-2) (303 ms)
+  √ el mecánico no puede crear órdenes (RN-15) (258 ms)
+  √ rechaza un vehículo inexistente con VEHICULO_NO_DISPONIBLE (RN-2) (245 ms)
+  √ rechaza el kilometraje menor al previo sin corrección (RN-4) (261 ms)
+  √ acepta el kilometraje menor con corrección explícita y la constancia (RN-4) (330 ms)
+  √ el mecánico solo ve en el listado las órdenes que le pertenecen (CA-3) (448 ms)
+  √ el listado acepta filtro de estado y texto (407 ms)
+
+PASS tests/integration/orders-entries.test.js
+  √ el dueño registra observaciones y recomendaciones con autor y fecha (FR-014) (372 ms)
+  √ las entradas del dueño son visibles para recepción y administración en el detalle (568 ms)
+  √ se rechazan entradas sin contenido o con tipo inválido (FR-014) (567 ms)
+  √ no existe endpoint para borrar entradas: el historial es inmutable (FR-014) (543 ms)
+  √ las órdenes ENTREGADO no admiten nuevas entradas (RN-9) (524 ms)
+
+PASS tests/contract/audit-log-roles.test.js
+  √ sin token responde 401 (18 ms)
+  √ un token inválido responde 401 (9 ms)
+  √ ADMIN consulta la bitácora (200) con la forma del contrato (514 ms)
+  √ recepcion recibe 403 NO_AUTORIZADO, también con filtros (485 ms)
+  √ mecanico recibe 403 NO_AUTORIZADO, también con filtros (501 ms)
+  √ con un rol no autorizado el 403 se responde antes de validar los filtros (no se revela nada) (476 ms)
+  √ ADMIN con un filtro inválido recibe 400 (no 500) (495 ms)
+
+PASS tests/integration/orders-assignment.test.js
+  √ la recepción asigna, reasigna y libera mecánicos (FR-009) (658 ms)
+  √ rechaza mecánicos inexistentes, inactivos o de otro rol (FR-008) (576 ms)
+  √ el mecánico no puede asignar ni liberar (RN-15) (533 ms)
+  √ la reasignación está prohibida en órdenes ENTREGADO (RN-9) (476 ms)
+  √ el mecánico solo ve y accede a sus propias órdenes (CA-3, RN-15) (552 ms)
+
+PASS tests/integration/order-totals-parts.test.js
+  √ agregar una refacción con precio refleja unitPrice, amount y el total (CA-3, CA-6) (504 ms)
+  √ cambiar el precio no altera el total ya registrado (CA-4) (470 ms)
+  √ el mismo cambio de precio sí eleva el importe al agregar la refacción a una orden nueva (CA-5) (460 ms)
+  √ los totales no arrastran error de coma flotante: 0.10 + 0.20 es exactamente 0.30 (CA-5) (391 ms)
+  √ el importe de una refacción con decimales es exacto: 1.15 × 3 = 3.45 (CA-5) (428 ms)
+
+PASS tests/integration/users.test.js
+  √ el administrador crea, consulta y edita usuarios (414 ms)
+  √ crear un usuario con username o email duplicado responde 409 (609 ms)
+  √ la gestión de usuarios responde 403 para roles no autorizados (237 ms)
+  √ no se puede desactivar al único administrador activo (ULTIMO_ADMIN) (737 ms)
+  √ un usuario desactivado pierde el acceso y lo recupera al reactivarse (FR-015) (631 ms)
+
+PASS tests/integration/payments-validation.test.js
+  √ un monto en cero o negativo se rechaza con DATOS_INVALIDOS (400, caso límite) (581 ms)
+  √ un monto mayor al saldo pendiente se rechaza con el saldo en details (409) (540 ms)
+  √ una orden cancelada rechaza pagos con ORDER_CANCELLED (409, FR-020) (518 ms)
+  √ el rol mecánico no puede registrar ni consultar pagos (403, RN-15) (530 ms)
+  √ administración y recepción pueden registrar pagos (FR-005) (540 ms)
+
+PASS tests/integration/parts-price-limits.test.js
+  √ el precio de venta y el de compra rechazan negativos, no numéricos y 3 decimales (CA-2) (442 ms)
+  √ un precio de 999,999.99 se acepta y de 1,000,000.00 se rechaza en venta y compra (CA-2) (304 ms)
+  √ el importe de una partida rechaza inválidos y más de 999,999.99 (CA-2) (314 ms)
+  √ un total de 99,999,999.99 se acepta y uno mayor responde 422 sin cambiar la orden (CA-2) (486 ms)
+  √ agregar una refacción que rebasa el total responde 422 sin tocar stock ni orden (CA-2) (405 ms)
+  √ dos líneas idénticas de servicio o mano de obra pueden coexistir, sin 409 (decisión H-14) (292 ms)
+
+PASS tests/integration/tickets-taller-snapshot.test.js
+  √ el ticket nuevo guarda y muestra los datos vigentes del taller (CA-1) (470 ms)
+  √ cambiar la configuración después NO cambia un ticket ya emitido con instantánea (CA-1) (421 ms)
+  √ un ticket emitido después del cambio usa los datos nuevos mientras el anterior conserva los suyos (457 ms)
+  √ un ticket anterior al sprint (sin instantánea) muestra los datos vigentes (422 ms)
+  √ sin configuración guardada el ticket usa los valores de respaldo de antes (CA-3) (423 ms)
+  √ el resto del contenido del ticket no cambia (folio, importes y pagos) (405 ms)
+
+PASS tests/integration/parts.test.js
+  √ el alta con stock inicial crea la refacción y registra el movimiento IN (433 ms)
+  √ un código duplicado se rechaza con PART_DUPLICATE (409) (437 ms)
+  √ la edición cambia nombre, mínimo y estado pero nunca el stock directamente (398 ms)
+  √ la inactivación es baja lógica: la refacción sigue consultable y conserva su stock (379 ms)
+  √ una refacción inexistente responde PART_NOT_FOUND (404) (348 ms)
+  √ los endpoints de refacciones son solo de administración (RN-15) (377 ms)
+
+PASS tests/contract/parts.contract.test.js
+  √ POST /api/parts sigue la forma del contrato (261 ms)
+  √ PUT /api/parts/:id sigue la forma del contrato (239 ms)
+  √ POST /api/parts/:id/movements devuelve stockResult y el error usa el formato centralizado (299 ms)
+  √ el stock insuficiente responde PART_SIN_STOCK con details.stockDisponible (300 ms)
+  √ la refacción incluye salePrice en alta, consulta y edición (FR-001) (275 ms)
+  √ el alta y la edición de precios son solo de administración (FR-002, CA-16) (576 ms)
+
+PASS tests/integration/reports-parts-rotation.test.js
+  refacciones: costo, venta y margen por uso
+    √ ventas = precio congelado × cantidad, costo = compra vigente × cantidad, margen en centavos (94 ms)
+    √ el costo es el precio de compra VIGENTE: si cambió después del uso, se usa el actual (57 ms)
+    √ un uso sin precio de compra es «sin costo»: costo y margen null y fuera de los totales (nunca costo 0) (79 ms)
+    √ un uso sin precio de venta es «sin precio»: ventas y margen null y fuera de los totales (59 ms)
+    √ un uso sin precio de compra y sin precio de venta cuenta en los dos contadores (65 ms)
+    √ precio de venta 0 (obsequio) es un precio válido: ventas 0 y margen negativo (63 ms)
+    √ precio de compra 0 es un costo válido (no «sin costo») (53 ms)
+    √ los totales son enteros exactos (3 × 33.33 = 99.99; 0.1 + 0.2 = 30 centavos) (58 ms)
+    √ las refacciones inactivas siguen apareciendo en sus usos históricos (51 ms)
+  refacciones: población
+    √ solo órdenes TERMINADO y ENTREGADO dentro del rango inclusivo (72 ms)
+    √ rango sin usos: totales en 0, lista vacía y una sola página (44 ms)
+    √ ordena por la orden cerrada más reciente primero (44 ms)
+  refacciones: paginación y totales
+    √ 50 por página por omisión; los totales cubren TODAS las líneas, no solo la página (70 ms)
+    √ limite de 1 a 100; la página 2 trae filas distintas a la 1 (67 ms)
+    √ una página más allá de la última devuelve datos vacíos con los totales (51 ms)
+    √ limite=0 → 400 DATOS_INVALIDOS (40 ms)
+    √ limite=101 → 400 DATOS_INVALIDOS (42 ms)
+    √ limite=-1 → 400 DATOS_INVALIDOS (43 ms)
+    √ limite=abc → 400 DATOS_INVALIDOS (61 ms)
+    √ limite vacío → 400 DATOS_INVALIDOS (76 ms)
+    √ pagina=0 → 400 DATOS_INVALIDOS (46 ms)
+    √ pagina=-2 → 400 DATOS_INVALIDOS (313 ms)
+    √ pagina=1.5 → 400 DATOS_INVALIDOS (69 ms)
+    √ el rango se valida antes que la paginación (RANGO_INVALIDO) (41 ms)
+  rotación de inventario
+    √ unidades OUT del rango entre la existencia actual (49 ms)
+    √ IN y ADJUSTMENT no cuentan; las salidas fuera del rango tampoco (54 ms)
+    √ existencia 0 → «sin existencia» (rotación null), al final de la lista (63 ms)
+    √ las refacciones inactivas se excluyen; las activas sin salidas aparecen con rotación 0 (40 ms)
+    √ ordena por rotación descendente y, a igualdad, por nombre; «sin existencia» al final (43 ms)
+    √ una salida guardada con signo negativo cuenta como unidades positivas (36 ms)
+    √ la rotación se redondea a dos decimales (48 ms)
+    √ pagina de 50 en 50 por omisión y respeta limite (61 ms)
+    √ sin refacciones activas → lista vacía y una sola página (42 ms)
+    √ no expone precios ni datos de compra (46 ms)
+  rango inválido y compuerta (ambos reportes)
+    √ parts: sin rango → 400 RANGO_INVALIDO (47 ms)
+    √ rotation: sin rango → 400 RANGO_INVALIDO (41 ms)
+    √ parts: más de 366 días → 400 RANGO_INVALIDO (32 ms)
+    √ rotation: más de 366 días → 400 RANGO_INVALIDO (30 ms)
+    √ parts: una carga de inyección se rechaza y las tablas quedan intactas (41 ms)
+    √ rotation: una carga de inyección se rechaza y las tablas quedan intactas (43 ms)
+    √ parts: con una versión de términos sin aceptar responde 403 TERMS_NOT_ACCEPTED (46 ms)
+    √ rotation: con una versión de términos sin aceptar responde 403 TERMS_NOT_ACCEPTED (49 ms)
+
+PASS tests/integration/history.test.js
+  √ el historial lista solo terminadas y entregadas en orden cronológico (449 ms)
+  √ el parámetro orden=asc invierte el orden del historial (445 ms)
+  √ un vehículo sin órdenes terminadas devuelve historial vacío sin error (372 ms)
+  √ un vehículo inexistente responde VEHICULO_NO_DISPONIBLE (404) (368 ms)
+  √ el historial está disponible para los tres roles del taller (404 ms)
+  √ sin token el historial responde NO_AUTENTICADO (365 ms)
+
+PASS tests/integration/orders-status.test.js (5.745 s)
+  √ la secuencia completa RECIBIDO a ENTREGADO funciona (CA-5) (612 ms)
+  √ la pausa ESPERANDO_REFACCION regresa al estado de origen (559 ms)
+  √ los retrocesos permitidos funcionan para el mecánico dueño (566 ms)
+  √ los saltos de secuencia son solo del administrador (605 ms)
+  √ DIAGNOSTICO a RECIBIDO solo lo hace el administrador (565 ms)
+  √ la entrega es de recepción/administración, nunca del mecánico (569 ms)
+  √ la cancelación es de recepción/administración y bloquea en ENTREGADO (893 ms)
+  √ el mecánico no cambia estados de órdenes ajenas (RN-15) (359 ms)
+
+PASS tests/integration/tickets.test.js
+  √ el primer acceso emite el ticket con folio, datos y estado de cobro (escenario 1) (377 ms)
+  √ el ticket reutiliza su folio y refleja el cobro más reciente (escenarios 2 y 3) (387 ms)
+  √ una orden cancelada no admite ticket y la inexistente responde 404 (346 ms)
+  √ el rol mecánico no puede emitir tickets (403, RN-15) y sin token 401 (339 ms)
+
+PASS tests/integration/parts-search.test.js
+  √ la búsqueda q filtra por nombre y por código (447 ms)
+  √ las refacciones inactivas solo las ve el administrador (FR-010) (337 ms)
+  √ el historial de movimientos es solo de administración con autor, fecha y motivo (497 ms)
+  √ una búsqueda sin resultados devuelve lista vacía sin error (598 ms)
+
+PASS tests/integration/parts-purchase-price.test.js
+  √ el alta guarda categoría, marca y precio de compra y se vuelven a consultar (CA-1) (317 ms)
+  √ la edición modifica y limpia categoría, marca y precio de compra (CA-1) (332 ms)
+  √ una categoría fuera del catálogo se rechaza y no cambia los datos (CA-1) (284 ms)
+  √ la marca de 50 caracteres se acepta y la de 51 se rechaza (CA-1) (273 ms)
+  √ una refacción sin categoría ni marca se acepta y se consulta con nulos (CA-1) (279 ms)
+  √ un precio de compra negativo o con más de 2 decimales se rechaza (CA-1) (264 ms)
+  √ un precio de venta menor al de compra se guarda con advertencia (FR-004) (311 ms)
+  √ un precio de venta igual o mayor al de compra no genera advertencia (FR-004) (256 ms)
+
+PASS tests/integration/auth.test.js
+  √ el login funciona con el nombre de usuario (311 ms)
+  √ el login funciona con el correo electrónico en el mismo campo (RN-16) (253 ms)
+  √ una contraseña incorrecta responde 401 con mensaje genérico (256 ms)
+  √ un usuario inexistente responde igual que una contraseña incorrecta (17 ms)
+  √ un usuario desactivado no puede iniciar sesión (124 ms)
+  √ el cambio de contraseña exige sesión, contraseña actual y política (FR-011) (782 ms)
+  √ un token expirado o inválido responde 401 SESION_EXPIRADA (13 ms)
+
+PASS tests/integration/payments.test.js
+  √ un pago total en efectivo liquida la orden y queda asociado (escenarios 1 y 6) (397 ms)
+  √ los pagos parciales muestran saldo y la orden se liquida al completarse (escenario 2) (487 ms)
+  √ una orden sin importes no admite pagos absurdos pero se muestra sin saldo (caso límite) (320 ms)
+  √ la orden inexistente responde 404 y sin token 401 (316 ms)
+  √ varios pagos con decimales liquidan la orden con saldo exactamente $0 (CA-5) (366 ms)
+  √ un saldo con decimales se calcula en centavos: 1000.10 − 333.33 = 666.77 (CA-5) (304 ms)
+
+PASS tests/integration/payments-parts-total.test.js
+  √ el resumen de pagos suma las refacciones y el saldo parte del total completo (CA-12) (582 ms)
+  √ un pago en orden con total incompleto se rechaza con TOTAL_INCOMPLETO antes que PAYMENT_EXCEEDS_BALANCE (CA-10) (311 ms)
+  √ el cobro digital también se bloquea con TOTAL_INCOMPLETO sin crear el cobro (CA-10) (292 ms)
+  √ una orden liquidada con usos sin precio conserva su total histórico y deja ver el resumen (FR-016) (338 ms)
+
+
+T133/T134 - Rendimiento de los reportes del Sprint 7 (bloque P3) en motorix_test
+Volumen: 1500 órdenes cerradas (1000 en el rango y 500 fuera), 3000 usos de refacciones, 500 refacciones, 5000 movimientos, 2000 pagos, 2000 líneas de servicio y 1500 de mano de obra.
+Método: 1 llamada de calentamiento descartada y 5 medidas por reporte con performance.now() (petición HTTP completa con autenticación). Límites: máximo < 2000 ms y <= 6 consultas SQL por petición.
+
+rango	reporte	máximo (ms)	promedio (ms)	consultas SQL
+mes (30 días)	income	16.5	14.4	3
+mes (30 días)	services	31.2	21.9	2
+mes (30 días)	productivity	34.2	24.9	2
+mes (30 días)	parts	54.3	44.0	3
+mes (30 días)	rotation	41.2	27.0	3
+año (366 días)	income	10.9	9.4	3
+año (366 días)	services	34.6	25.8	2
+año (366 días)	productivity	36.7	24.2	2
+año (366 días)	parts	67.4	45.8	3
+año (366 días)	rotation	35.8	29.1	3
+
+Peor tiempo: 67.4 ms (límite 2000 ms). Máximo de consultas: 3 (límite 6).
+PASS tests/integration/reports-performance.test.js
+  √ cada reporte responde en menos de 2 s y con 6 consultas SQL o menos (volumen ampliado) (2401 ms)
+
+PASS tests/integration/inventory.test.js
+  √ una entrada IN suma al stock de la refacción (357 ms)
+  √ un AJUSTE con signo suma o resta según corresponda (267 ms)
+  √ un AJUSTE que dejaría stock negativo se rechaza sin modificar el stock (Q3, RN-8) (290 ms)
+  √ un movimiento con cantidad 0 se rechaza con MOVEMENT_INVALID (422) (256 ms)
+  √ el movimiento sin motivo se rechaza con DATOS_INVALIDOS (400) (271 ms)
+  √ un tipo de movimiento no admitido públicamente (OUT) se rechaza (259 ms)
+  √ el stock resultante siempre coincide con el acumulado de movimientos (SC-004) (404 ms)
+
+PASS tests/integration/reports-income.test.js
+  solo pagos COMPLETED
+    √ PENDING, EXPIRED y STALE no cuentan (130 ms)
+  rango inclusivo en hora local
+    √ incluye el primer instante del primer día y el último del último; excluye lo de fuera (57 ms)
+    √ un solo día (desde = hasta) incluye todo ese día (68 ms)
+  atajos de mes
+    √ MES_ACTUAL y MES_ANTERIOR devuelven el mes completo con su rango (88 ms)
+  agrupación
+    √ hasta 62 días agrupa por día (AAAA-MM-DD, ascendente, solo días con pagos) (63 ms)
+    √ 62 días agrupa por día y 63 por mes (AAAA-MM) (69 ms)
+  desglose por método
+    √ suma por método, del mayor al menor, y la suma de métodos es el total (55 ms)
+  centavos enteros
+    √ 0.10 + 0.20 son exactamente 30 centavos y los totales coinciden con la suma de los pagos (55 ms)
+    √ coincide con la suma de los pagos COMPLETED de la base (88 ms)
+  criterio del panel de control
+    √ el total y el de hoy coinciden con los cobros del panel (solo COMPLETED) (93 ms)
+  rango sin pagos
+    √ totales en 0 y listas vacías (no es un error) (47 ms)
+    √ un rango futuro tampoco es un error (43 ms)
+  rango inválido
+    √ sin rango → 400 RANGO_INVALIDO (52 ms)
+    √ solo desde → 400 RANGO_INVALIDO (52 ms)
+    √ solo hasta → 400 RANGO_INVALIDO (58 ms)
+    √ formato de fecha → 400 RANGO_INVALIDO (55 ms)
+    √ fecha inexistente → 400 RANGO_INVALIDO (43 ms)
+    √ hasta anterior a desde → 400 RANGO_INVALIDO (43 ms)
+    √ más de 366 días → 400 RANGO_INVALIDO (44 ms)
+    √ periodo inexistente → 400 RANGO_INVALIDO (50 ms)
+    √ periodo junto con fechas → 400 RANGO_INVALIDO (45 ms)
+    √ parámetro vacío → 400 RANGO_INVALIDO (46 ms)
+    √ una carga de inyección en el rango se rechaza y la tabla queda intacta (62 ms)
+    √ un parámetro repetido (arreglo) se rechaza sin error interno (44 ms)
+  forma de la respuesta y no exposición
+    √ solo trae rango, agrupación, totales y desgloses (sin ids, usuarios ni órdenes) (47 ms)
+  compuerta de términos
+    √ con una versión vigente sin aceptar responde 403 TERMS_NOT_ACCEPTED y, tras aceptar, 200 (59 ms)
+
+PASS tests/integration/seed-terms.test.js
+  contenido de la versión 1
+    √ es la versión 1 con id 1 y sus textos tienen una longitud válida (31 ms)
+    √ los términos nombran el uso permitido, la confidencialidad y las cuentas personales (21 ms)
+    √ el aviso de privacidad existe y ambos textos advierten que es una plantilla a revisar (17 ms)
+    √ NO siembra ninguna aceptación (16 ms)
+  bitácora de ejemplo
+    √ siembra cuatro entradas de ejemplo con fechas relativas y sin datos sensibles (18 ms)
+    √ el administrador (tras aceptar) ve las cuatro entradas por la API (222 ms)
+  idempotencia
+    √ aplicarlo dos veces no duplica versiones ni entradas de bitácora (41 ms)
+    √ si el usuario ya publicó su propia versión, no se siembra otra ni se modifica la suya (27 ms)
+    √ si ya hay versiones publicadas con otros números, la vigente sigue siendo la del usuario (150 ms)
+    √ conserva las aceptaciones ya hechas (171 ms)
+    √ no se mezcla con la bitácora real: las entradas reales con los ids 1 a 4 no impiden las de ejemplo (25 ms)
+  compuerta con las cuentas de demostración
+    √ admin ve la pantalla de aceptación en su primer inicio de sesión y no se repite tras aceptar (293 ms)
+    √ recepcion ve la pantalla de aceptación en su primer inicio de sesión y no se repite tras aceptar (269 ms)
+    √ mecanico ve la pantalla de aceptación en su primer inicio de sesión y no se repite tras aceptar (295 ms)
+
+PASS tests/integration/reports-services-productivity.test.js
+  servicios más frecuentes: población
+    √ cuentan las órdenes TERMINADO y ENTREGADO; ningún otro estado (341 ms)
+    √ el rango es inclusivo en hora local y solo cuenta el último cambio de estado (75 ms)
+  servicios más frecuentes: agrupación
+    √ agrupa por tipo y «Sin tipo», con cantidad e importe, por frecuencia descendente (83 ms)
+    √ con la misma cantidad, ordena por nombre; «Sin tipo» no se oculta ni va siempre al final (83 ms)
+    √ un tipo desactivado sigue apareciendo con su nombre (65 ms)
+    √ los importes se suman en centavos exactos (0.10 + 0.20 = 30 centavos) (64 ms)
+    √ las líneas de otras órdenes (fuera de población) no se mezclan (76 ms)
+    √ rango sin órdenes cerradas → lista vacía (no es un error) (72 ms)
+  productividad por mecánico
+    √ número de órdenes e importe de mano de obra por mecánico, con id y nombre (70 ms)
+    √ una orden con varias líneas de servicio y de mano de obra cuenta UNA vez y no multiplica la mano de obra (77 ms)
+    √ las órdenes sin mano de obra cuentan con 0 (57 ms)
+    √ «Sin asignar» (mecánico nulo) sale con mecanico null y siempre al final (94 ms)
+    √ ordena por número de órdenes descendente y, a igualdad, por nombre (63 ms)
+    √ no cuentan las canceladas, las que siguen en trabajo ni las de fuera del rango (61 ms)
+    √ un mecánico desactivado conserva su nombre en el reporte (56 ms)
+    √ del mecánico solo se expone id y nombre (nunca correo, usuario ni hash) (47 ms)
+    √ rango sin órdenes cerradas → lista vacía (41 ms)
+  rango inválido y compuerta (ambos reportes)
+    √ services: sin rango → 400 RANGO_INVALIDO (46 ms)
+    √ productivity: sin rango → 400 RANGO_INVALIDO (51 ms)
+    √ services: más de 366 días → 400 RANGO_INVALIDO (50 ms)
+    √ productivity: más de 366 días → 400 RANGO_INVALIDO (49 ms)
+    √ services: acepta el atajo de mes (48 ms)
+    √ productivity: acepta el atajo de mes (52 ms)
+    √ services: una carga de inyección se rechaza y las tablas quedan intactas (58 ms)
+    √ productivity: una carga de inyección se rechaza y las tablas quedan intactas (55 ms)
+    √ services: con una versión de términos sin aceptar responde 403 TERMS_NOT_ACCEPTED (56 ms)
+    √ productivity: con una versión de términos sin aceptar responde 403 TERMS_NOT_ACCEPTED (74 ms)
+
+PASS tests/integration/orders-detail.test.js
+  √ el detalle muestra cliente, vehículo, kilometraje y estado (FR-015) (393 ms)
+  √ las partidas y entradas del detalle cuadran con los totales (306 ms)
+  √ una orden inexistente responde 404 ORDEN_NO_ENCONTRADA (280 ms)
+  √ no se pueden crear órdenes para vehículos de clientes desactivados (RN-2) (277 ms)
+  √ el mecánico no puede ver el detalle de una orden ajena (RN-15) (403 ms)
+
+PASS tests/integration/digital-payments.test.js
+  √ el cobro digital ofrece un enlace y la verificación lo confirma (escenarios 1 y 2) (429 ms)
+  √ solo hay un cobro digital vigente por orden (PAYMENT_DUPLICATE_PENDING) (286 ms)
+  √ la doble confirmación no duplica el importe cobrado (FR-010) (321 ms)
+  √ un cobro digital antiguo pasa a EXPIRED y no cuenta como cobro (FR-009, SC-007) (360 ms)
+  √ un fallo del proveedor responde MP_PROVIDER_ERROR sin registrar pagos (escenario 5) (301 ms)
+
+PASS tests/integration/parts-sale-price.test.js
+  √ el alta con salePrice guarda el precio y lo devuelve en la consulta (CA-1) (307 ms)
+  √ el alta sin salePrice deja la refacción pendiente de precio (salePrice null) (268 ms)
+  √ la edición asigna, cambia y limpia el precio de venta (316 ms)
+  √ un salePrice negativo se rechaza con DATOS_INVALIDOS sin crear la refacción (CA-2) (298 ms)
+
+PASS tests/contract/settings-roles.test.js
+  √ sin token GET y PUT responden 401 (45 ms)
+  √ ADMIN consulta y edita (200) (523 ms)
+  √ recepcion recibe 403 NO_AUTORIZADO en GET y PUT (492 ms)
+  √ mecanico recibe 403 NO_AUTORIZADO en GET y PUT (530 ms)
+
+PASS tests/integration/order-parts-rejection.test.js
+  √ agregar una refacción sin precio se rechaza con PART_SIN_PRECIO sin tocar nada (CA-8) (552 ms)
+  √ un uso heredado sin precio deja el total incompleto sumando solo las líneas con precio (FR-008) (460 ms)
+  √ retirar una refacción baja el total por su importe (CA-15) (455 ms)
+
+PASS tests/integration/vehicles.test.js
+  √ registrar un vehículo con propietario funciona de extremo a extremo (CA-3) (329 ms)
+  √ los datos obligatorios son placas, marca, modelo y año (clarificación 2) (263 ms)
+  √ no se permite guardar un vehículo sin propietario (RN-1) (300 ms)
+  √ dos vehículos no pueden compartir placas (VEHICULO_DUPLICADO) (276 ms)
+  √ el rol mecánico no puede gestionar vehículos (403) (251 ms)
+
+PASS tests/integration/vehicle-owner.test.js
+  √ la ficha del cliente muestra sus vehículos (FR-007) (354 ms)
+  √ el vehículo muestra a su propietario y la reasociación actualiza ambos lados (282 ms)
+  √ la reasociación rechaza un propietario inexistente o inactivo (361 ms)
+  √ un cliente desactivado no aparece en la consulta de clientes activos (FR-015) (548 ms)
+
+PASS tests/integration/parts-pending-price.test.js
+  √ el filtro pending-price lista solo las refacciones activas sin precio (CA-17) (475 ms)
+  √ el filtro devuelve lista vacía cuando todas las activas tienen precio (425 ms)
+  √ recepción también consulta el filtro de pendientes de precio (427 ms)
+
+PASS tests/integration/part-price-adoption.test.js
+  √ una orden abierta parcialmente pagada adopta el precio y ajusta el saldo (CA-11) (353 ms)
+  √ una orden ya pagada por completo no adopta el precio (total previo, AMB-01) (318 ms)
+  √ una orden abierta con total previo cero y cobrado cero sí adopta el precio (T035) (324 ms)
+  √ una orden entregada o cancelada no adopta el precio (329 ms)
+
+PASS tests/integration/dashboard.test.js
+  √ el panel de administración resume órdenes, citas, mantenimientos, stock y cobros (728 ms)
+  √ el panel rechaza a recepción, al mecánico y a las sesiones sin token (RN-15) (543 ms)
+
+PASS tests/integration/parts-low-stock.test.js
+  √ stock por encima del mínimo no genera la alerta (337 ms)
+  √ llevar el stock hasta el mínimo activa la alerta en la siguiente consulta (268 ms)
+  √ una salida que cruza el mínimo refleja la alerta en la siguiente consulta (311 ms)
+  √ refacciones sin stock mínimo configurado nunca alertan con stock positivo (228 ms)
+
+PASS tests/integration/terms-gate-queries.test.js
+  una sola consulta para autenticar y evaluar los términos
+    √ GET /api/me con la compuerta activa y aceptada emite una consulta (311 ms)
+    √ con la compuerta activa y sin aceptar también es una sola consulta (403) (264 ms)
+    √ una ruta exenta (authBase) no consulta los términos al autenticar (237 ms)
+  presupuesto de consultas de los avisos
+    √ GET /api/notifications de ADMIN con compuerta activa usa 8 consultas o menos (293 ms)
+
+PASS tests/integration/notifications-performance.test.js
+  rendimiento de GET /api/notifications con volumen ampliado (CA-13)
+    √ el volumen sembrado coincide con el definido en el plan (12 ms)
+    √ el máximo de 5 mediciones de admin es menor de 1,000 ms y usa 10 consultas o menos (387 ms)
+    √ el máximo de 5 mediciones de recepcion es menor de 1,000 ms y usa 10 consultas o menos (287 ms)
+    √ el máximo de 5 mediciones de mecanico es menor de 1,000 ms y usa 10 consultas o menos (191 ms)
+
+PASS tests/contract/order-parts.contract.test.js
+  √ POST /api/orders/:id/parts y DELETE siguen la forma del contrato (549 ms)
+  √ los errores de refacciones en orden usan el formato centralizado (479 ms)
+
+PASS tests/integration/history-mileage.test.js
+  √ cada servicio del historial muestra el kilometraje registrado en su momento (376 ms)
+  √ el historial conserva la constancia de la corrección explícita de kilometraje (331 ms)
+  √ dos servicios del mismo vehículo permiten comparar sus kilometrajes en orden (331 ms)
+
+PASS tests/integration/tickets-parts.test.js
+  √ el ticket desglosea las refacciones con precio e importe y su total es idéntico al de la orden (CA-13, CA-14) (400 ms)
+  √ una orden no liquidada con uso sin precio no emite ticket: TOTAL_INCOMPLETO con la lista de refacciones (CA-10) (330 ms)
+  √ una orden liquidada emite el ticket con total histórico y las líneas sin precio marcadas (FR-016, CA-21) (299 ms)
+
+PASS tests/integration/payments-compat.test.js
+  √ los pagos previos se consultan igual y ninguno pasa a STALE (CA-7) (410 ms)
+  √ el ticket ya emitido conserva folio y contenido tras consultar los pagos (CA-7) (382 ms)
+  √ un pago individual conserva su presentación (GET /api/payments/:id) (369 ms)
+
+PASS tests/integration/clients.test.js
+  √ el recepcionista registra y consulta clientes (nombre y teléfono obligatorios) (311 ms)
+  √ sin nombre o sin teléfono el registro se rechaza con DATOS_INVALIDOS (267 ms)
+  √ un correo con formato inválido se rechaza; un correo correcto es válido (281 ms)
+  √ el rol mecánico no puede gestionar clientes (403) (260 ms)
+
+PASS tests/contract/payments.contract.test.js
+  √ GET /api/orders/:id/payments sigue la forma del contrato (378 ms)
+  √ POST /api/orders/:id/payments devuelve el pago creado en 201 (payload directo) (295 ms)
+  √ los errores siguen el envoltorio { error: { codigo, mensaje } } (311 ms)
+
+PASS tests/integration/clients-update.test.js
+  √ editar el teléfono del cliente conserva el dato nuevo y sus vehículos (FR-006) (346 ms)
+  √ una edición con datos inválidos se rechaza y conserva el registro original (771 ms)
+
+PASS tests/contract/auth.contract.test.js
+  √ POST /api/auth/login devuelve token y usuario sin passwordHash (contrato) (310 ms)
+  √ los errores siguen el formato centralizado { error: { codigo, mensaje } } (contrato) (19 ms)
+  √ POST /api/auth/change-password responde 204 sin cuerpo (contrato) (545 ms)
+
+PASS tests/contract/vehicle-history.contract.test.js
+  √ el historial sigue la forma del contrato y nunca expone datos sensibles (494 ms)
+  √ el mecánico también puede consultar el historial de cualquier vehículo (411 ms)
+
+PASS tests/contract/tickets.contract.test.js
+  √ GET /api/tickets/:orderId sigue la forma del contrato (439 ms)
+  √ los errores del ticket siguen el envoltorio centralizado (329 ms)
+
+PASS tests/contract/users.contract.test.js
+  √ las respuestas de usuarios siguen el contrato y nunca exponen passwordHash (432 ms)
+
+PASS tests/contract/orders-work.contract.test.js
+  √ las respuestas de entradas y partidas siguen el contrato (535 ms)
+
+PASS tests/contract/orders-status.contract.test.js
+  √ las respuestas de estado siguen el contrato y el error sugiere opciones válidas (496 ms)
+
+PASS tests/contract/dashboard.contract.test.js
+  √ GET /api/dashboard sigue la forma del contrato (317 ms)
+
+PASS tests/contract/appointments.contract.test.js
+  √ la creación, el listado y los errores de citas siguen el contrato (393 ms)
+
+PASS tests/contract/orders-detail.contract.test.js
+  √ el detalle de la orden cumple la forma del contrato (379 ms)
+
+PASS tests/contract/orders.contract.test.js
+  √ la creación de órdenes sigue la forma del contrato y no expone datos internos (353 ms)
+
+PASS tests/contract/orders-assignment.contract.test.js
+  √ la asignación y el listado siguen la forma del contrato (347 ms)
+
+PASS tests/unit/maintenance-state.test.js
+  √ diasRestantes devuelve días positivos para una fecha futura (1 ms)
+  √ diasRestantes devuelve 0 el día mismo del umbral (ya vencido)
+  √ diasRestantes devuelve negativo para una fecha pasada (1 ms)
+  √ diasRestantes devuelve null sin umbral de fecha
+  √ kmRestantes devuelve la diferencia hasta el kilometraje objetivo (1 ms)
+  √ kmRestantes devuelve 0 o negativo cuando el kilometraje ya alcanzó el objetivo
+  √ kmRestantes devuelve null sin umbral de kilometraje
+  √ esVencido con solo fecha: vencido cuando la fecha llegó (1 ms)
+  √ esVencido con solo kilometraje: vencido cuando el kilometraje alcanzó el objetivo
+  √ esVencido con ambos umbrales: rige el primero de los dos que se cumpla
+  √ esVencido es false para estados COMPLETED y CANCELLED aunque el umbral se cumpla (1 ms)
+  √ proximidad usa el umbral disponible (fecha o kilometraje)
+  √ proximidad con ambos umbrales devuelve la menor de las dos medidas
+  √ proximidad devuelve null sin umbrales
+
+PASS tests/integration/migrations-022-023.test.js
+  migración 022: audit_log
+    √ columnas: usuario nulo, acción y entidad obligatorias, detalle de hasta 255 (17 ms)
+    √ índices por fecha, por usuario y fecha y por acción y fecha (7 ms)
+    √ llave foránea solo hacia users (6 ms)
+    √ una entrada sin usuario (inicio de sesión fallido de una cuenta inexistente) es válida (8 ms)
+    √ una entrada no puede apuntar a un usuario inexistente (11 ms)
+  migración 023: terms_versions
+    √ columnas: versión única, textos obligatorios y publicador opcional (9 ms)
+    √ el número de versión es único y published_by apunta a users (12 ms)
+    √ la versión sembrada puede no tener publicador (published_by nulo) (7 ms)
+  migración 023: terms_acceptances
+    √ columnas obligatorias y llaves foráneas hacia users y terms_versions (8 ms)
+    √ una sola aceptación por usuario y versión (UNIQUE) (20 ms)
+    √ no se puede aceptar una versión inexistente ni por un usuario inexistente (9 ms)
+  limpieza entre suites
+    √ limpiarTablas() vacía audit_log, terms_acceptances y terms_versions (18 ms)
+
+PASS tests/integration/migrations-019-021.test.js
+  migración 019: settings
+    √ tiene clave primaria setting_key, valor obligatorio y updated_by con FK a users (28 ms)
+    √ una clave no se puede repetir (22 ms)
+  migración 020: service_types y order_services.service_type_id
+    √ service_types: nombre único sin distinguir mayúsculas y activo por omisión (22 ms)
+    √ exige al menos un intervalo y valores positivos (CHECK) (33 ms)
+    √ order_services.service_type_id es opcional, tiene FK a service_types e índice (13 ms)
+    √ una línea de servicio existente (sin tipo) queda con service_type_id en NULL (19 ms)
+    √ una línea no puede apuntar a un tipo inexistente (13 ms)
+  migración 021: instantánea del taller en tickets
+    √ tickets tiene shop_name, shop_address y shop_phone nulos (13 ms)
+    √ un ticket creado sin instantánea (como los existentes) queda con las tres columnas en NULL, sin relleno (27 ms)
+
+PASS tests/integration/migration-018.test.js
+  migración 018: esquema
+    √ service_orders tiene status_changed_at NOT NULL con valor por defecto de la hora actual (13 ms)
+    √ existe el índice idx_orders_status_changed sobre (status, status_changed_at) (18 ms)
+    √ una orden nueva recibe status_changed_at con la hora de su creación (17 ms)
+    √ notification_reads: columnas, único (user_id, notification_key) y FK a users (10 ms)
+    √ client_notices: columnas, único (notice_type, fact_id), índice por cliente y FK a clients y users (9 ms)
+    √ un mismo hecho no puede avisarse dos veces (restricción única) (21 ms)
+  migración 018: relleno de las órdenes existentes
+    √ el relleno copia updated_at a status_changed_at y NO altera updated_at (14 ms)
+    √ el relleno asigna explícitamente updated_at = updated_at (evita ON UPDATE CURRENT_TIMESTAMP) (6 ms)
+
+PASS tests/unit/payment-digital.test.js
+  √ el estado de cobro se deriva del total y lo cobrado (FR-004) (2 ms)
+  √ un cobro digital caduca recién después de las 24 horas (FR-009) (1 ms)
+  √ el plazo de caducidad usado por el modelo es de 24 horas
+
+PASS tests/unit/part-model-purchase-price.test.js
+  √ aObjeto sin opción omite purchasePrice: la clave ni siquiera existe (5 ms)
+  √ aObjeto con incluirPrecioCompra: false también lo omite
+  √ aObjeto solo incluye purchasePrice cuando se pide de forma explícita (1 ms)
+  √ un índice de Array.map no se interpreta como la opción (regresión de findAll) (2 ms)
+
+PASS tests/unit/order-totals-parts.test.js
+  √ una orden sin refacciones suma solo servicios y mano de obra (CA-7) (2 ms)
+  √ una orden sin nada registrado tiene total $0 y completo
+  √ las refacciones suman unit_price × cantidad al total (CA-6) (1 ms)
+  √ un uso sin precio marca el total como incompleto (FR-008) (1 ms)
+
+PASS tests/unit/maintenance-proximo-margenes.test.js
+  √ las constantes del Sprint 6 siguen exportadas como valores de respaldo (3 ms)
+  márgenes explícitos por fecha
+    √ a 15 días del umbral es próximo (1 ms)
+    √ a 16 días del umbral ya no es próximo (1 ms)
+    √ un margen mayor al de respaldo amplía lo que es próximo (1 ms)
+  márgenes explícitos por kilometraje
+    √ a 500 km del umbral es próximo (1 ms)
+    √ a 501 km del umbral ya no es próximo (1 ms)
+  sin márgenes se usan los de respaldo
+    √ 30 días sí y 31 no (1 ms)
+    √ 1,000 km sí y 1,001 no (2 ms)
+    √ márgenes parciales usan el respaldo para lo que falte (1 ms)
+  lo vencido nunca es próximo, con cualquier margen
+    √ un mantenimiento vencido por fecha no es próximo aunque el margen sea enorme (1 ms)
+    √ uno cancelado o completado nunca es próximo (1 ms)
+
+PASS tests/unit/csv.test.js
+  BOM y separadores
+    √ el cuerpo empieza con el BOM de UTF-8 (2 ms)
+    √ encabezados y filas van separados por coma y terminan en CRLF
+    √ sin filas devuelve solo los encabezados
+    √ las celdas nulas o indefinidas salen vacías
+  comillas, comas y saltos de línea
+    √ una celda con coma va entre comillas
+    √ las comillas dobles internas se duplican y la celda va entre comillas
+    √ un salto de línea (LF, CR o CRLF) dentro de la celda se conserva entre comillas (1 ms)
+    √ una celda sin caracteres especiales no lleva comillas
+    √ una fila con celdas especiales se serializa completa
+  acentos y eñes
+    √ se conservan tal cual (el BOM y UTF-8 se encargan de Excel) (2 ms)
+  importes en centavos
+    √ 123450 centavos → 1234.50
+    √ 5 centavos → 0.05
+    √ 0 centavos → 0.00 (1 ms)
+    √ 100 centavos → 1.00
+    √ 99999999 centavos → 999999.99
+    √ 9999999999 centavos → 99999999.99
+    √ -1250 centavos → -12.50
+    √ -5 centavos → -0.05
+    √ un importe negativo NO se neutraliza (es un número, no una fórmula)
+    √ un importe nulo (por ejemplo «sin costo») sale vacío (1 ms)
+    √ los números simples (cantidades) salen sin formato especial y los negativos tampoco se neutralizan
+    √ un importe no entero o no numérico se rechaza (los reportes trabajan en centavos enteros) (7 ms)
+  neutralización de fórmulas
+    √ «=SUM(A1:A9)» se neutraliza anteponiendo una comilla simple (1 ms)
+    √ «+cmd|calc» se neutraliza anteponiendo una comilla simple
+    √ «-2+3» se neutraliza anteponiendo una comilla simple
+    √ «@SUM(1)» se neutraliza anteponiendo una comilla simple
+    √ «	=1+1» se neutraliza anteponiendo una comilla simple
+    √ «=1+1» se neutraliza anteponiendo una comilla simple
+    √ «=HYPERLINK("http://x","clic")» se neutraliza anteponiendo una comilla simple
+    √ «=1,2» se neutraliza anteponiendo una comilla simple
+    √ el carácter solo «=» también se neutraliza (1 ms)
+    √ el carácter solo «+» también se neutraliza
+    √ el carácter solo «-» también se neutraliza
+    √ el carácter solo «@» también se neutraliza
+    √ solo cuenta el PRIMER carácter: un signo en medio no se toca
+    √ la neutralización aplica también a los encabezados (1 ms)
+    √ una fila de reporte con una descripción maliciosa sale neutralizada y el resto intacto
+    √ no se neutraliza dos veces ni se altera un texto que ya empieza con una comilla simple
+
+PASS tests/unit/notification-keys.test.js
+  construirClave
+    √ arma la clave de ["MANTENIMIENTO",12,"VENCIDO"] (4 ms)
+    √ arma la clave de ["MANTENIMIENTO",12,"PROXIMO"]
+    √ arma la clave de ["CITA",7,"HOY"]
+    √ arma la clave de ["STOCK",7,"BAJO"] (1 ms)
+    √ arma la clave de ["STOCK",7,"AGOTADO"] (1 ms)
+    √ arma la clave de ["ORDEN",5,"DETENIDA"]
+    √ acepta el identificador como texto numérico (1 ms)
+    √ un cambio de estado cambia la clave (el aviso que empeora vuelve como no leído) (2 ms)
+    √ rechaza tipo desconocido (20 ms)
+    √ rechaza estado que no corresponde al tipo (1 ms)
+    √ rechaza estado desconocido (1 ms)
+    √ rechaza identificador cero
+    √ rechaza identificador negativo
+    √ rechaza identificador decimal (1 ms)
+    √ rechaza identificador no numérico
+    √ rechaza identificador ausente (3 ms)
+  esClaveValida y descomponerClave
+    √ acepta la clave MANTENIMIENTO:12:VENCIDO y la descompone
+    √ acepta la clave MANTENIMIENTO:12:PROXIMO y la descompone (1 ms)
+    √ acepta la clave CITA:7:HOY y la descompone
+    √ acepta la clave STOCK:7:BAJO y la descompone
+    √ acepta la clave STOCK:7:AGOTADO y la descompone
+    √ acepta la clave ORDEN:5:DETENIDA y la descompone
+    √ descompone en tipo, identificador numérico y estado (1 ms)
+    √ rechaza una clave vacía (1 ms)
+    √ rechaza una clave sin formato
+    √ rechaza una clave faltan segmentos
+    √ rechaza una clave sobran segmentos
+    √ rechaza una clave identificador no numérico (1 ms)
+    √ rechaza una clave identificador con ceros a la izquierda
+    √ rechaza una clave identificador cero
+    √ rechaza una clave minúsculas
+    √ rechaza una clave estado que no corresponde al tipo
+    √ rechaza una clave tipo desconocido (2 ms)
+    √ rechaza una clave espacios
+    √ rechaza un valor que no es texto (undefined)
+    √ rechaza un valor que no es texto (null)
+    √ rechaza un valor que no es texto (12)
+    √ rechaza un valor que no es texto ({})
+    √ rechaza un valor que no es texto ([])
+    √ rechaza una clave de más de 80 caracteres (1 ms)
+    √ toda clave válida cabe en la columna notification_key (80 caracteres)
+
+PASS tests/unit/settings-rules.test.js
+  valores de respaldo
+    √ repiten exactamente los valores de las constantes anteriores (2 ms)
+    √ las claves tienen el nombre acordado (1 ms)
+    √ los límites son los de data-model.md (1 ms)
+  resolverValor (valor guardado o respaldo)
+    √ sin valor guardado devuelve el respaldo
+    √ un entero guardado válido se convierte a número (1 ms)
+    √ un valor guardado inválido o fuera de rango cae al respaldo (1 ms)
+    √ un nombre vacío guardado cae al respaldo; una dirección vacía es válida
+  validarAjustes: datos del taller
+    √ acepta un subconjunto válido y devuelve solo los cambios enviados (1 ms)
+    √ rechaza un nombre vacío o de más de 100 caracteres (1 ms)
+    √ rechaza una dirección de más de 150 caracteres y acepta una vacía (1 ms)
+    √ rechaza un teléfono con letras o de más de 30 caracteres
+    √ rechaza valores que no son texto
+  validarAjustes: operación
+    √ acepta los límites inclusivos
+    √ rechaza margenProximoDias = 0 (fuera de límites)
+    √ rechaza margenProximoDias = 366 (fuera de límites)
+    √ rechaza margenProximoKm = 99 (fuera de límites)
+    √ rechaza margenProximoKm = 50001 (fuera de límites) (1 ms)
+    √ rechaza diasOrdenDetenida = 0 (fuera de límites)
+    √ rechaza diasOrdenDetenida = 91 (fuera de límites)
+    √ rechaza un margen que no es un entero ("15")
+    √ rechaza un margen que no es un entero (2.5)
+    √ rechaza un margen que no es un entero (null)
+    √ rechaza un margen que no es un entero (NaN)
+    √ rechaza un margen que no es un entero (true)
+    √ rechaza un margen que no es un entero ("abc")
+  validarAjustes: forma del cuerpo
+    √ un cuerpo vacío o sin grupos se rechaza
+    √ un grupo o campo desconocido se rechaza
+    √ el grupo seguridad se rechaza mientras no esté habilitado (se entrega en P2)
+    √ con el grupo seguridad habilitado valida de 5 a 120 minutos (1 ms)
+    √ un solo error invalida todo el guardado (no hay cambios parciales)
+    √ los mensajes están en español (1 ms)
+
+PASS tests/unit/validators/part-validator-part-price.test.js
+  √ un salePrice decimal no negativo no produce errores (2 ms)
+  √ un salePrice igual a cero es válido (obsequio) (1 ms)
+  √ un salePrice nulo deja la refacción pendiente de precio sin errores
+  √ un salePrice ausente no produce errores
+  √ un salePrice negativo se rechaza con mensaje claro (2 ms)
+  √ un salePrice no numérico se rechaza con mensaje claro
+  √ un salePrice con más de dos decimales se rechaza (1 ms)
+
+PASS tests/unit/validators/appointment-validator.test.js
+  √ una cita válida no produce errores (2 ms)
+  √ los campos obligatorios son cliente, vehículo, fecha, hora y motivo (1 ms)
+  √ rechaza una fecha anterior a hoy
+  √ rechaza formatos de fecha u hora inválidos (1 ms)
+  √ la cancelación exige motivo y solo acepta estados válidos
+
+PASS tests/unit/services/order-state.test.js
+  √ el mecánico dueño avanza en la secuencia de trabajo (3 ms)
+  √ recepción y administración también pueden avanzar los estados de trabajo (1 ms)
+  √ el mecánico no puede operar una orden que no es suya (1 ms)
+  √ la pausa por refacción regresa al estado desde el que se pausó (1 ms)
+  √ los retrocesos permitidos funcionan para el mecánico dueño
+  √ DIAGNOSTICO a RECIBIDO solo lo hace el administrador
+  √ los saltos de secuencia solo los hace el administrador
+  √ la entrega es de recepción y administración, nunca del mecánico
+  √ ENTREGADO y CANCELADA son estados finales sin transiciones
+  √ la cancelación la hacen recepción o administración desde cualquier estado previo
+  √ permanecer en el mismo estado no es una transición válida
+  √ faltan datos obligatorios para validar
+
+PASS tests/unit/ticket-folio.test.js
+  √ el folio se genera con el formato TCK-AAAA-NNNN (FR-012) (2 ms)
+  √ el folio válido se reconoce y los formatos ajenos se rechazan (1 ms)
+  √ el año del folio se extrae para auditoría por periodo (1 ms)
+
+PASS tests/unit/report-range.test.js
+  desde y hasta (inclusivos)
+    √ devuelve el rango, los límites SQL (fin exclusivo) y el número de días (2 ms)
+    √ un solo día (desde = hasta) es válido y cuenta 1 día
+    √ el último día del mes y del año termina el día siguiente (sin desbordes) (1 ms)
+    √ las fechas futuras son válidas (un reporte vacío no es un error)
+  periodo
+    √ MES_ACTUAL es el mes completo de «hoy» (1 ms)
+    √ MES_ANTERIOR es el mes completo anterior (1 ms)
+    √ en enero, el mes anterior es diciembre del año previo
+    √ fin de mes: 31 de marzo de 2026 → febrero de 2026 (28 días)
+    √ fin de mes: 31 de marzo de 2024 → febrero bisiesto de 2024 (29 días) (1 ms)
+    √ fin de mes: 31 de enero → diciembre
+    √ fin de mes: 1 de mayo → abril (30 días)
+    √ fin de mes: 29 de febrero de 2024 → enero
+    √ MES_ACTUAL en febrero bisiesto y en diciembre (1 ms)
+    √ el periodo «SEMANA» es inválido
+    √ el periodo «mes_actual» es inválido
+    √ el periodo «MES_SIGUIENTE» es inválido
+    √ el periodo «» es inválido
+    √ el periodo «MES_ACTUAL,MES_ANTERIOR» es inválido (1 ms)
+    √ periodo junto con desde o hasta es ambiguo y se rechaza
+  rangos inválidos
+    √ sin ningún dato de rango se pide indicarlo (1 ms)
+    √ solo desde o solo hasta es incompleto
+    √ la fecha final anterior a la inicial se rechaza con un mensaje claro (1 ms)
+    √ el formato de fecha «2026-13-01» es inválido
+    √ el formato de fecha «2026-02-30» es inválido
+    √ el formato de fecha «2026-00-10» es inválido (1 ms)
+    √ el formato de fecha «2026-11-31» es inválido
+    √ el formato de fecha «2025-02-29» es inválido
+    √ el formato de fecha «26-11-01» es inválido
+    √ el formato de fecha «2026-1-1» es inválido
+    √ el formato de fecha «2026/11/01» es inválido (1 ms)
+    √ el formato de fecha «01-11-2026» es inválido
+    √ el formato de fecha «2026-11-01T00:00:00» es inválido
+    √ el formato de fecha «2026-11-01 » es inválido
+    √ el formato de fecha «ayer» es inválido (1 ms)
+    √ el formato de fecha «» es inválido
+    √ el formato de fecha «2026-11-01'; DROP TABLE payments; --» es inválido
+    √ la fecha final con formato inválido también se señala
+    √ un valor que no es texto (20261101) es inválido
+    √ un valor que no es texto (["2026-11-01"]) es inválido
+    √ un valor que no es texto ({"a": 1}) es inválido (1 ms)
+    √ un valor que no es texto (true) es inválido
+  máximo de 366 días
+    √ el límite es 366
+    √ exactamente 366 días (inclusivos) se acepta, también cruzando un año bisiesto (1 ms)
+    √ 367 días se rechazan
+    √ un año no bisiesto completo (365 días) se acepta y varios años se rechazan (1 ms)
+  agrupación del reporte de ingresos
+    √ hasta 62 días se agrupa por día y desde 63 por mes
+    √ coincide con la duración de dos meses completos y de un trimestre (1 ms)
+
+PASS tests/unit/audit-detail.test.js
+  √ una acción desconocida no tiene detalle (1 ms)
+  catálogo de acciones
+    √ las acciones son las del contrato (2 ms)
+    √ cada acción tiene su tipo de entidad (1 ms)
+  textos del contrato
+    √ inicio de sesión fallido: solo el identificador tecleado
+    √ alta de usuario: el rol (1 ms)
+    √ baja y reactivación no llevan detalle
+    √ cambio de rol: anterior → nuevo (1 ms)
+    √ ajustes: la lista de claves modificadas
+    √ precio de venta: anterior → nuevo con dos decimales y «sin precio» cuando no hay (2 ms)
+    √ publicación de términos: el número de versión (1 ms)
+  lo que NUNCA entra en el detalle (CA-21)
+    √ el precio de compra solo registra que se modificó, sin importes (1 ms)
+    √ los campos secretos que lleguen por error se ignoran en cualquier acción (5 ms)
+    √ un identificador que parece un hash o un token se omite (1 ms)
+  longitudes
+    √ el identificador se trunca a 100 caracteres
+    √ un identificador vacío o ausente se registra como «(vacío)»
+    √ ningún detalle excede 255 caracteres (límite de la columna) (1 ms)
+
+PASS tests/unit/validators/report-validator.test.js
+  errores del catálogo
+    √ RANGO_INVALIDO es 400 con el mensaje indicado (3 ms)
+    √ RANGO_INVALIDO tiene un mensaje por omisión en español (2 ms)
+    √ REPORT_NOT_FOUND es 404 en español (1 ms)
+  validarRangoDeReporte
+    √ acepta desde y hasta y devuelve el rango resuelto (1 ms)
+    √ acepta el periodo MES_ANTERIOR (1 ms)
+    √ un rango inválido devuelve los mensajes y ningún rango (1 ms)
+    √ los demás parámetros de la consulta (pagina, limite) no afectan al rango
+  validarPaginacion
+    √ sin parámetros usa página 1 y 50 por página (1 ms)
+    √ acepta página y límite válidos, incluidos los extremos 1 y 100
+    √ el límite «0» es inválido
+    √ el límite «101» es inválido
+    √ el límite «-5» es inválido
+    √ el límite «1.5» es inválido
+    √ el límite «abc» es inválido (1 ms)
+    √ el límite «» es inválido
+    √ el límite «1e2» es inválido
+    √ el límite « 10» es inválido
+    √ el límite «10 » es inválido
+    √ el límite «0x10» es inválido (1 ms)
+    √ la página «0» es inválida
+    √ la página «-1» es inválida
+    √ la página «1.5» es inválida
+    √ la página «abc» es inválida
+    √ la página «» es inválida
+    √ la página «99999999999» es inválida
+    √ valores que no son texto (arreglos o números) son inválidos
+    √ puede acumular los dos errores
+  esReporteValido
+    √ el catálogo tiene los cinco reportes (1 ms)
+    √ «income» es válido
+    √ «services» es válido
+    √ «productivity» es válido
+    √ «parts» es válido
+    √ «rotation» es válido
+    √ «» no es un reporte
+    √ «INCOME» no es un reporte
+    √ «ingresos» no es un reporte
+    √ «users» no es un reporte
+    √ «../etc/passwd» no es un reporte
+    √ «income;» no es un reporte
+    √ «constructor» no es un reporte
+    √ «__proto__» no es un reporte (1 ms)
+    √ «toString» no es un reporte
+    √ «undefined» no es un reporte
+    √ «null» no es un reporte (1 ms)
+    √ «5» no es un reporte
+
+PASS tests/unit/maintenance-proximo.test.js
+  √ los márgenes son 30 días y 1,000 km (2 ms)
+  esProximo por fecha
+    √ a 30 días del umbral es próximo
+    √ a 31 días del umbral todavía no es próximo
+    √ a 1 día del umbral es próximo
+  esProximo por kilometraje
+    √ a 1,000 km del umbral es próximo (1 ms)
+    √ a 1,001 km del umbral todavía no es próximo
+    √ a 1 km del umbral es próximo
+  esProximo con ambos umbrales
+    √ basta que se cumpla el margen de uno: fecha cercana y kilometraje lejano (1 ms)
+    √ basta que se cumpla el margen de uno: fecha lejana y kilometraje cercano
+    √ si ninguno entra en su margen no es próximo
+  esProximo con un solo umbral
+    √ solo fecha: se evalúa únicamente la fecha (el kilometraje actual no influye)
+    √ solo kilometraje: se evalúa únicamente el kilometraje (la fecha de hoy no influye)
+    √ sin ningún umbral no es próximo
+  esProximo no incluye lo vencido ni lo que no está pendiente
+    √ un mantenimiento vencido por fecha no es próximo (1 ms)
+    √ un mantenimiento vencido por kilometraje no es próximo
+    √ con un umbral vencido y el otro dentro del margen sigue siendo vencido, no próximo
+    √ un mantenimiento COMPLETED nunca es próximo
+    √ un mantenimiento CANCELLED nunca es próximo
+  esVencido conserva su comportamiento actual (sin cambios por esta feature)
+    √ vencido cuando la fecha llegó o el kilometraje se alcanzó (1 ms)
+    √ con ambos umbrales rige el primero que se cumpla
+    √ no está vencido si no está pendiente
+
+PASS tests/unit/validators/order-validator.test.js
+  √ una orden válida no produce errores (2 ms)
+  √ rechaza un payload vacío con mensajes claros (1 ms)
+  √ el kilometraje debe ser un entero mayor o igual a cero (RN-3)
+  √ el motivo es obligatorio y no puede exceder 255 caracteres (1 ms)
+  √ las notas son opcionales pero limitadas a 255 caracteres
+  √ la corrección de kilometraje debe ser booleana si viene
+  √ el mecánico, si viene, debe ser un identificador numérico o null (1 ms)
+
+PASS tests/unit/validators/auth-validator.test.js
+  √ la identificación y la contraseña son obligatorias en el login (2 ms)
+  √ un login con identificación y contraseña no vacíos es válido (1 ms)
+  √ el cambio de contraseña exige la contraseña actual
+  √ la contraseña nueva debe cumplir la política mínima (8+, mayúscula, minúscula, número)
+
+PASS tests/unit/next-service.test.js
+  √ un tipo con días y km: fecha base + días y kilometraje base + km (5 ms)
+  √ un tipo solo con días no calcula kilometraje
+  √ un tipo solo con km no calcula fecha (1 ms)
+  √ con varios tipos usa el menor intervalo de cada dimensión (1 ms)
+  √ sin tipos o sin ningún intervalo válido no hay próximo servicio (null) (3 ms)
+  √ ignora intervalos no positivos o no enteros (1 ms)
+  √ la fecha cruza fin de mes y de año con el formato AAAA-MM-DD (1 ms)
+  √ respeta el año bisiesto (2 ms)
+  √ sin kilometraje base no se calcula el kilometraje aunque haya intervalo (1 ms)
+
+PASS tests/unit/money-cents.test.js
+  √ aCentavos convierte importes con dos decimales a enteros exactos (1 ms)
+  √ aCentavos absorbe el error de coma flotante (0.1 + 0.2 = 30 centavos)
+  √ aCentavos siempre devuelve un entero (1 ms)
+  √ deCentavos devuelve el importe con dos decimales exactos
+  √ sumar en centavos no deja diferencias de redondeo (diferencia $0)
+  √ los límites en centavos son 999,999.99 por precio y 99,999,999.99 por total
+  √ esImporteValido acepta importes no negativos con hasta dos decimales (1 ms)
+  √ esImporteValido rechaza negativos, no numéricos y más de dos decimales
+
+Test Suites: 109 passed, 109 total
+Tests:       1329 passed, 1329 total
+Snapshots:   0 total
+Time:        348.911 s, estimated 480 s
+Ran all test suites.

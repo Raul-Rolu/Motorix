@@ -2,7 +2,8 @@
  * Rutas de los reportes (008-configuracion-seguridad-reportes, T117; FR-028,
  * CA-10). EXCLUSIVAS de ADMIN y de solo lectura: la autorización se valida en el
  * servidor (RN-15) y pasan por `auth`, así que respetan la compuerta de términos.
- * No existen rutas de escritura.
+ * Consultas JSON de los cinco reportes y su exportación CSV (`/:reporte/export`,
+ * T139). No existen rutas de escritura.
  */
 import { Router } from 'express';
 import { auth } from '../middlewares/auth.js';

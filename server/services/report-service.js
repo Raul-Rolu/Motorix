@@ -1,8 +1,8 @@
 /**
  * Servicio de reportes (008-configuracion-seguridad-reportes, T116; FR-023,
  * FR-024, CA-7). Solo ADMIN los consulta (validado en el ruteador, RN-15). Cada
- * función devuelve UNA estructura que usan tanto la respuesta JSON como, más
- * adelante, la exportación a CSV, de modo que pantalla y archivo coincidan.
+ * función devuelve UNA estructura que usan tanto la respuesta JSON como la
+ * exportación a CSV (`exportar`, T139), de modo que pantalla y archivo coincidan.
  *
  * Los importes se calculan y se suman en centavos enteros (`aCentavos` /
  * `deCentavos` de `utils/money.js`); los pesos solo son la presentación.

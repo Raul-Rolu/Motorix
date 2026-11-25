@@ -481,9 +481,10 @@ efecto de escritura es guardar un archivo CSV en el equipo (8.10.3).
 **Estructura de la pantalla** (de arriba abajo, sin tarjetas, separadas por título
 y divisor como la bitácora, 8.9):
 
-1. Encabezado «Reportes» con el botón de ícono «Actualizar» (`Icons.refresh`).
+1. Encabezado «Reportes» con el botón «Exportar CSV» (8.10.3) y el botón de ícono
+   «Actualizar» (`Icons.refresh`).
 2. **Pestañas** (`TabBar`): «Ingresos», «Servicios», «Productividad»,
-   «Refacciones» y «Rotación». Cada tramo del bloque agrega la suya; **todas
+   «Refacciones» y «Rotación»; **todas
    comparten el mismo filtro de rango**, de modo que cambiar de pestaña consulta el
    mismo periodo.
 3. **Filtro de rango**: tres `ChoiceChip` en una fila — «Mes actual» (elegido por

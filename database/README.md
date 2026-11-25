@@ -124,6 +124,14 @@ durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se version
   `SELECT COUNT(*) FROM order_parts WHERE id BETWEEN 9101 AND 9110;` (esperado 10) y
   `SELECT COUNT(*) FROM inventory_movements WHERE id BETWEEN 9101 AND 9120;`
   (esperado 20).
+  Se puede aplicar solo, sin volver a correr los demás seeds, con redirección de
+  entrada (en cmd de Windows):
+  `mysql -u <usuario> -p --default-character-set=utf8mb4 -D <base> < database\seeds
+_demo_reports.sql`.
+  Como el `AUTO_INCREMENT` de las tablas con ids 9101+ avanza, los registros nuevos de
+  `inventory_movements`, `order_parts`, `payments`, `order_services` y `order_labor`
+  continúan desde ahí (`service_orders` desde 9108). No agrega migración: el bloque
+  P3 no necesitó la 024.
 
 > **IDs de los datos de ejemplo.** Las tablas **nuevas** del Sprint 7 (`settings`,
 > `service_types`, `audit_log`, `terms_versions` y `terms_acceptances`) siembran con

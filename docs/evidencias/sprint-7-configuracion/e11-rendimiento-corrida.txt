@@ -1,0 +1,32 @@
+
+> motorix-server@0.1.0 test
+> node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand reports-performance
+
+(node:27036) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+T133/T134 - Rendimiento de los reportes del Sprint 7 (bloque P3) en motorix_test
+Volumen: 1500 órdenes cerradas (1000 en el rango y 500 fuera), 3000 usos de refacciones, 500 refacciones, 5000 movimientos, 2000 pagos, 2000 líneas de servicio y 1500 de mano de obra.
+Método: 1 llamada de calentamiento descartada y 5 medidas por reporte con performance.now() (petición HTTP completa con autenticación). Límites: máximo < 2000 ms y <= 6 consultas SQL por petición.
+
+rango	reporte	máximo (ms)	promedio (ms)	consultas SQL
+mes (30 días)	income	8.8	7.6	3
+mes (30 días)	services	14.4	14.0	2
+mes (30 días)	productivity	21.3	15.1	2
+mes (30 días)	parts	36.7	28.8	3
+mes (30 días)	rotation	22.6	19.5	3
+año (366 días)	income	7.9	6.6	3
+año (366 días)	services	15.6	13.8	2
+año (366 días)	productivity	36.4	20.5	2
+año (366 días)	parts	54.5	34.7	3
+año (366 días)	rotation	30.4	22.0	3
+
+Peor tiempo: 54.5 ms (límite 2000 ms). Máximo de consultas: 3 (límite 6).
+PASS tests/integration/reports-performance.test.js
+  √ cada reporte responde en menos de 2 s y con 6 consultas SQL o menos (volumen ampliado) (1968 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        3.343 s, estimated 4 s
+Ran all test suites matching /reports-performance/i.
