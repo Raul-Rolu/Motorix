@@ -1,0 +1,60 @@
+OK    motorix_test tiene aplicadas las 23 migraciones
+OK    motorix_test está vacía y con los contadores en 1 (base de pruebas desechable)
+--- Corrida 1 de seeds 001-012 ---
+OK    los seeds se aplican sin error (corrida 1)
+{"appointments":5,"audit_log":4,"client_notices":0,"clients":3,"inventory_movements":30,"maintenance_plans":6,"notification_reads":0,"order_entries":5,"order_labor":9,"order_parts":12,"order_services":16,"parts":8,"payments":14,"schema_migrations":23,"service_orders":14,"service_types":4,"settings":7,"terms_acceptances":0,"terms_versions":1,"tickets":2,"users":4,"vehicles":4}
+--- Corrida 2 de seeds 001-012 ---
+OK    los seeds se aplican sin error (corrida 2)
+{"appointments":5,"audit_log":4,"client_notices":0,"clients":3,"inventory_movements":30,"maintenance_plans":6,"notification_reads":0,"order_entries":5,"order_labor":9,"order_parts":12,"order_services":16,"parts":8,"payments":14,"schema_migrations":23,"service_orders":14,"service_types":4,"settings":7,"terms_acceptances":0,"terms_versions":1,"tickets":2,"users":4,"vehicles":4}
+OK    los conteos por tabla son idénticos entre corridas
+OK    las órdenes 9101-9107 existen con los estados y mecánicos del seed
+OK    mecanico2 existe y está INACTIVO
+OK    admin inicia sesión
+OK    admin acepta la versión vigente de los términos
+--- Reportes de MES_ANTERIOR ---
+OK    MES_ANTERIOR: ingresos de la API = suma SQL de pagos COMPLETED
+OK    MES_ANTERIOR: el desglose por método y por periodo suma el total
+OK    MES_ANTERIOR: los pagos del seed 012 suman 4920.5
+OK    MES_ANTERIOR: servicios de la API = líneas e importe SQL de órdenes cerradas
+OK    MES_ANTERIOR: los servicios del seed 012 son 5 líneas por 3180.5
+OK    MES_ANTERIOR: aparecen servicios con tipo y «Sin tipo»
+OK    MES_ANTERIOR: productividad de la API = órdenes y mano de obra SQL
+OK    MES_ANTERIOR: el seed 012 aporta 3 órdenes y 800 de mano de obra
+OK    MES_ANTERIOR: aparece «Sin asignar»
+OK    MES_ANTERIOR: aparecen al menos dos mecánicos
+OK    MES_ANTERIOR: refacciones de la API = líneas, ventas y costo SQL (margen = ventas − costo)
+OK    MES_ANTERIOR: el seed 012 aporta 5 usos, ventas 1290 y costo 908.5
+OK    MES_ANTERIOR: una línea sin costo y una sin precio fuera de los totales
+OK    MES_ANTERIOR: salidas de rotación de la API = suma SQL de movimientos OUT por refacción
+OK    MES_ANTERIOR: la rotación tiene refacciones con salidas
+OK    MES_ANTERIOR: la exportación CSV de income trae encabezado y datos
+OK    MES_ANTERIOR: la exportación CSV de services trae encabezado y datos
+OK    MES_ANTERIOR: la exportación CSV de productivity trae encabezado y datos
+OK    MES_ANTERIOR: la exportación CSV de parts trae encabezado y datos
+OK    MES_ANTERIOR: la exportación CSV de rotation trae encabezado y datos
+--- Reportes de MES_ACTUAL ---
+OK    MES_ACTUAL: ingresos de la API = suma SQL de pagos COMPLETED
+OK    MES_ACTUAL: el desglose por método y por periodo suma el total
+OK    MES_ACTUAL: los pagos del seed 012 suman 4730
+OK    MES_ACTUAL: servicios de la API = líneas e importe SQL de órdenes cerradas
+OK    MES_ACTUAL: los servicios del seed 012 son 5 líneas por 2770
+OK    MES_ACTUAL: aparecen servicios con tipo y «Sin tipo»
+OK    MES_ACTUAL: productividad de la API = órdenes y mano de obra SQL
+OK    MES_ACTUAL: el seed 012 aporta 3 órdenes y 830 de mano de obra
+OK    MES_ACTUAL: aparece «Sin asignar»
+OK    MES_ACTUAL: aparecen al menos dos mecánicos
+OK    MES_ACTUAL: refacciones de la API = líneas, ventas y costo SQL (margen = ventas − costo)
+OK    MES_ACTUAL: el seed 012 aporta 5 usos, ventas 2000 y costo 1362
+OK    MES_ACTUAL: salidas de rotación de la API = suma SQL de movimientos OUT por refacción
+OK    MES_ACTUAL: la rotación tiene refacciones con salidas
+OK    MES_ACTUAL: la exportación CSV de income trae encabezado y datos
+OK    MES_ACTUAL: la exportación CSV de services trae encabezado y datos
+OK    MES_ACTUAL: la exportación CSV de productivity trae encabezado y datos
+OK    MES_ACTUAL: la exportación CSV de parts trae encabezado y datos
+OK    MES_ACTUAL: la exportación CSV de rotation trae encabezado y datos
+--- Corrida 3 de seeds 001-012 (base ya usada) ---
+OK    los seeds se aplican sin error (corrida 3)
+OK    la corrida 3 no cambia ningún conteo (nada se duplica ni se repone)
+OK    fuera de la bitácora y de las aceptaciones (que crea el uso de la API), los conteos son los de las corridas 1 y 2
+OK    motorix_test quedó vacía otra vez
+Resultado: TODO OK

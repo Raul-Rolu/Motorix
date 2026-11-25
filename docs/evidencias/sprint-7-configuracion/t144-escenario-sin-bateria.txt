@@ -1,0 +1,113 @@
+=== A) Base completa (con BAT-12V-60) ===
+{
+ "sembrado": {
+  "movimientos": 20,
+  "usos": 10
+ },
+ "MES_ANTERIOR": {
+  "ingresosCentavos": 707050,
+  "servicios": "Sin tipo:3:125000 | Cambio de aceite:2:120000 | Afinación:1:120050 | Revisión de frenos:1:48000",
+  "productividad": "Mecánico del Taller:2:75000 | Mecánico de Apoyo (ejemplo):1:25000 | Sin asignar:1:20000",
+  "refacciones": {
+   "lineas": 5,
+   "totales": {
+    "ventasCentavos": 129000,
+    "costoCentavos": 90850,
+    "margenCentavos": 38150,
+    "lineasSinCosto": 1,
+    "lineasSinPrecio": 1
+   },
+   "codigos": "BAT-12V-60,DEM-SIN-COSTO,FRN-PAS-220,LUB-0530-1L,FLT-OIL-010"
+  },
+  "rotacion": {
+   "refaccionesActivas": 7,
+   "filas": "DEM-SIN-COSTO:2/3=0.67 | FRN-PAS-220:1/2=0.5 | BAT-12V-60:1/5=0.2 | LUB-0530-1L:4/34=0.12 | FLT-OIL-010:1/11=0.09 | BUJ-IR-001:0/8=0 | COR-DIS-004:0/1=0"
+  }
+ },
+ "MES_ACTUAL": {
+  "ingresosCentavos": 568000,
+  "servicios": "Cambio de aceite:3:195000 | Afinación:1:95000 | Rotación de neumáticos:1:30000 | Sin tipo:1:22000",
+  "productividad": "Mecánico del Taller:3:58000 | Mecánico de Apoyo (ejemplo):1:40000 | Sin asignar:1:15000",
+  "refacciones": {
+   "lineas": 5,
+   "totales": {
+    "ventasCentavos": 200000,
+    "costoCentavos": 136200,
+    "margenCentavos": 63800,
+    "lineasSinCosto": 0,
+    "lineasSinPrecio": 0
+   },
+   "codigos": "FLT-OIL-010,FLT-AIR-000,COR-DIS-004,BUJ-IR-001,LUB-0530-1L"
+  },
+  "rotacion": {
+   "refaccionesActivas": 7,
+   "filas": "COR-DIS-004:1/1=1 | BUJ-IR-001:4/8=0.5 | FLT-OIL-010:3/11=0.27 | LUB-0530-1L:9/34=0.26 | BAT-12V-60:0/5=0 | FRN-PAS-220:0/2=0 | DEM-SIN-COSTO:0/3=0"
+  }
+ },
+ "orden9103": {
+  "services": 550,
+  "labor": 200,
+  "parts": 190,
+  "grand": 940,
+  "totalCompleto": false,
+  "refaccionesSinPrecio": 1
+ }
+}
+
+=== B) Sin BAT-12V-60 (como la base motorix del usuario) ===
+{
+ "sembrado": {
+  "movimientos": 18,
+  "usos": 9
+ },
+ "MES_ANTERIOR": {
+  "ingresosCentavos": 707050,
+  "servicios": "Sin tipo:3:125000 | Cambio de aceite:2:120000 | Afinación:1:120050 | Revisión de frenos:1:48000",
+  "productividad": "Mecánico del Taller:2:75000 | Mecánico de Apoyo (ejemplo):1:25000 | Sin asignar:1:20000",
+  "refacciones": {
+   "lineas": 4,
+   "totales": {
+    "ventasCentavos": 129000,
+    "costoCentavos": 90850,
+    "margenCentavos": 38150,
+    "lineasSinCosto": 1,
+    "lineasSinPrecio": 0
+   },
+   "codigos": "DEM-SIN-COSTO,FRN-PAS-220,LUB-0530-1L,FLT-OIL-010"
+  },
+  "rotacion": {
+   "refaccionesActivas": 6,
+   "filas": "DEM-SIN-COSTO:2/3=0.67 | FRN-PAS-220:1/2=0.5 | LUB-0530-1L:4/34=0.12 | FLT-OIL-010:1/11=0.09 | BUJ-IR-001:0/8=0 | COR-DIS-004:0/1=0"
+  }
+ },
+ "MES_ACTUAL": {
+  "ingresosCentavos": 568000,
+  "servicios": "Cambio de aceite:3:195000 | Afinación:1:95000 | Rotación de neumáticos:1:30000 | Sin tipo:1:22000",
+  "productividad": "Mecánico del Taller:3:58000 | Mecánico de Apoyo (ejemplo):1:40000 | Sin asignar:1:15000",
+  "refacciones": {
+   "lineas": 5,
+   "totales": {
+    "ventasCentavos": 200000,
+    "costoCentavos": 136200,
+    "margenCentavos": 63800,
+    "lineasSinCosto": 0,
+    "lineasSinPrecio": 0
+   },
+   "codigos": "FLT-OIL-010,FLT-AIR-000,COR-DIS-004,BUJ-IR-001,LUB-0530-1L"
+  },
+  "rotacion": {
+   "refaccionesActivas": 6,
+   "filas": "COR-DIS-004:1/1=1 | BUJ-IR-001:4/8=0.5 | FLT-OIL-010:3/11=0.27 | LUB-0530-1L:9/34=0.26 | FRN-PAS-220:0/2=0 | DEM-SIN-COSTO:0/3=0"
+  }
+ },
+ "orden9103": {
+  "services": 550,
+  "labor": 200,
+  "parts": 190,
+  "grand": 940,
+  "totalCompleto": true,
+  "refaccionesSinPrecio": 0
+ }
+}
+
+motorix_test quedó vacía otra vez.

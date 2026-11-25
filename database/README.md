@@ -109,6 +109,22 @@ durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se version
   Se puede aplicar solo, sin volver a correr los demás seeds:
   `mysql -u <usuario> -p --default-character-set=utf8mb4 -D <base> -e "source database/seeds/011_demo_terms.sql"`.
 
+- `012_demo_reports.sql` — **008 (FR-029, CA-12)**: datos para los cinco reportes.
+  Siete órdenes con ids altos **9101–9107** (tres cerradas el mes anterior, tres el
+  actual y una cancelada), con servicios con y sin tipo, mano de obra, 9 pagos, 10
+  usos de refacciones y 20 movimientos de inventario, más el mecánico inactivo
+  `mecanico2` (sin contraseña utilizable) y la refacción `DEM-SIN-COSTO`. Fechas
+  relativas al día de la siembra. Cada orden se omite completa si su id ya existe y
+  la existencia de las refacciones no cambia. Requiere los seeds 001, 002, 004, 005,
+  008 y 010. **Omite sin error los usos cuyo código de refacción no existe**: en la
+  base `motorix` del autor no existe `BAT-12V-60`, así que se omitió ese uso de la
+  orden 9103 y quedaron 9 usos y 18 movimientos en vez de 10 y 20 (cambian solo las
+  líneas de Refacciones y Rotación; ver `t144-escenario-sin-bateria.txt` en
+  `docs/evidencias/sprint-7-configuracion/`). Para comprobar lo sembrado:
+  `SELECT COUNT(*) FROM order_parts WHERE id BETWEEN 9101 AND 9110;` (esperado 10) y
+  `SELECT COUNT(*) FROM inventory_movements WHERE id BETWEEN 9101 AND 9120;`
+  (esperado 20).
+
 > **IDs de los datos de ejemplo.** Las tablas **nuevas** del Sprint 7 (`settings`,
 > `service_types`, `audit_log`, `terms_versions` y `terms_acceptances`) siembran con
 > IDs normales desde 1 (la versión 1 de los términos es el id 1): no hay datos del usuario con
