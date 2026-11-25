@@ -202,11 +202,11 @@ void main() {
 
       await _abrir(tester, 'pestanaRefacciones');
 
-      for (final encabezado in ['Refacción', 'Cant.', 'Precio de venta']) {
+      // Unitario vs. total de la línea: las etiquetas lo dicen y no se repiten con el resumen.
+      for (final encabezado in ['Refacción', 'Cant.', 'Precio unitario', 'Costo total', 'Margen total']) {
         expect(find.text(encabezado), findsOneWidget);
       }
-      expect(find.text('Costo'), findsWidgets); // encabezado de columna y cifra del resumen
-      expect(find.text('Margen'), findsWidgets);
+      expect(find.text('Precio de venta'), findsNothing);
       expect(_en('filaRefaccion-0', 'Pastillas de freno'), findsOneWidget);
       expect(_en('filaRefaccion-0', 'FRN-PAS-220 · Orden #12'), findsOneWidget);
       expect(_en('filaRefaccion-0', '4'), findsOneWidget);
@@ -278,8 +278,8 @@ void main() {
       await _abrir(tester, 'pestanaRefacciones');
 
       expect(find.text('Ventas'), findsOneWidget);
-      expect(find.text('Costo'), findsWidgets);
-      expect(find.text('Margen'), findsWidgets);
+      expect(find.text('Costo'), findsOneWidget);
+      expect(find.text('Margen'), findsOneWidget);
       expect(tester.widget<Text>(find.byKey(const Key('totalVentas'))).data, '\$1800.00');
       expect(tester.widget<Text>(find.byKey(const Key('totalCosto'))).data, '\$1357.00');
       expect(tester.widget<Text>(find.byKey(const Key('totalMargen'))).data, '\$443.00');

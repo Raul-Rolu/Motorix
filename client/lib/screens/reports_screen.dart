@@ -1,5 +1,5 @@
-/// Reportes (008-configuracion-seguridad-reportes, T118, T125 y T132; FR-023,
-/// FR-025, FR-026, CA-6, CA-8).
+/// Reportes (008-configuracion-seguridad-reportes, T118, T125, T132 y T140; FR-023,
+/// FR-025, FR-026, FR-027, CA-6, CA-8, CA-9).
 ///
 /// Solo para ADMIN (la autorización real es del servidor, RN-15). Es de solo
 /// lectura. Pestañas «Ingresos», «Servicios», «Productividad», «Refacciones» y
@@ -69,6 +69,18 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     context.read<ReportsProvider>().seleccionarMesAnterior();
   }
 
+  /// Exporta la pestaña activa a CSV y avisa el resultado (éxito o error sin trazas).
+  Future<void> _exportar() async {
+    final mensajero = ScaffoldMessenger.of(context);
+    final resultado = await context.read<ReportsProvider>().exportar();
+    mensajero.showSnackBar(
+      SnackBar(
+        content: Text(resultado.mensaje),
+        backgroundColor: resultado.exito ? MotorixColores.exito : MotorixColores.error,
+      ),
+    );
+  }
+
   void _consultarRango() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     context.read<ReportsProvider>().aplicarRango(_desde.text, _hasta.text);
@@ -87,6 +99,21 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
           child: Row(
             children: [
               Expanded(child: Text('Reportes', style: Theme.of(context).textTheme.titleLarge)),
+              if (!proveedor.sinPermiso)
+                OutlinedButton.icon(
+                  key: const Key('botonExportarCsv'),
+                  onPressed: proveedor.exportando ? null : _exportar,
+                  icon: proveedor.exportando
+                      ? const SizedBox(
+                          key: Key('exportandoCsv'),
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.download_outlined),
+                  label: const Text('Exportar CSV'),
+                ),
+              const SizedBox(width: MotorixEspaciados.s),
               IconButton(
                 key: const Key('botonRefrescarReportes'),
                 tooltip: 'Actualizar',
@@ -571,9 +598,9 @@ class _EncabezadoRefacciones extends StatelessWidget {
             children: const [
               Expanded(child: Text('Refacción', style: estilo)),
               SizedBox(width: _anchoCantidad, child: Text('Cant.', textAlign: TextAlign.right, style: estilo)),
-              SizedBox(width: _anchoImporte, child: Text('Precio de venta', textAlign: TextAlign.right, style: estilo)),
-              SizedBox(width: _anchoImporte, child: Text('Costo', textAlign: TextAlign.right, style: estilo)),
-              SizedBox(width: _anchoImporte, child: Text('Margen', textAlign: TextAlign.right, style: estilo)),
+              SizedBox(width: _anchoImporte, child: Text('Precio unitario', textAlign: TextAlign.right, style: estilo)),
+              SizedBox(width: _anchoImporte, child: Text('Costo total', textAlign: TextAlign.right, style: estilo)),
+              SizedBox(width: _anchoImporte, child: Text('Margen total', textAlign: TextAlign.right, style: estilo)),
             ],
           ),
         ),

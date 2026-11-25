@@ -15,6 +15,7 @@ import 'package:flutter/foundation.dart';
 
 import '../models/report.dart';
 import '../services/api_client.dart';
+import '../services/csv_export.dart';
 import 'auth_provider.dart';
 
 /// Filtro de rango compartido por las pestañas.
@@ -23,11 +24,22 @@ enum FiltroRango { mesActual, mesAnterior, libre }
 /// Pestañas de la sección «Reportes» (el orden es el de la barra de pestañas).
 enum PestanaReporte { ingresos, servicios, productividad, refacciones, rotacion }
 
+/// Resultado de exportar: éxito (con la ruta guardada) o el mensaje a mostrar.
+class ResultadoExportacion {
+  final bool exito;
+  final String mensaje;
+
+  const ResultadoExportacion(this.exito, this.mensaje);
+}
+
 class ReportsProvider extends ChangeNotifier {
   final ApiClient api;
   final AuthProvider auth;
+  final GuardarArchivo _guardarArchivo;
 
-  ReportsProvider(this.api, this.auth) {
+  /// `guardarArchivo` se inyecta en las pruebas; por omisión guarda en Descargas.
+  ReportsProvider(this.api, this.auth, {GuardarArchivo? guardarArchivo})
+      : _guardarArchivo = guardarArchivo ?? guardarCsvEnDescargas {
     _usuarioId = auth.usuario?.id;
     auth.addListener(_alCambiarSesion);
   }
@@ -50,6 +62,9 @@ class ReportsProvider extends ChangeNotifier {
   /// true si el servidor respondió 403 (el rol no puede ver los reportes).
   bool sinPermiso = false;
 
+  /// true mientras se exporta un reporte a CSV (una sola exportación a la vez).
+  bool exportando = false;
+
   final Map<PestanaReporte, bool> _cargando = {};
   final Map<PestanaReporte, String?> _errores = {};
   final Map<PestanaReporte, int> _generaciones = {};
@@ -58,10 +73,12 @@ class ReportsProvider extends ChangeNotifier {
   final Map<PestanaReporte, int> _paginas = {};
 
   int? _usuarioId;
+  int _exportacion = 0;
   bool _liberado = false;
 
   static const String _mensajeError = 'No se pudo cargar el reporte.';
   static const String _mensajeSinPermiso = 'No tiene permisos para ver los reportes.';
+  static const String _mensajeErrorExportar = 'No se pudo exportar el reporte.';
 
   static const int maximoDias = 366;
   static final RegExp _formatoFecha = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$');
@@ -111,6 +128,8 @@ class ReportsProvider extends ChangeNotifier {
     for (final p in PestanaReporte.values) {
       _generaciones[p] = (_generaciones[p] ?? 0) + 1;
     }
+    _exportacion++;
+    exportando = false;
     _cargando.clear();
     _errores.clear();
     _paginas.clear();
@@ -206,6 +225,61 @@ class ReportsProvider extends ChangeNotifier {
     }
   }
 
+  /// Nombre del reporte en la API (`/reports/<ruta>`).
+  static String rutaDe(PestanaReporte p) => switch (p) {
+        PestanaReporte.ingresos => 'income',
+        PestanaReporte.servicios => 'services',
+        PestanaReporte.productividad => 'productivity',
+        PestanaReporte.refacciones => 'parts',
+        PestanaReporte.rotacion => 'rotation',
+      };
+
+  // ----------------------------------------------------------------- Exportación
+
+  /// Exporta a CSV el reporte de la pestaña activa con el filtro activo (todo el
+  /// rango, sin la página) y lo guarda en Descargas. No cambia lo que se ve. Los
+  /// mensajes son en español y nunca llevan trazas ni rutas del sistema de errores.
+  Future<ResultadoExportacion> exportar() async {
+    if (_liberado || auth.usuario == null) {
+      return const ResultadoExportacion(false, 'Inicie sesión para exportar reportes.');
+    }
+    if (exportando) {
+      return const ResultadoExportacion(false, 'Ya se está exportando un reporte.');
+    }
+    final ruta = rutaDe(pestana);
+    final exportacion = _exportacion;
+    exportando = true;
+    notifyListeners();
+    try {
+      final RespuestaArchivo archivo;
+      try {
+        archivo = await api.descargar('/reports/$ruta/export?$_consulta');
+      } on ExcepcionApi catch (excepcion) {
+        if (excepcion.status == 403 && excepcion.codigo != 'TERMS_NOT_ACCEPTED') {
+          return const ResultadoExportacion(false, 'No tiene permisos para exportar reportes.');
+        }
+        if (excepcion.codigo == 'RANGO_INVALIDO') {
+          return ResultadoExportacion(false, excepcion.mensaje);
+        }
+        return const ResultadoExportacion(false, _mensajeErrorExportar);
+      } catch (_) {
+        return const ResultadoExportacion(false, _mensajeErrorExportar);
+      }
+      try {
+        final nombre = sanearNombreCsv(archivo.contentDisposition, 'motorix-$ruta.csv');
+        final guardado = await _guardarArchivo(nombre, archivo.bytes);
+        return ResultadoExportacion(true, 'Archivo guardado en $guardado.');
+      } catch (_) {
+        return const ResultadoExportacion(false, 'No se pudo guardar el archivo.');
+      }
+    } finally {
+      if (exportacion == _exportacion && !_liberado) {
+        exportando = false;
+        notifyListeners();
+      }
+    }
+  }
+
   // ------------------------------------------------------------------ Consulta
 
   /// Pide otra página de una pestaña paginada (el filtro no cambia).
@@ -241,16 +315,8 @@ class ReportsProvider extends ChangeNotifier {
     }
     notifyListeners();
 
-    final ruta = switch (p) {
-      PestanaReporte.ingresos => 'income',
-      PestanaReporte.servicios => 'services',
-      PestanaReporte.productividad => 'productivity',
-      PestanaReporte.refacciones => 'parts',
-      PestanaReporte.rotacion => 'rotation',
-    };
-
     try {
-      final respuesta = await api.get('/reports/$ruta?${_consultaDe(p)}');
+      final respuesta = await api.get('/reports/${rutaDe(p)}?${_consultaDe(p)}');
       if (generacion != _generaciones[p]) return;
       switch (p) {
         case PestanaReporte.ingresos:

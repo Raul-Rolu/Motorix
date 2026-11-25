@@ -5,7 +5,7 @@
 import { ok } from '../utils/responses.js';
 import { asyncHandler } from '../middlewares/error-handler.js';
 import { errores } from '../utils/errors.js';
-import { validarRangoDeReporte, validarPaginacion } from '../validators/report-validator.js';
+import { validarRangoDeReporte, validarPaginacion, esReporteValido } from '../validators/report-validator.js';
 import * as reportService from '../services/report-service.js';
 
 /** Rango de la consulta o `400 RANGO_INVALIDO`. */
@@ -46,4 +46,23 @@ export const refacciones = asyncHandler(async (req, res) => {
 export const rotacion = asyncHandler(async (req, res) => {
   const rango = rangoDe(req);
   return ok(res, await reportService.rotacion(rango, paginacionDe(req)));
+});
+
+/**
+ * Exportación a CSV: el nombre del reporte se valida antes que el rango; `pagina` y
+ * `limite` se ignoran (se exporta todo el rango, hasta 10,000 filas). No se guarda en
+ * la bitácora (decisión de la spec) y la respuesta no se almacena en cachés.
+ */
+export const exportar = asyncHandler(async (req, res) => {
+  const { reporte } = req.params;
+  if (!esReporteValido(reporte)) {
+    throw errores.reporteNoEncontrado();
+  }
+  const { nombreArchivo, contenido } = await reportService.exportar(reporte, rangoDe(req));
+  res.set({
+    'Content-Type': 'text/csv; charset=utf-8',
+    'Content-Disposition': `attachment; filename="${nombreArchivo}"`,
+    'Cache-Control': 'no-store',
+  });
+  return res.status(200).send(contenido);
 });

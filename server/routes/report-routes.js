@@ -18,3 +18,4 @@ reportRoutes.get('/services', reportController.servicios);
 reportRoutes.get('/productivity', reportController.productividad);
 reportRoutes.get('/parts', reportController.refacciones);
 reportRoutes.get('/rotation', reportController.rotacion);
+reportRoutes.get('/:reporte/export', reportController.exportar);

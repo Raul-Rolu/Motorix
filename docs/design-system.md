@@ -550,9 +550,12 @@ mismo filtro.
   de venta y de compra); un margen negativo se muestra en `error`. Si hay líneas
   incompletas, un aviso en `textSecondary` lo explica («2 líneas sin costo y 1 sin
   precio no se incluyen en estos totales.»). Debajo, la lista densa con encabezado
-  «Refacción», «Cant.», «Precio de venta», «Costo» y «Margen». Cada fila: el nombre en
-  peso 600 y debajo, en `textSecondary`, el código y la orden («FRN-PAS-220 · Orden
-  #12»); el costo y el margen de la línea son importes a la derecha. Las marcas **«sin
+  «Refacción», «Cant.», **«Precio unitario»**, **«Costo total»** y **«Margen total»**.
+  Las etiquetas distinguen lo unitario de lo total de la línea: el precio unitario es
+  el precio de venta de UNA pieza, congelado al usarla; el costo total es el precio de
+  compra vigente × la cantidad, y el margen total es (precio − costo) × la cantidad.
+  Cada fila: el nombre en peso 600 y debajo, en `textSecondary`, el código y la orden
+  («FRN-PAS-220 · Orden #12»); los tres importes van a la derecha. Las marcas **«sin
   costo»** (refacción sin precio de compra: costo y margen no se calculan, nunca con
   costo 0) y **«sin precio»** (uso sin precio de venta) se escriben en texto en color
   `advertencia`, en lugar del importe, y el margen faltante se muestra «—». El precio
@@ -567,10 +570,33 @@ mismo filtro.
   descendente y, a igualdad, por nombre. Misma paginación de 50 en 50. Vacío: «No hay
   refacciones activas.».
 
-**8.10.3 Exportación.** Se documenta aquí antes de construirla (tramo de
-exportación): botón «Exportar CSV» (`OutlinedButton` con `Icons.download_outlined`)
-en el encabezado de cada pestaña, con el rango activo; confirma con un snackbar con
-la ruta del archivo guardado o muestra el error sin trazas.
+**8.10.3 Exportación a CSV.** En el encabezado de la sección, a la izquierda de
+«Actualizar», un `OutlinedButton.icon` **«Exportar CSV»** (`Icons.download_outlined`)
+exporta el reporte de la **pestaña activa** con el **filtro de rango activo**, siempre
+completo (no solo la página que se ve: la paginación no afecta al archivo). No aparece
+si el rol no tiene permiso. Mientras se exporta, el botón se deshabilita y muestra un
+indicador de progreso, de modo que una pulsación repetida no genera dos archivos.
+
+- **Dónde se guarda.** En la carpeta **Descargas** del usuario (con la carpeta
+  temporal solo como respaldo), con el nombre que indica el servidor
+  (`motorix-<reporte>-<desde>-<hasta>.csv`) ya saneado (solo letras, números, guion y
+  punto; si ya existe, se agrega `(1)`, `(2)`…).
+- **Resultado (snackbar, 8.4).** Éxito, en `success`: «Archivo guardado en <ruta>.».
+  Error, en `error` y sin trazas: «No se pudo exportar el reporte.»; si el servidor
+  rechaza el rango o el tamaño se muestra su mensaje en español (por ejemplo «La
+  exportación supera las 10,000 filas; reduzca el rango.»); si el equipo no deja
+  escribir el archivo, «No se pudo guardar el archivo.».
+- **Contenido.** UTF-8 con BOM (Excel respeta acentos y eñes), encabezados en español
+  e importes con punto y dos decimales. Es la **misma información que la pantalla**:
+  cada reporte repite sus filas y, donde la pantalla tiene fila «Total», la agrega al
+  final (en «Refacciones», «Total (líneas completas)» con el aviso de las líneas
+  excluidas; «Refacciones» incluye además el precio de compra unitario, porque solo
+  ADMIN llega a este reporte). Un rango sin datos exporta solo los encabezados. Las
+  celdas de texto que empiezan con `=`, `+`, `-`, `@`, tabulador o retorno de carro
+  salen con una comilla simple delante para que no se interpreten como fórmulas; los
+  importes negativos siguen siendo números.
+- **Límite.** Hasta 10,000 filas por archivo; con más, el servidor responde con un
+  error de rango y se pide reducir el rango.
 
 ---
 

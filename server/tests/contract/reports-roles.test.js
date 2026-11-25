@@ -265,6 +265,81 @@ describe.each([
   });
 });
 
+describe.each(['income', 'services', 'productivity', 'parts', 'rotation'])('GET /api/reports/%s/export', (reporte) => {
+  const ruta = `/api/reports/${reporte}/export?${RANGO}`;
+
+  test('sin token responde 401', async () => {
+    const respuesta = await request(app).get(ruta);
+
+    expect(respuesta.status).toBe(401);
+  });
+
+  test('un token inválido responde 401', async () => {
+    const respuesta = await request(app).get(ruta).set(con('no-es-un-token'));
+
+    expect(respuesta.status).toBe(401);
+  });
+
+  test('ADMIN responde 200 con un CSV y su cabecera de descarga', async () => {
+    const tokens = await crearTokens();
+
+    const respuesta = await request(app).get(ruta).set(con(tokens.admin));
+
+    expect(respuesta.status).toBe(200);
+    expect(respuesta.headers['content-type']).toBe('text/csv; charset=utf-8');
+    expect(respuesta.headers['content-disposition']).toContain(`motorix-${reporte}-2026-11-01-2026-11-30.csv`);
+  });
+
+  test.each(['recepcion', 'mecanico'])('%s recibe 403 NO_AUTORIZADO y ningún archivo', async (usuario) => {
+    const tokens = await crearTokens();
+
+    const respuesta = await request(app).get(ruta).set(con(tokens[usuario]));
+
+    expect(respuesta.status).toBe(403);
+    expect(respuesta.body.error.codigo).toBe('NO_AUTORIZADO');
+    expect(respuesta.headers['content-disposition']).toBeUndefined();
+    expect(respuesta.headers['content-type']).toMatch(/json/);
+  });
+
+  test.each(['recepcion', 'mecanico'])('%s recibe 403 (no 400) aunque el rango sea inválido', async (usuario) => {
+    const tokens = await crearTokens();
+
+    const respuesta = await request(app).get(`/api/reports/${reporte}/export?desde=basura`).set(con(tokens[usuario]));
+
+    expect(respuesta.status).toBe(403);
+  });
+
+  test('no existen rutas de escritura de la exportación', async () => {
+    const tokens = await crearTokens();
+
+    for (const metodo of ['post', 'put', 'patch', 'delete']) {
+      const respuesta = await request(app)[metodo](`/api/reports/${reporte}/export`).set(con(tokens.admin)).send({});
+
+      expect(respuesta.status).toBe(404);
+    }
+  });
+});
+
+describe('exportación de un reporte inexistente', () => {
+  test('ADMIN recibe 404 REPORT_NOT_FOUND', async () => {
+    const tokens = await crearTokens();
+
+    const respuesta = await request(app).get(`/api/reports/users/export?${RANGO}`).set(con(tokens.admin));
+
+    expect(respuesta.status).toBe(404);
+    expect(respuesta.body.error.codigo).toBe('REPORT_NOT_FOUND');
+  });
+
+  test.each(['recepcion', 'mecanico'])('%s recibe 403 (el rol se valida antes que el nombre)', async (usuario) => {
+    const tokens = await crearTokens();
+
+    const respuesta = await request(app).get(`/api/reports/users/export?${RANGO}`).set(con(tokens[usuario]));
+
+    expect(respuesta.status).toBe(403);
+    expect(respuesta.body.error.codigo).toBe('NO_AUTORIZADO');
+  });
+});
+
 describe('no hay rutas de escritura de reportes', () => {
   test.each([
     ['post', '/api/reports/income'],
