@@ -233,3 +233,207 @@ class ReporteProductividad {
   String get etiquetaTotalOrdenes => _plural(totalOrdenes, 'orden', 'órdenes');
   String get rangoTexto => 'Del ${fechaLegible(desde)} al ${fechaLegible(hasta)}';
 }
+
+/// Un uso de una refacción en una orden cerrada (una fila de «Refacciones»). Los
+/// importes que faltan (`sinCosto`, `sinPrecio`) llegan nulos: nunca se muestran
+/// como 0.
+class LineaRefaccion {
+  final int ordenId;
+  final int parteId;
+  final String codigo;
+  final String nombre;
+  final int cantidad;
+  final int? precioVentaCentavos;
+  final int? precioCompraCentavos;
+  final int? ventasCentavos;
+  final int? costoCentavos;
+  final int? margenCentavos;
+  final bool sinCosto;
+  final bool sinPrecio;
+
+  const LineaRefaccion({
+    required this.ordenId,
+    required this.parteId,
+    required this.codigo,
+    required this.nombre,
+    required this.cantidad,
+    this.precioVentaCentavos,
+    this.precioCompraCentavos,
+    this.ventasCentavos,
+    this.costoCentavos,
+    this.margenCentavos,
+    required this.sinCosto,
+    required this.sinPrecio,
+  });
+
+  factory LineaRefaccion.desdeJson(Map<String, dynamic> json) => LineaRefaccion(
+        ordenId: _entero(json['ordenId']),
+        parteId: _entero(json['parteId']),
+        codigo: json['codigo'] as String? ?? '',
+        nombre: json['nombre'] as String? ?? '',
+        cantidad: _entero(json['cantidad']),
+        precioVentaCentavos: (json['precioVentaCentavos'] as num?)?.toInt(),
+        precioCompraCentavos: (json['precioCompraCentavos'] as num?)?.toInt(),
+        ventasCentavos: (json['ventasCentavos'] as num?)?.toInt(),
+        costoCentavos: (json['costoCentavos'] as num?)?.toInt(),
+        margenCentavos: (json['margenCentavos'] as num?)?.toInt(),
+        sinCosto: json['sinCosto'] as bool? ?? false,
+        sinPrecio: json['sinPrecio'] as bool? ?? false,
+      );
+
+  /// `FRN-PAS-220 · Orden #12`.
+  String get detalle => '$codigo · Orden #$ordenId';
+}
+
+/// Totales de las líneas COMPLETAS del rango (todas, no solo la página).
+class TotalesRefacciones {
+  final int ventasCentavos;
+  final int costoCentavos;
+  final int margenCentavos;
+  final int lineasSinCosto;
+  final int lineasSinPrecio;
+
+  const TotalesRefacciones({
+    required this.ventasCentavos,
+    required this.costoCentavos,
+    required this.margenCentavos,
+    required this.lineasSinCosto,
+    required this.lineasSinPrecio,
+  });
+
+  factory TotalesRefacciones.desdeJson(Map<String, dynamic> json) => TotalesRefacciones(
+        ventasCentavos: _entero(json['ventasCentavos']),
+        costoCentavos: _entero(json['costoCentavos']),
+        margenCentavos: _entero(json['margenCentavos']),
+        lineasSinCosto: _entero(json['lineasSinCosto']),
+        lineasSinPrecio: _entero(json['lineasSinPrecio']),
+      );
+
+  /// Aviso de las líneas incompletas, o `null` si todas están completas.
+  String? get aviso {
+    final c = lineasSinCosto;
+    final p = lineasSinPrecio;
+    if (c == 0 && p == 0) return null;
+    final partes = <String>[
+      if (c > 0) '$c ${c == 1 ? 'línea' : 'líneas'} sin costo',
+      if (p > 0) (c > 0 ? '$p sin precio' : '$p ${p == 1 ? 'línea' : 'líneas'} sin precio'),
+    ];
+    final verbo = (c + p) == 1 ? 'no se incluye' : 'no se incluyen';
+    return '${partes.join(' y ')} $verbo en estos totales.';
+  }
+}
+
+/// Reporte de refacciones (`GET /api/reports/parts`), paginado.
+class ReporteRefacciones {
+  final String desde;
+  final String hasta;
+  final int pagina;
+  final int totalPaginas;
+  final int total;
+  final TotalesRefacciones totales;
+  final List<LineaRefaccion> datos;
+
+  const ReporteRefacciones({
+    required this.desde,
+    required this.hasta,
+    required this.pagina,
+    required this.totalPaginas,
+    required this.total,
+    required this.totales,
+    required this.datos,
+  });
+
+  factory ReporteRefacciones.desdeJson(Map<String, dynamic> json) {
+    final rango = json['rango'] as Map<String, dynamic>? ?? const {};
+    return ReporteRefacciones(
+      desde: rango['desde'] as String? ?? '',
+      hasta: rango['hasta'] as String? ?? '',
+      pagina: _entero(json['pagina']),
+      totalPaginas: (json['totalPaginas'] as num? ?? 1).toInt(),
+      total: _entero(json['total']),
+      totales: TotalesRefacciones.desdeJson(json['totales'] as Map<String, dynamic>? ?? const {}),
+      datos: (json['datos'] as List<dynamic>? ?? [])
+          .map((dato) => LineaRefaccion.desdeJson(dato as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  bool get vacio => total == 0 && datos.isEmpty;
+  bool get hayAnterior => pagina > 1;
+  bool get haySiguiente => pagina < totalPaginas;
+  String get etiquetaTotal => _plural(total, 'línea', 'líneas');
+  String get rangoTexto => 'Del ${fechaLegible(desde)} al ${fechaLegible(hasta)}';
+}
+
+/// Rotación de una refacción activa (una fila de «Rotación»).
+class RotacionRefaccion {
+  final int parteId;
+  final String codigo;
+  final String nombre;
+  final int unidadesSalidas;
+  final int existencia;
+  final double? rotacion;
+  final bool sinExistencia;
+
+  const RotacionRefaccion({
+    required this.parteId,
+    required this.codigo,
+    required this.nombre,
+    required this.unidadesSalidas,
+    required this.existencia,
+    this.rotacion,
+    required this.sinExistencia,
+  });
+
+  factory RotacionRefaccion.desdeJson(Map<String, dynamic> json) => RotacionRefaccion(
+        parteId: _entero(json['parteId']),
+        codigo: json['codigo'] as String? ?? '',
+        nombre: json['nombre'] as String? ?? '',
+        unidadesSalidas: _entero(json['unidadesSalidas']),
+        existencia: _entero(json['existencia']),
+        rotacion: (json['rotacion'] as num?)?.toDouble(),
+        sinExistencia: json['sinExistencia'] as bool? ?? false,
+      );
+
+  /// `2.00`; con existencia 0 no hay rotación y se muestra «sin existencia».
+  String get etiquetaRotacion => rotacion == null ? 'sin existencia' : rotacion!.toStringAsFixed(2);
+}
+
+/// Reporte de rotación (`GET /api/reports/rotation`), paginado.
+class ReporteRotacion {
+  final String desde;
+  final String hasta;
+  final int pagina;
+  final int totalPaginas;
+  final int total;
+  final List<RotacionRefaccion> datos;
+
+  const ReporteRotacion({
+    required this.desde,
+    required this.hasta,
+    required this.pagina,
+    required this.totalPaginas,
+    required this.total,
+    required this.datos,
+  });
+
+  factory ReporteRotacion.desdeJson(Map<String, dynamic> json) {
+    final rango = json['rango'] as Map<String, dynamic>? ?? const {};
+    return ReporteRotacion(
+      desde: rango['desde'] as String? ?? '',
+      hasta: rango['hasta'] as String? ?? '',
+      pagina: _entero(json['pagina']),
+      totalPaginas: (json['totalPaginas'] as num? ?? 1).toInt(),
+      total: _entero(json['total']),
+      datos: (json['datos'] as List<dynamic>? ?? [])
+          .map((dato) => RotacionRefaccion.desdeJson(dato as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  bool get vacio => total == 0 && datos.isEmpty;
+  bool get hayAnterior => pagina > 1;
+  bool get haySiguiente => pagina < totalPaginas;
+  String get etiquetaTotal => _plural(total, 'refacción', 'refacciones');
+  String get rangoTexto => 'Del ${fechaLegible(desde)} al ${fechaLegible(hasta)}';
+}

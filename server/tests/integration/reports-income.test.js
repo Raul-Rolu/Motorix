@@ -34,7 +34,7 @@ const CLAVE = 'Usuario123';
 const con = (token) => ({ Authorization: `Bearer ${token}` });
 
 async function prepararEntorno() {
-  const hash = await bcrypt.hash(CLAVE, 10);
+  const hash = await bcrypt.hash(CLAVE, 4);
   const tokens = {};
   const ids = {};
   for (const [username, rol] of [

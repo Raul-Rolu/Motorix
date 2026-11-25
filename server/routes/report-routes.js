@@ -16,3 +16,5 @@ reportRoutes.use(auth, requireRole('ADMIN'));
 reportRoutes.get('/income', reportController.ingresos);
 reportRoutes.get('/services', reportController.servicios);
 reportRoutes.get('/productivity', reportController.productividad);
+reportRoutes.get('/parts', reportController.refacciones);
+reportRoutes.get('/rotation', reportController.rotacion);

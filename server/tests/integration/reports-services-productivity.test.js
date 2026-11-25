@@ -39,7 +39,7 @@ const RANGO = { desde: '2026-11-01', hasta: '2026-11-30' };
 const DENTRO = '2026-11-15 10:00:00';
 
 async function prepararEntorno() {
-  const hash = await bcrypt.hash(CLAVE, 10);
+  const hash = await bcrypt.hash(CLAVE, 4);
   const ids = {};
   const tokens = {};
   for (const [username, nombre, rol] of [

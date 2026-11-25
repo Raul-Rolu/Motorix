@@ -5,7 +5,7 @@
 import { ok } from '../utils/responses.js';
 import { asyncHandler } from '../middlewares/error-handler.js';
 import { errores } from '../utils/errors.js';
-import { validarRangoDeReporte } from '../validators/report-validator.js';
+import { validarRangoDeReporte, validarPaginacion } from '../validators/report-validator.js';
 import * as reportService from '../services/report-service.js';
 
 /** Rango de la consulta o `400 RANGO_INVALIDO`. */
@@ -27,4 +27,23 @@ export const servicios = asyncHandler(async (req, res) => {
 
 export const productividad = asyncHandler(async (req, res) => {
   return ok(res, await reportService.productividad(rangoDe(req)));
+});
+
+/** Paginación de la consulta o `400 DATOS_INVALIDOS` (el rango se valida antes). */
+function paginacionDe(req) {
+  const { errores: lista, pagina, limite } = validarPaginacion(req.query);
+  if (lista.length > 0) {
+    throw errores.datosInvalidos(lista.join(' '));
+  }
+  return { pagina, limite };
+}
+
+export const refacciones = asyncHandler(async (req, res) => {
+  const rango = rangoDe(req);
+  return ok(res, await reportService.refacciones(rango, paginacionDe(req)));
+});
+
+export const rotacion = asyncHandler(async (req, res) => {
+  const rango = rangoDe(req);
+  return ok(res, await reportService.rotacion(rango, paginacionDe(req)));
 });

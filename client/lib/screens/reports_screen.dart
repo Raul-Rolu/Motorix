@@ -1,8 +1,9 @@
-/// Reportes (008-configuracion-seguridad-reportes, T118 y T125; FR-023, FR-026,
-/// CA-6).
+/// Reportes (008-configuracion-seguridad-reportes, T118, T125 y T132; FR-023,
+/// FR-025, FR-026, CA-6, CA-8).
 ///
 /// Solo para ADMIN (la autorización real es del servidor, RN-15). Es de solo
-/// lectura. Pestañas «Ingresos», «Servicios» y «Productividad» con UN filtro de
+/// lectura. Pestañas «Ingresos», «Servicios», «Productividad», «Refacciones» y
+/// «Rotación» (estas dos paginadas de 50 en 50) con UN filtro de
 /// rango compartido («Mes actual» por omisión, «Mes anterior» o «Rango libre»
 /// validado en la interfaz) y los estados de carga, vacío, error y sin permiso de
 /// docs/design-system.md 8.4 y 8.10. Listas densas con divisores (sin tarjetas,
@@ -108,6 +109,8 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                 Tab(key: Key('pestanaIngresos'), text: 'Ingresos'),
                 Tab(key: Key('pestanaServicios'), text: 'Servicios'),
                 Tab(key: Key('pestanaProductividad'), text: 'Productividad'),
+                Tab(key: Key('pestanaRefacciones'), text: 'Refacciones'),
+                Tab(key: Key('pestanaRotacion'), text: 'Rotación'),
               ],
             ),
           ),
@@ -123,6 +126,8 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                     _Estado(proveedor: proveedor, pestana: PestanaReporte.ingresos, hijo: _Ingresos(reporte: proveedor.ingresos)),
                     _Estado(proveedor: proveedor, pestana: PestanaReporte.servicios, hijo: _Servicios(reporte: proveedor.servicios)),
                     _Estado(proveedor: proveedor, pestana: PestanaReporte.productividad, hijo: _Productividad(reporte: proveedor.productividad)),
+                    _Estado(proveedor: proveedor, pestana: PestanaReporte.refacciones, hijo: _Refacciones(proveedor: proveedor)),
+                    _Estado(proveedor: proveedor, pestana: PestanaReporte.rotacion, hijo: _Rotacion(proveedor: proveedor)),
                   ],
                 ),
         ),
@@ -258,6 +263,8 @@ class _Estado extends StatelessWidget {
       PestanaReporte.ingresos => proveedor.ingresos == null,
       PestanaReporte.servicios => proveedor.servicios == null,
       PestanaReporte.productividad => proveedor.productividad == null,
+      PestanaReporte.refacciones => proveedor.refacciones == null,
+      PestanaReporte.rotacion => proveedor.rotacion == null,
     };
     if (sinDatos) {
       // Solo la pestaña que se está consultando muestra el indicador (las demás, al abrirlas).
@@ -425,6 +432,384 @@ class _Productividad extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+
+/// Pestaña «Refacciones»: totales de las líneas completas, una fila por uso con
+/// costo, precio de venta y margen («sin costo» y «sin precio» en advertencia) y
+/// paginación de 50 en 50.
+class _Refacciones extends StatelessWidget {
+  final ReportsProvider proveedor;
+
+  const _Refacciones({required this.proveedor});
+
+  @override
+  Widget build(BuildContext context) {
+    final datos = proveedor.refacciones;
+    if (datos == null) return const SizedBox.shrink();
+    if (datos.vacio) {
+      return Padding(
+        padding: const EdgeInsets.all(MotorixEspaciados.m),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(datos.rangoTexto, style: const TextStyle(color: MotorixColores.textoSecundario)),
+            const SizedBox(height: MotorixEspaciados.m),
+            const Text(
+              'No hay refacciones usadas en órdenes cerradas en este rango.',
+              key: Key('refaccionesVacias'),
+              style: TextStyle(color: MotorixColores.textoSecundario),
+            ),
+          ],
+        ),
+      );
+    }
+    final totales = datos.totales;
+    final aviso = totales.aviso;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(MotorixEspaciados.m),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(datos.rangoTexto, style: const TextStyle(color: MotorixColores.textoSecundario)),
+                const SizedBox(height: MotorixEspaciados.m),
+                Wrap(
+                  spacing: MotorixEspaciados.xl,
+                  runSpacing: MotorixEspaciados.s,
+                  children: [
+                    _Cifra(etiqueta: 'Ventas', claveValor: const Key('totalVentas'), centavos: totales.ventasCentavos),
+                    _Cifra(etiqueta: 'Costo', claveValor: const Key('totalCosto'), centavos: totales.costoCentavos),
+                    _Cifra(
+                      etiqueta: 'Margen',
+                      claveValor: const Key('totalMargen'),
+                      centavos: totales.margenCentavos,
+                      resaltarNegativo: true,
+                    ),
+                  ],
+                ),
+                if (aviso != null) ...[
+                  const SizedBox(height: MotorixEspaciados.s),
+                  Text(
+                    aviso,
+                    key: const Key('avisoLineasExcluidas'),
+                    style: const TextStyle(color: MotorixColores.textoSecundario),
+                  ),
+                ],
+                const SizedBox(height: MotorixEspaciados.l),
+                const _EncabezadoRefacciones(),
+                for (var i = 0; i < datos.datos.length; i++) _FilaRefaccion(indice: i, linea: datos.datos[i]),
+              ],
+            ),
+          ),
+        ),
+        _Paginacion(
+          texto: 'Página ${datos.pagina} de ${datos.totalPaginas} · ${datos.etiquetaTotal}',
+          hayAnterior: datos.hayAnterior,
+          haySiguiente: datos.haySiguiente,
+          ocupado: proveedor.cargando(PestanaReporte.refacciones),
+          alAnterior: () => proveedor.irAPagina(PestanaReporte.refacciones, datos.pagina - 1),
+          alSiguiente: () => proveedor.irAPagina(PestanaReporte.refacciones, datos.pagina + 1),
+        ),
+      ],
+    );
+  }
+}
+
+/// Una cifra de resumen: etiqueta y valor (el margen negativo se resalta en rojo).
+class _Cifra extends StatelessWidget {
+  final String etiqueta;
+  final Key claveValor;
+  final int centavos;
+  final bool resaltarNegativo;
+
+  const _Cifra({
+    required this.etiqueta,
+    required this.claveValor,
+    required this.centavos,
+    this.resaltarNegativo = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final estilo = Theme.of(context).textTheme.titleLarge;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(etiqueta, style: const TextStyle(color: MotorixColores.textoSecundario)),
+        const SizedBox(height: MotorixEspaciados.xs),
+        Text(
+          formatearCentavos(centavos),
+          key: claveValor,
+          style: resaltarNegativo && centavos < 0 ? estilo?.copyWith(color: MotorixColores.error) : estilo,
+        ),
+      ],
+    );
+  }
+}
+
+const double _anchoCantidad = 70;
+const double _anchoImporte = 130;
+
+class _EncabezadoRefacciones extends StatelessWidget {
+  const _EncabezadoRefacciones();
+
+  @override
+  Widget build(BuildContext context) {
+    const estilo = TextStyle(color: MotorixColores.textoSecundario);
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: MotorixEspaciados.s),
+          child: Row(
+            children: const [
+              Expanded(child: Text('Refacción', style: estilo)),
+              SizedBox(width: _anchoCantidad, child: Text('Cant.', textAlign: TextAlign.right, style: estilo)),
+              SizedBox(width: _anchoImporte, child: Text('Precio de venta', textAlign: TextAlign.right, style: estilo)),
+              SizedBox(width: _anchoImporte, child: Text('Costo', textAlign: TextAlign.right, style: estilo)),
+              SizedBox(width: _anchoImporte, child: Text('Margen', textAlign: TextAlign.right, style: estilo)),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+      ],
+    );
+  }
+}
+
+/// Un importe a la derecha, o la marca en advertencia / «—» cuando falta.
+class _Importe extends StatelessWidget {
+  final int? centavos;
+  final String? marca;
+  final bool negativoEnRojo;
+
+  const _Importe({required this.centavos, this.marca, this.negativoEnRojo = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget texto;
+    if (centavos != null) {
+      texto = Text(
+        formatearCentavos(centavos!),
+        textAlign: TextAlign.right,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: negativoEnRojo && centavos! < 0 ? MotorixColores.error : null,
+        ),
+      );
+    } else if (marca != null) {
+      texto = Text(marca!, textAlign: TextAlign.right, style: const TextStyle(color: MotorixColores.advertencia));
+    } else {
+      texto = const Text('—', textAlign: TextAlign.right, style: TextStyle(color: MotorixColores.textoSecundario));
+    }
+    return SizedBox(width: _anchoImporte, child: texto);
+  }
+}
+
+class _FilaRefaccion extends StatelessWidget {
+  final int indice;
+  final LineaRefaccion linea;
+
+  const _FilaRefaccion({required this.indice, required this.linea});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          key: Key('filaRefaccion-$indice'),
+          padding: const EdgeInsets.symmetric(vertical: MotorixEspaciados.s),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(linea.nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(linea.detalle, style: const TextStyle(color: MotorixColores.textoSecundario)),
+                  ],
+                ),
+              ),
+              SizedBox(width: _anchoCantidad, child: Text('${linea.cantidad}', textAlign: TextAlign.right)),
+              _Importe(centavos: linea.precioVentaCentavos, marca: linea.sinPrecio ? 'sin precio' : null),
+              _Importe(centavos: linea.costoCentavos, marca: linea.sinCosto ? 'sin costo' : null),
+              _Importe(centavos: linea.margenCentavos, negativoEnRojo: true),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+      ],
+    );
+  }
+}
+
+/// Pestaña «Rotación»: una fila por refacción activa y paginación de 50 en 50.
+class _Rotacion extends StatelessWidget {
+  final ReportsProvider proveedor;
+
+  const _Rotacion({required this.proveedor});
+
+  @override
+  Widget build(BuildContext context) {
+    final datos = proveedor.rotacion;
+    if (datos == null) return const SizedBox.shrink();
+    if (datos.vacio) {
+      return Padding(
+        padding: const EdgeInsets.all(MotorixEspaciados.m),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(datos.rangoTexto, style: const TextStyle(color: MotorixColores.textoSecundario)),
+            const SizedBox(height: MotorixEspaciados.m),
+            const Text(
+              'No hay refacciones activas.',
+              key: Key('rotacionVacia'),
+              style: TextStyle(color: MotorixColores.textoSecundario),
+            ),
+          ],
+        ),
+      );
+    }
+    const estilo = TextStyle(color: MotorixColores.textoSecundario);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(MotorixEspaciados.m),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(datos.rangoTexto, style: estilo),
+                const SizedBox(height: MotorixEspaciados.m),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: MotorixEspaciados.s),
+                  child: Row(
+                    children: [
+                      Expanded(child: Text('Refacción', style: estilo)),
+                      SizedBox(width: _anchoImporte, child: Text('Salidas', textAlign: TextAlign.right, style: estilo)),
+                      SizedBox(width: _anchoImporte, child: Text('Existencia', textAlign: TextAlign.right, style: estilo)),
+                      SizedBox(width: _anchoImporte, child: Text('Rotación', textAlign: TextAlign.right, style: estilo)),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                for (var i = 0; i < datos.datos.length; i++) _FilaRotacion(indice: i, fila: datos.datos[i]),
+              ],
+            ),
+          ),
+        ),
+        _Paginacion(
+          texto: 'Página ${datos.pagina} de ${datos.totalPaginas} · ${datos.etiquetaTotal}',
+          hayAnterior: datos.hayAnterior,
+          haySiguiente: datos.haySiguiente,
+          ocupado: proveedor.cargando(PestanaReporte.rotacion),
+          alAnterior: () => proveedor.irAPagina(PestanaReporte.rotacion, datos.pagina - 1),
+          alSiguiente: () => proveedor.irAPagina(PestanaReporte.rotacion, datos.pagina + 1),
+        ),
+      ],
+    );
+  }
+}
+
+class _FilaRotacion extends StatelessWidget {
+  final int indice;
+  final RotacionRefaccion fila;
+
+  const _FilaRotacion({required this.indice, required this.fila});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          key: Key('filaRotacion-$indice'),
+          padding: const EdgeInsets.symmetric(vertical: MotorixEspaciados.s),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(fila.nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(fila.codigo, style: const TextStyle(color: MotorixColores.textoSecundario)),
+                  ],
+                ),
+              ),
+              SizedBox(width: _anchoImporte, child: Text('${fila.unidadesSalidas}', textAlign: TextAlign.right)),
+              SizedBox(width: _anchoImporte, child: Text('${fila.existencia}', textAlign: TextAlign.right)),
+              SizedBox(
+                width: _anchoImporte,
+                child: Text(
+                  fila.etiquetaRotacion,
+                  textAlign: TextAlign.right,
+                  style: fila.sinExistencia
+                      ? const TextStyle(color: MotorixColores.advertencia)
+                      : const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+      ],
+    );
+  }
+}
+
+/// Pie de paginación como el de la bitácora: «Página N de M · T …», «Anterior» y «Siguiente».
+class _Paginacion extends StatelessWidget {
+  final String texto;
+  final bool hayAnterior;
+  final bool haySiguiente;
+  final bool ocupado;
+  final VoidCallback alAnterior;
+  final VoidCallback alSiguiente;
+
+  const _Paginacion({
+    required this.texto,
+    required this.hayAnterior,
+    required this.haySiguiente,
+    required this.ocupado,
+    required this.alAnterior,
+    required this.alSiguiente,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      key: const Key('paginacionReporte'),
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: MotorixEspaciados.m, vertical: MotorixEspaciados.s),
+          child: Row(
+            children: [
+              Expanded(child: Text(texto, style: const TextStyle(color: MotorixColores.textoSecundario))),
+              OutlinedButton(
+                key: const Key('botonPaginaAnteriorReporte'),
+                onPressed: hayAnterior && !ocupado ? alAnterior : null,
+                child: const Text('Anterior'),
+              ),
+              const SizedBox(width: MotorixEspaciados.s),
+              OutlinedButton(
+                key: const Key('botonPaginaSiguienteReporte'),
+                onPressed: haySiguiente && !ocupado ? alSiguiente : null,
+                child: const Text('Siguiente'),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

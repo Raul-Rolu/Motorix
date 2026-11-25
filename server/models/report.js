@@ -90,3 +90,100 @@ export async function findProductivityByMechanic({ desdeSql, hastaExclusivoSql }
     centavos: Number(fila.centavos),
   }));
 }
+
+/**
+ * Usos de refacciones de las órdenes cerradas del periodo (una fila por línea de
+ * `order_parts`), con el precio de venta CONGELADO del uso y el precio de compra
+ * VIGENTE de la refacción (el sistema no guarda el costo por uso). Los precios
+ * salen en centavos enteros y nulos cuando faltan (nunca 0 por omisión). Las
+ * refacciones inactivas se incluyen: son usos históricos. Más reciente primero.
+ */
+export async function findPartUsages({ desdeSql, hastaExclusivoSql }, { limite, desplazamiento }) {
+  const [filas] = await getPool().query(
+    `SELECT op.id AS uso_id, o.id AS orden_id, p.id AS parte_id, p.code AS codigo, p.name AS nombre,
+            op.quantity AS cantidad,
+            CAST(ROUND(op.unit_price * 100) AS SIGNED) AS venta_centavos,
+            CAST(ROUND(p.purchase_price * 100) AS SIGNED) AS compra_centavos
+     FROM service_orders o
+     JOIN order_parts op ON op.order_id = o.id
+     JOIN parts p ON p.id = op.part_id
+     WHERE ${ORDENES_CERRADAS}
+     ORDER BY o.status_changed_at DESC, op.id DESC
+     LIMIT ? OFFSET ?`,
+    [desdeSql, hastaExclusivoSql, limite, desplazamiento]
+  );
+  return filas.map((fila) => ({
+    ordenId: fila.orden_id,
+    parteId: fila.parte_id,
+    codigo: fila.codigo,
+    nombre: fila.nombre,
+    cantidad: Number(fila.cantidad),
+    ventaCentavos: fila.venta_centavos === null ? null : Number(fila.venta_centavos),
+    compraCentavos: fila.compra_centavos === null ? null : Number(fila.compra_centavos),
+  }));
+}
+
+/**
+ * Totales de TODOS los usos del rango (no solo de la página): número de líneas,
+ * líneas sin costo y sin precio, y ventas y costo en centavos SOLO de las líneas
+ * completas (con precio de venta y de compra), de modo que margen = ventas − costo.
+ */
+export async function summarizePartUsages({ desdeSql, hastaExclusivoSql }) {
+  const [[fila]] = await getPool().query(
+    `SELECT COUNT(*) AS lineas,
+            COALESCE(SUM(p.purchase_price IS NULL), 0) AS sin_costo,
+            COALESCE(SUM(op.unit_price IS NULL), 0) AS sin_precio,
+            CAST(ROUND(COALESCE(SUM(CASE WHEN op.unit_price IS NOT NULL AND p.purchase_price IS NOT NULL
+                                         THEN op.unit_price * op.quantity END), 0) * 100) AS SIGNED) AS ventas,
+            CAST(ROUND(COALESCE(SUM(CASE WHEN op.unit_price IS NOT NULL AND p.purchase_price IS NOT NULL
+                                         THEN p.purchase_price * op.quantity END), 0) * 100) AS SIGNED) AS costo
+     FROM service_orders o
+     JOIN order_parts op ON op.order_id = o.id
+     JOIN parts p ON p.id = op.part_id
+     WHERE ${ORDENES_CERRADAS}`,
+    [desdeSql, hastaExclusivoSql]
+  );
+  return {
+    lineas: Number(fila.lineas),
+    sinCosto: Number(fila.sin_costo),
+    sinPrecio: Number(fila.sin_precio),
+    ventasCentavos: Number(fila.ventas),
+    costoCentavos: Number(fila.costo),
+  };
+}
+
+/**
+ * Rotación: por refacción ACTIVA, las unidades de salida (`OUT`) del rango y la
+ * existencia actual. Orden en SQL (para paginar): con existencia primero, por
+ * salidas ÷ existencia descendente, y luego por nombre; las agotadas al final.
+ */
+export async function findRotation({ desdeSql, hastaExclusivoSql }, { limite, desplazamiento }) {
+  const [filas] = await getPool().query(
+    `SELECT p.id AS parte_id, p.code AS codigo, p.name AS nombre, p.stock AS existencia,
+            COALESCE(m.unidades, 0) AS unidades
+     FROM parts p
+     LEFT JOIN (
+       SELECT part_id, SUM(ABS(quantity)) AS unidades
+       FROM inventory_movements
+       WHERE movement_type = 'OUT' AND created_at >= ? AND created_at < ?
+       GROUP BY part_id
+     ) m ON m.part_id = p.id
+     WHERE p.is_active = 1
+     ORDER BY (p.stock = 0) ASC, COALESCE(m.unidades, 0) / NULLIF(p.stock, 0) DESC, p.name ASC, p.id ASC
+     LIMIT ? OFFSET ?`,
+    [desdeSql, hastaExclusivoSql, limite, desplazamiento]
+  );
+  return filas.map((fila) => ({
+    parteId: fila.parte_id,
+    codigo: fila.codigo,
+    nombre: fila.nombre,
+    existencia: Number(fila.existencia),
+    unidades: Number(fila.unidades),
+  }));
+}
+
+/** Número de refacciones activas (para paginar la rotación). */
+export async function countActiveParts() {
+  const [[fila]] = await getPool().query('SELECT COUNT(*) AS total FROM parts WHERE is_active = 1');
+  return Number(fila.total);
+}

@@ -520,14 +520,17 @@ divisores:
 | Error | «No se pudo cargar el reporte.» en `error` con «Reintentar», sin trazas. Si el servidor rechaza el rango, se muestra su mensaje en español (por ejemplo «El rango no puede exceder 366 días.»). |
 | Sin permiso | «No tiene permisos para ver los reportes.» sin botón de reintento y sin filtro. |
 
-**8.10.2 Pestañas «Servicios» y «Productividad».** Comparten el filtro de rango
+**8.10.2 Pestañas «Servicios», «Productividad», «Refacciones» y «Rotación».** Comparten el filtro de rango
 con «Ingresos»: cambiar de pestaña consulta el **mismo** periodo, cambiar el filtro
 invalida las demás pestañas (se vuelven a consultar al abrirlas) y volver a una
 pestaña ya cargada con el mismo filtro no consulta otra vez. «Actualizar» recarga
 solo la pestaña activa. Un error o un resultado vacío de una pestaña no afecta a las
 demás; un 403 en cualquiera muestra el estado «sin permiso» de toda la sección. La
-población de ambas es la de **órdenes cerradas del periodo** (terminadas o
-entregadas, por la fecha de su último cambio de estado; nunca las canceladas).
+población de «Servicios», «Productividad» y «Refacciones» es la de **órdenes cerradas
+del periodo** (terminadas o entregadas, por la fecha de su último cambio de estado;
+nunca las canceladas). Las pestañas paginadas («Refacciones» y «Rotación») vuelven a
+la página 1 cuando cambia el filtro y conservan su página al cambiar de pestaña con el
+mismo filtro.
 
 - **Servicios.** Lista densa con divisores y una fila de encabezado en
   `textSecondary`: «Tipo de servicio», «Cantidad» e «Importe». Cada fila: el tipo en
@@ -541,9 +544,28 @@ entregadas, por la fecha de su último cambio de estado; nunca las canceladas).
   órdenes descendente y, a igualdad, por nombre; **«Sin asignar»** (órdenes sin
   mecánico) siempre al final. Fila «Total» al cierre. Los mecánicos desactivados
   conservan su nombre. Vacío: «No hay órdenes cerradas en este rango.».
-- **Refacciones** y **Rotación** (siguientes tramos): su detalle (columnas y las
-  marcas «sin costo», «sin precio» y «sin existencia») se agrega a esta sección
-  **antes** de construir cada pestaña.
+- **Refacciones.** Una fila por **uso** de una refacción en una orden cerrada del
+  periodo (la más reciente primero). Arriba, tres cifras de resumen en `titleMedium`
+  — «Ventas», «Costo» y «Margen» — que suman solo las líneas **completas** (con precio
+  de venta y de compra); un margen negativo se muestra en `error`. Si hay líneas
+  incompletas, un aviso en `textSecondary` lo explica («2 líneas sin costo y 1 sin
+  precio no se incluyen en estos totales.»). Debajo, la lista densa con encabezado
+  «Refacción», «Cant.», «Precio de venta», «Costo» y «Margen». Cada fila: el nombre en
+  peso 600 y debajo, en `textSecondary`, el código y la orden («FRN-PAS-220 · Orden
+  #12»); el costo y el margen de la línea son importes a la derecha. Las marcas **«sin
+  costo»** (refacción sin precio de compra: costo y margen no se calculan, nunca con
+  costo 0) y **«sin precio»** (uso sin precio de venta) se escriben en texto en color
+  `advertencia`, en lugar del importe, y el margen faltante se muestra «—». El precio
+  de compra solo lo ve ADMIN (la sección entera es suya). Pie de paginación como en la
+  bitácora (8.9): «Página N de M · T líneas» y «Anterior» / «Siguiente» (50 por
+  página). Vacío: «No hay refacciones usadas en órdenes cerradas en este rango.».
+- **Rotación.** Una fila por refacción **activa**: encabezado «Refacción», «Salidas»,
+  «Existencia» y «Rotación». Las salidas son las unidades que salieron del
+  inventario en el rango y la rotación es salidas ÷ existencia actual con dos
+  decimales (`2.00`). Con existencia 0 no hay rotación: se escribe **«sin
+  existencia»** en color `advertencia` y la fila va al final. Orden: rotación
+  descendente y, a igualdad, por nombre. Misma paginación de 50 en 50. Vacío: «No hay
+  refacciones activas.».
 
 **8.10.3 Exportación.** Se documenta aquí antes de construirla (tramo de
 exportación): botón «Exportar CSV» (`OutlinedButton` con `Icons.download_outlined`)

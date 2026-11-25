@@ -1,0 +1,17 @@
+T133/T134 - Rendimiento de los reportes del Sprint 7 (bloque P3) en motorix_test
+Volumen: 1500 órdenes cerradas (1000 en el rango y 500 fuera), 3000 usos de refacciones, 500 refacciones, 5000 movimientos, 2000 pagos, 2000 líneas de servicio y 1500 de mano de obra.
+Método: 1 llamada de calentamiento descartada y 5 medidas por reporte con performance.now() (petición HTTP completa con autenticación). Límites: máximo < 2000 ms y <= 6 consultas SQL por petición.
+
+rango	reporte	máximo (ms)	promedio (ms)	consultas SQL
+mes (30 días)	income	8.2	7.2	3
+mes (30 días)	services	25.7	19.0	2
+mes (30 días)	productivity	27.9	19.0	2
+mes (30 días)	parts	45.4	32.3	3
+mes (30 días)	rotation	21.9	21.0	3
+año (366 días)	income	7.9	6.4	3
+año (366 días)	services	32.7	24.2	2
+año (366 días)	productivity	37.4	22.1	2
+año (366 días)	parts	52.6	35.7	3
+año (366 días)	rotation	21.9	20.0	3
+
+Peor tiempo: 52.6 ms (límite 2000 ms). Máximo de consultas: 3 (límite 6).

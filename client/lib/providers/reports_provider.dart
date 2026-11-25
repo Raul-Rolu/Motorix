@@ -21,7 +21,7 @@ import 'auth_provider.dart';
 enum FiltroRango { mesActual, mesAnterior, libre }
 
 /// Pestañas de la sección «Reportes» (el orden es el de la barra de pestañas).
-enum PestanaReporte { ingresos, servicios, productividad }
+enum PestanaReporte { ingresos, servicios, productividad, refacciones, rotacion }
 
 class ReportsProvider extends ChangeNotifier {
   final ApiClient api;
@@ -44,6 +44,8 @@ class ReportsProvider extends ChangeNotifier {
   ReporteIngresos? ingresos;
   ReporteServicios? servicios;
   ReporteProductividad? productividad;
+  ReporteRefacciones? refacciones;
+  ReporteRotacion? rotacion;
 
   /// true si el servidor respondió 403 (el rol no puede ver los reportes).
   bool sinPermiso = false;
@@ -51,6 +53,9 @@ class ReportsProvider extends ChangeNotifier {
   final Map<PestanaReporte, bool> _cargando = {};
   final Map<PestanaReporte, String?> _errores = {};
   final Map<PestanaReporte, int> _generaciones = {};
+
+  /// Página pedida de las pestañas paginadas (Refacciones y Rotación); 1 por omisión.
+  final Map<PestanaReporte, int> _paginas = {};
 
   int? _usuarioId;
   bool _liberado = false;
@@ -76,8 +81,18 @@ class ReportsProvider extends ChangeNotifier {
         return servicios != null;
       case PestanaReporte.productividad:
         return productividad != null;
+      case PestanaReporte.refacciones:
+        return refacciones != null;
+      case PestanaReporte.rotacion:
+        return rotacion != null;
     }
   }
+
+  /// Las pestañas «Refacciones» y «Rotación» se consultan de 50 en 50.
+  static bool esPaginada(PestanaReporte p) => p == PestanaReporte.refacciones || p == PestanaReporte.rotacion;
+
+  /// Página pedida de una pestaña paginada.
+  int paginaDe(PestanaReporte p) => _paginas[p] ?? 1;
 
   void _alCambiarSesion() {
     final id = auth.usuario?.id;
@@ -98,9 +113,12 @@ class ReportsProvider extends ChangeNotifier {
     }
     _cargando.clear();
     _errores.clear();
+    _paginas.clear();
     ingresos = null;
     servicios = null;
     productividad = null;
+    refacciones = null;
+    rotacion = null;
     sinPermiso = false;
   }
 
@@ -150,6 +168,9 @@ class ReportsProvider extends ChangeNotifier {
     }
   }
 
+  /// Parámetros de la consulta de una pestaña: el filtro y, si es paginada, la página.
+  String _consultaDe(PestanaReporte p) => esPaginada(p) ? '$_consulta&pagina=${paginaDe(p)}' : _consulta;
+
   /// Un filtro nuevo invalida todas las pestañas y consulta solo la activa.
   Future<void> _aplicarFiltro() {
     _descartarDatos();
@@ -187,6 +208,12 @@ class ReportsProvider extends ChangeNotifier {
 
   // ------------------------------------------------------------------ Consulta
 
+  /// Pide otra página de una pestaña paginada (el filtro no cambia).
+  Future<void> irAPagina(PestanaReporte p, int pagina) {
+    _paginas[p] = pagina;
+    return cargar(p);
+  }
+
   Future<void> cargarIngresos() => cargar(PestanaReporte.ingresos);
 
   /// Carga (o recarga) los datos de una pestaña (por omisión, la activa) con el
@@ -207,6 +234,10 @@ class ReportsProvider extends ChangeNotifier {
         servicios = null;
       case PestanaReporte.productividad:
         productividad = null;
+      case PestanaReporte.refacciones:
+        refacciones = null;
+      case PestanaReporte.rotacion:
+        rotacion = null;
     }
     notifyListeners();
 
@@ -214,10 +245,12 @@ class ReportsProvider extends ChangeNotifier {
       PestanaReporte.ingresos => 'income',
       PestanaReporte.servicios => 'services',
       PestanaReporte.productividad => 'productivity',
+      PestanaReporte.refacciones => 'parts',
+      PestanaReporte.rotacion => 'rotation',
     };
 
     try {
-      final respuesta = await api.get('/reports/$ruta?$_consulta');
+      final respuesta = await api.get('/reports/$ruta?${_consultaDe(p)}');
       if (generacion != _generaciones[p]) return;
       switch (p) {
         case PestanaReporte.ingresos:
@@ -226,6 +259,10 @@ class ReportsProvider extends ChangeNotifier {
           servicios = ReporteServicios.desdeJson(respuesta);
         case PestanaReporte.productividad:
           productividad = ReporteProductividad.desdeJson(respuesta);
+        case PestanaReporte.refacciones:
+          refacciones = ReporteRefacciones.desdeJson(respuesta);
+        case PestanaReporte.rotacion:
+          rotacion = ReporteRotacion.desdeJson(respuesta);
       }
     } on ExcepcionApi catch (excepcion) {
       if (generacion != _generaciones[p]) return;

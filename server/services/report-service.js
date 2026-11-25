@@ -82,3 +82,82 @@ export async function productividad(rango) {
     });
   return { rango: { desde: rango.desde, hasta: rango.hasta }, datos };
 }
+
+const totalPaginas = (total, limite) => Math.max(1, Math.ceil(total / limite));
+
+/**
+ * Refacciones usadas en órdenes cerradas del periodo (una fila por uso): ventas =
+ * precio congelado × cantidad, costo = precio de compra vigente × cantidad y
+ * margen = ventas − costo, todo en centavos enteros. Un uso sin precio de compra
+ * es «sin costo» y uno sin precio de venta es «sin precio»: sus importes
+ * faltantes son `null` (nunca 0) y la línea queda FUERA de los totales.
+ */
+export async function refacciones(rango, { pagina, limite }) {
+  const [filas, resumen] = await Promise.all([
+    reportModel.findPartUsages(rango, { limite, desplazamiento: (pagina - 1) * limite }),
+    reportModel.summarizePartUsages(rango),
+  ]);
+
+  const datos = filas.map((fila) => {
+    const { cantidad, ventaCentavos, compraCentavos } = fila;
+    const ventas = ventaCentavos === null ? null : ventaCentavos * cantidad;
+    const costo = compraCentavos === null ? null : compraCentavos * cantidad;
+    return {
+      ordenId: fila.ordenId,
+      parteId: fila.parteId,
+      codigo: fila.codigo,
+      nombre: fila.nombre,
+      cantidad,
+      precioVentaCentavos: ventaCentavos,
+      precioCompraCentavos: compraCentavos,
+      ventasCentavos: ventas,
+      costoCentavos: costo,
+      margenCentavos: ventas !== null && costo !== null ? ventas - costo : null,
+      sinCosto: compraCentavos === null,
+      sinPrecio: ventaCentavos === null,
+    };
+  });
+
+  return {
+    rango: { desde: rango.desde, hasta: rango.hasta },
+    pagina,
+    totalPaginas: totalPaginas(resumen.lineas, limite),
+    total: resumen.lineas,
+    totales: {
+      ventasCentavos: resumen.ventasCentavos,
+      costoCentavos: resumen.costoCentavos,
+      margenCentavos: resumen.ventasCentavos - resumen.costoCentavos,
+      lineasSinCosto: resumen.sinCosto,
+      lineasSinPrecio: resumen.sinPrecio,
+    },
+    datos,
+  };
+}
+
+/**
+ * Rotación del inventario: por refacción activa, unidades de salida del rango entre
+ * la existencia actual (dos decimales). Con existencia 0 no hay rotación
+ * (`rotacion: null`, `sinExistencia: true`) y la fila va al final.
+ */
+export async function rotacion(rango, { pagina, limite }) {
+  const [filas, total] = await Promise.all([
+    reportModel.findRotation(rango, { limite, desplazamiento: (pagina - 1) * limite }),
+    reportModel.countActiveParts(),
+  ]);
+  const datos = filas.map((fila) => ({
+    parteId: fila.parteId,
+    codigo: fila.codigo,
+    nombre: fila.nombre,
+    unidadesSalidas: fila.unidades,
+    existencia: fila.existencia,
+    rotacion: fila.existencia === 0 ? null : Math.round((fila.unidades / fila.existencia) * 100) / 100,
+    sinExistencia: fila.existencia === 0,
+  }));
+  return {
+    rango: { desde: rango.desde, hasta: rango.hasta },
+    pagina,
+    totalPaginas: totalPaginas(total, limite),
+    total,
+    datos,
+  };
+}
