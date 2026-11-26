@@ -1,0 +1,9 @@
+Analyzing client...                                             
+
+   info - Use the null-aware marker '?' rather than a null check via an 'if'. Try using '?' - lib\providers\parts_provider.dart:77:7 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if'. Try using '?' - lib\providers\parts_provider.dart:78:7 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if'. Try using '?' - lib\providers\parts_provider.dart:79:7 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if'. Try using '?' - lib\providers\parts_provider.dart:80:7 - use_null_aware_elements
+   info - Unnecessary 'this.' qualifier. Try removing 'this.' - test\payment_flow_test.dart:88:20 - unnecessary_this
+
+5 issues found. (ran in 46.7s)

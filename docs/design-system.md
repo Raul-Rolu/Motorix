@@ -471,6 +471,134 @@ cargar los términos.» con «Reintentar») y sin permiso («No tiene permisos p
 administrar los términos.», sin reintento ni formulario). No hay botones de editar
 ni de borrar.
 
+### 8.10 Reportes (Sprint 7, bloque P3)
+
+Sección del menú lateral **«Reportes»** (`Icons.bar_chart_outlined`), visible solo
+para ADMIN (el servidor responde `403` a los demás roles; ocultarla es comodidad,
+no seguridad). Es de **solo lectura**: no se edita ni se borra nada, y el único
+efecto de escritura es guardar un archivo CSV en el equipo (8.10.3).
+
+**Estructura de la pantalla** (de arriba abajo, sin tarjetas, separadas por título
+y divisor como la bitácora, 8.9):
+
+1. Encabezado «Reportes» con el botón «Exportar CSV» (8.10.3) y el botón de ícono
+   «Actualizar» (`Icons.refresh`).
+2. **Pestañas** (`TabBar`): «Ingresos», «Servicios», «Productividad»,
+   «Refacciones» y «Rotación»; **todas
+   comparten el mismo filtro de rango**, de modo que cambiar de pestaña consulta el
+   mismo periodo.
+3. **Filtro de rango**: tres `ChoiceChip` en una fila — «Mes actual» (elegido por
+   omisión al abrir), «Mes anterior» y «Rango libre». Con «Rango libre» aparecen
+   «Desde» y «Hasta» (`AAAA-MM-DD`, ancho 150, igual que los filtros de la
+   bitácora) y el botón `FilledButton` «Consultar». Validación en la interfaz, sin
+   consultar si falla: «Use el formato AAAA-MM-DD.», «La fecha final no puede ser
+   anterior a la inicial.» y «El rango no puede exceder 366 días.». Un solo día
+   (`desde` = `hasta`) es válido.
+4. **Resultado** de la pestaña activa.
+
+**Importes.** Siempre con signo de pesos y dos decimales, `$1234.50` (el mismo
+formato del resto de la aplicación), calculados desde **centavos enteros** que
+entrega el servidor (nunca desde un número de coma flotante). Alineados a la derecha
+y en peso 600 en las listas; el total, en `titleLarge`.
+
+**8.10.1 Pestaña «Ingresos».** Muestra el rango consultado en `textSecondary`
+(«Del 01/11/2026 al 30/11/2026»), el **total cobrado** («Total cobrado» y la cifra
+en `titleLarge`; solo cuentan los pagos confirmados) y dos listas densas con
+divisores:
+
+- «Ingresos por día» (rangos de hasta 62 días) o «Ingresos por mes» (más largos).
+  Cada fila: el día (`05/11/2026`) o el mes con su nombre en español
+  («Noviembre 2026») y el importe. Solo aparecen los periodos con cobros.
+- «Por método de pago», del mayor al menor: «Efectivo», «Tarjeta»,
+  «Transferencia» y «Mercado Pago» (un método desconocido se muestra con su código).
+
+**Estados (8.4).**
+
+| Estado | Comportamiento |
+|---|---|
+| Cargando | Indicador de progreso discreto centrado. Una respuesta lenta de un filtro anterior **nunca** pisa a la más reciente. |
+| Vacío | «No hay cobros en este rango.» en `textSecondary`, con el rango consultado. |
+| Error | «No se pudo cargar el reporte.» en `error` con «Reintentar», sin trazas. Si el servidor rechaza el rango, se muestra su mensaje en español (por ejemplo «El rango no puede exceder 366 días.»). |
+| Sin permiso | «No tiene permisos para ver los reportes.» sin botón de reintento y sin filtro. |
+
+**8.10.2 Pestañas «Servicios», «Productividad», «Refacciones» y «Rotación».** Comparten el filtro de rango
+con «Ingresos»: cambiar de pestaña consulta el **mismo** periodo, cambiar el filtro
+invalida las demás pestañas (se vuelven a consultar al abrirlas) y volver a una
+pestaña ya cargada con el mismo filtro no consulta otra vez. «Actualizar» recarga
+solo la pestaña activa. Un error o un resultado vacío de una pestaña no afecta a las
+demás; un 403 en cualquiera muestra el estado «sin permiso» de toda la sección. La
+población de «Servicios», «Productividad» y «Refacciones» es la de **órdenes cerradas
+del periodo** (terminadas o entregadas, por la fecha de su último cambio de estado;
+nunca las canceladas). Las pestañas paginadas («Refacciones» y «Rotación») vuelven a
+la página 1 cuando cambia el filtro y conservan su página al cambiar de pestaña con el
+mismo filtro.
+
+- **Servicios.** Lista densa con divisores y una fila de encabezado en
+  `textSecondary`: «Tipo de servicio», «Cantidad» e «Importe». Cada fila: el tipo en
+  texto normal («Sin tipo» para las líneas sin tipo, sin ocultarla ni cambiar su
+  lugar), la cantidad («12 servicios», «1 servicio») y el importe a la derecha en
+  peso 600. Orden: por cantidad descendente y, a igualdad, por nombre. Cierra con una
+  fila «Total» (cantidad e importe, en peso 600). Vacío: «No hay servicios en órdenes
+  cerradas en este rango.».
+- **Productividad.** Mismo patrón con «Mecánico», «Órdenes» y «Mano de obra»: el
+  nombre del mecánico, «8 órdenes» / «1 orden» y el importe de mano de obra. Orden: por
+  órdenes descendente y, a igualdad, por nombre; **«Sin asignar»** (órdenes sin
+  mecánico) siempre al final. Fila «Total» al cierre. Los mecánicos desactivados
+  conservan su nombre. Vacío: «No hay órdenes cerradas en este rango.».
+- **Refacciones.** Una fila por **uso** de una refacción en una orden cerrada del
+  periodo (la más reciente primero). Arriba, tres cifras de resumen en `titleMedium`
+  — «Ventas», «Costo» y «Margen» — que suman solo las líneas **completas** (con precio
+  de venta y de compra); un margen negativo se muestra en `error`. Si hay líneas
+  incompletas, un aviso en `textSecondary` lo explica («2 líneas sin costo y 1 sin
+  precio no se incluyen en estos totales.»). Debajo, la lista densa con encabezado
+  «Refacción», «Cant.», **«Precio unitario»**, **«Costo total»** y **«Margen total»**.
+  Las etiquetas distinguen lo unitario de lo total de la línea: el precio unitario es
+  el precio de venta de UNA pieza, congelado al usarla; el costo total es el precio de
+  compra vigente × la cantidad, y el margen total es (precio − costo) × la cantidad.
+  Cada fila: el nombre en peso 600 y debajo, en `textSecondary`, el código y la orden
+  («FRN-PAS-220 · Orden #12»); los tres importes van a la derecha. Las marcas **«sin
+  costo»** (refacción sin precio de compra: costo y margen no se calculan, nunca con
+  costo 0) y **«sin precio»** (uso sin precio de venta) se escriben en texto en color
+  `advertencia`, en lugar del importe, y el margen faltante se muestra «—». El precio
+  de compra solo lo ve ADMIN (la sección entera es suya). Pie de paginación como en la
+  bitácora (8.9): «Página N de M · T líneas» y «Anterior» / «Siguiente» (50 por
+  página). Vacío: «No hay refacciones usadas en órdenes cerradas en este rango.».
+- **Rotación.** Una fila por refacción **activa**: encabezado «Refacción», «Salidas»,
+  «Existencia» y «Rotación». Las salidas son las unidades que salieron del
+  inventario en el rango y la rotación es salidas ÷ existencia actual con dos
+  decimales (`2.00`). Con existencia 0 no hay rotación: se escribe **«sin
+  existencia»** en color `advertencia` y la fila va al final. Orden: rotación
+  descendente y, a igualdad, por nombre. Misma paginación de 50 en 50. Vacío: «No hay
+  refacciones activas.».
+
+**8.10.3 Exportación a CSV.** En el encabezado de la sección, a la izquierda de
+«Actualizar», un `OutlinedButton.icon` **«Exportar CSV»** (`Icons.download_outlined`)
+exporta el reporte de la **pestaña activa** con el **filtro de rango activo**, siempre
+completo (no solo la página que se ve: la paginación no afecta al archivo). No aparece
+si el rol no tiene permiso. Mientras se exporta, el botón se deshabilita y muestra un
+indicador de progreso, de modo que una pulsación repetida no genera dos archivos.
+
+- **Dónde se guarda.** En la carpeta **Descargas** del usuario (con la carpeta
+  temporal solo como respaldo), con el nombre que indica el servidor
+  (`motorix-<reporte>-<desde>-<hasta>.csv`) ya saneado (solo letras, números, guion y
+  punto; si ya existe, se agrega `(1)`, `(2)`…).
+- **Resultado (snackbar, 8.4).** Éxito, en `success`: «Archivo guardado en <ruta>.».
+  Error, en `error` y sin trazas: «No se pudo exportar el reporte.»; si el servidor
+  rechaza el rango o el tamaño se muestra su mensaje en español (por ejemplo «La
+  exportación supera las 10,000 filas; reduzca el rango.»); si el equipo no deja
+  escribir el archivo, «No se pudo guardar el archivo.».
+- **Contenido.** UTF-8 con BOM (Excel respeta acentos y eñes), encabezados en español
+  e importes con punto y dos decimales. Es la **misma información que la pantalla**:
+  cada reporte repite sus filas y, donde la pantalla tiene fila «Total», la agrega al
+  final (en «Refacciones», «Total (líneas completas)» con el aviso de las líneas
+  excluidas; «Refacciones» incluye además el precio de compra unitario, porque solo
+  ADMIN llega a este reporte). Un rango sin datos exporta solo los encabezados. Las
+  celdas de texto que empiezan con `=`, `+`, `-`, `@`, tabulador o retorno de carro
+  salen con una comilla simple delante para que no se interpreten como fórmulas; los
+  importes negativos siguen siendo números.
+- **Límite.** Hasta 10,000 filas por archivo; con más, el servidor responde con un
+  error de rango y se pide reducir el rango.
+
 ---
 
 ## 9. Qué evitar (señales de "hecho por IA")

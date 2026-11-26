@@ -1,0 +1,92 @@
+Base recreada: motorix_test
+  OK    migraciones 001-023 aplicadas sin error
+  OK    seeds 001-012 aplicados sin error (corrida 1)
+  OK    schema_migrations tiene 23 migraciones
+  OK    la conexión del guion apunta a motorix_test
+  OK    las tres cuentas inician sesión y aceptan los términos (seed 011)
+
+===== E10 - Ingresos, servicios y productividad (CA-6, CA-7, CA-10) =====
+  OK    MES_ANTERIOR: ingresos = suma SQL de pagos COMPLETED (centavos exactos)
+  OK    MES_ANTERIOR: los pagos del seed 012 suman 4920.5
+  OK    MES_ANTERIOR: el desglose por método y por día suma el total
+  OK    MES_ANTERIOR: un mes completo se agrupa por día
+  OK    MES_ANTERIOR: servicios = líneas e importe SQL de órdenes cerradas
+  OK    MES_ANTERIOR: aparecen servicios con tipo y «Sin tipo»
+  OK    MES_ANTERIOR: el seed 012 aporta 5 líneas por 3180.5
+  OK    MES_ANTERIOR: dos mecánicos y «Sin asignar» al final
+  OK    MES_ANTERIOR: el seed 012 aporta 3 órdenes y 800 de mano de obra
+  OK    MES_ANTERIOR: las órdenes de productividad = órdenes cerradas del periodo
+  OK    MES_ACTUAL: ingresos = suma SQL de pagos COMPLETED (centavos exactos)
+  OK    MES_ACTUAL: los pagos del seed 012 suman 4730
+  OK    MES_ACTUAL: el desglose por método y por día suma el total
+  OK    MES_ACTUAL: un mes completo se agrupa por día
+  OK    MES_ACTUAL: servicios = líneas e importe SQL de órdenes cerradas
+  OK    MES_ACTUAL: aparecen servicios con tipo y «Sin tipo»
+  OK    MES_ACTUAL: el seed 012 aporta 5 líneas por 2770
+  OK    MES_ACTUAL: dos mecánicos y «Sin asignar» al final
+  OK    MES_ACTUAL: el seed 012 aporta 3 órdenes y 830 de mano de obra
+  OK    MES_ACTUAL: las órdenes de productividad = órdenes cerradas del periodo
+  OK    la orden 9107 está CANCELADA y no se cuenta en ningún reporte (verificado arriba por las sumas SQL)
+  OK    rango libre de un solo día: total igual a la suma SQL del día
+  OK    un rango sin pagos responde total 0 y listas vacías (estado vacío de la pantalla)
+  OK    fecha final anterior a la inicial: 400 RANGO_INVALIDO
+  OK    más de 366 días: 400 RANGO_INVALIDO
+  OK    recepcion: 403 en las 10 rutas de reportes (consulta y exportación)
+  OK    mecanico: 403 en las 10 rutas de reportes (consulta y exportación)
+  OK    sin sesión: 401
+
+===== E11 - Refacciones y rotación (CA-8, CA-11) =====
+  OK    MES_ANTERIOR: refacciones = líneas, ventas y costo SQL; margen = ventas − costo
+  OK    MES_ANTERIOR: las líneas «sin costo» no llevan costo ni margen (nunca 0)
+  OK    MES_ANTERIOR: el contador de líneas sin costo coincide con las filas
+  OK    MES_ANTERIOR: el margen total suma solo las líneas completas
+  OK    Mes anterior: DEM-SIN-COSTO «sin costo» y la batería «sin precio» quedan fuera de los totales
+  OK    MES_ACTUAL: refacciones = líneas, ventas y costo SQL; margen = ventas − costo
+  OK    MES_ACTUAL: las líneas «sin costo» no llevan costo ni margen (nunca 0)
+  OK    MES_ACTUAL: el contador de líneas sin costo coincide con las filas
+  OK    MES_ACTUAL: el margen total suma solo las líneas completas
+  OK    rotación: con existencia 0 sale «sin existencia» (sin rotación) y al final
+  OK    rotación: solo las agotadas van al final
+  OK    rotación: las salidas = suma SQL de movimientos OUT por refacción activa
+  OK    rotación: la refacción inactiva no aparece
+
+===== E12 - Exportación (CA-9) =====
+  OK    se crea una refacción de prueba con nombre «=HYPERLINK(...)»
+  OK    income: 200 y text/csv
+  OK    income: UTF-8 con BOM
+  OK    income: attachment con nombre motorix-…-desde-hasta.csv y no-store
+  OK    income: filas con CRLF, encabezado y datos
+  OK    services: 200 y text/csv
+  OK    services: UTF-8 con BOM
+  OK    services: attachment con nombre motorix-…-desde-hasta.csv y no-store
+  OK    services: filas con CRLF, encabezado y datos
+  OK    productivity: 200 y text/csv
+  OK    productivity: UTF-8 con BOM
+  OK    productivity: attachment con nombre motorix-…-desde-hasta.csv y no-store
+  OK    productivity: filas con CRLF, encabezado y datos
+  OK    parts: 200 y text/csv
+  OK    parts: UTF-8 con BOM
+  OK    parts: attachment con nombre motorix-…-desde-hasta.csv y no-store
+  OK    parts: filas con CRLF, encabezado y datos
+  OK    rotation: 200 y text/csv
+  OK    rotation: UTF-8 con BOM
+  OK    rotation: attachment con nombre motorix-…-desde-hasta.csv y no-store
+  OK    rotation: filas con CRLF, encabezado y datos
+  OK    parts: el CSV tiene encabezado + una fila por uso + fila Total (coincide con la pantalla)
+  OK    parts: la fila Total repite los totales de la pantalla
+  OK    parts: la línea sin costo lleva «sin costo» en Observación
+  OK    rotation: el CSV tiene encabezado + una fila por refacción activa
+  OK    rotation: el nombre «=HYPERLINK(...)» sale neutralizado con una comilla simple
+  OK    income: total + filas por día + filas por método (coincide con la pantalla)
+  OK    un rango sin datos exporta solo los encabezados
+  OK    un reporte inexistente responde 404 REPORT_NOT_FOUND
+  OK    exportar no escribe en la bitácora (decisión del usuario)
+  OK    la apertura en Excel (acentos y columnas) se verificó a mano con la captura s7-17-exportacion-csv.png
+
+===== E13 - Cierre (seed 012 dos veces; suites completas en T151) =====
+  OK    los seeds 001-012 se aplican sin error (corrida 2)
+  OK    la corrida 2 no duplica nada (conteos iguales; se excluyen bitácora y aceptaciones que crea la API, y refacciones y movimientos por la refacción de prueba de E12)
+  OK    órdenes, pagos y usos sin cambios tras la corrida 2
+  OK    siguen las 7 órdenes 9101-9107
+
+Resultado: 81/81 verificaciones OK. motorix_test quedó vacía.
