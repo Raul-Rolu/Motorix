@@ -1,8 +1,9 @@
-# Base de datos de Motorix (MVP local)
+# Base de datos de Motorix
 
-Scripts SQL versionados para crear y recrear la base de datos **local** de MySQL
-durante los cuatro sprints del MVP. Los archivos físicos de MySQL no se versionan
-(Principio III de la constitución).
+Scripts SQL versionados para crear y recrear la base de datos. En desarrollo y
+pruebas se usa **MySQL local**; para el despliegue puede usarse una base alojada
+en la nube, MySQL o compatible como TiDB, con TLS (mini-sprint 009, en curso). Los
+archivos físicos de MySQL no se versionan (Principio III de la constitución).
 
 ## Estructura
 
@@ -201,11 +202,14 @@ scripts anteriores **no se editaron**.
 
 ## Requisitos
 
-- MySQL local instalado (instalación nativa, no Docker).
+- MySQL local instalado (instalación nativa, no Docker) para desarrollo y pruebas.
 - Un usuario **dedicado** al proyecto, por ejemplo `motorix_app`, con permisos de
   lectura/escritura sobre las bases `motorix` (desarrollo) y `motorix_test`
-  (pruebas). La aplicación NUNCA se conecta como `root`.
-- Node.js LTS en el equipo (los runners reutilizan las dependencias de `server/`).
+  (pruebas). La aplicación, los scripts y las pruebas NUNCA se conectan como
+  `root` ni con la cuenta administradora, tampoco en una base alojada.
+- Node.js LTS en el equipo y las dependencias de `server/` instaladas
+  (`npm ci` en `server/`) **antes** de usar los scripts, porque las reutilizan. En
+  un clon limpio esto será suficiente al completar el tramo 1 del mini-sprint 009.
 
 ## Recrear la base desde cero
 
@@ -224,7 +228,8 @@ scripts anteriores **no se editaron**.
 2. Configurar el backend: copiar `server/.env.example` a `server/.env` y completar
    `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` y `JWT_SECRET`.
 
-3. Instalar dependencias del backend (si aún no están): `cd server && npm install`.
+3. Instalar las dependencias del backend (si aún no están): `npm ci` dentro de
+   `server/`.
 
 4. Aplicar el esquema y los datos iniciales:
 

@@ -1,14 +1,16 @@
 # Motorix — Sistema de gestión para talleres mecánicos
 
-Motorix es una aplicación de escritorio para administrar un taller mecánico: base de clientes y vehículos, citas, órdenes de servicio con historial e inventario, y —desde el **Sprint 4**— **pagos, tickets imprimibles y panel de control**.
+Motorix es una aplicación de escritorio y web para administrar un taller mecánico: base de clientes y vehículos, citas, órdenes de servicio con historial e inventario, y —desde el **Sprint 4**— **pagos, tickets imprimibles y panel de control**.
+
+> **Mini-sprint 009 (en curso):** la versión web y el despliegue en la nube se están preparando. Hasta terminarlo, la forma comprobada de usar Motorix es la aplicación de escritorio con MySQL local. Guía: `specs/009-despliegue-cumplimiento/quickstart.md`.
 
 ## Stack tecnológico
 
 | Capa | Tecnología |
 |------|------------|
 | Backend | Node.js + Express (ES Modules), sin ORM — `mysql2` directo |
-| Base de datos | MySQL local, InnoDB y `utf8mb4` |
-| Frontend | Flutter (escritorio, Windows) con `provider` |
+| Base de datos | MySQL local (InnoDB y `utf8mb4`); en el despliegue, base compatible en la nube (TiDB) con TLS |
+| Frontend | Flutter (escritorio Windows y web) con `provider` |
 | Pruebas backend | Jest + supertest contra la base `motorix_test` (`--runInBand`) |
 | Pruebas frontend | `flutter test` (sin red: clientes HTTP falsos) |
 
@@ -16,7 +18,7 @@ Motorix es una aplicación de escritorio para administrar un taller mecánico: b
 
 ```
 motorix/
-├── client/          # Aplicación Flutter (escritorio)
+├── client/          # Aplicación Flutter (escritorio y web)
 ├── server/          # API REST (Express + MySQL)
 ├── database/        # Migraciones y seeds idempotentes
 ├── docs/            # Contexto, reglas y sistema de diseño
@@ -27,10 +29,13 @@ motorix/
 
 ### 1. Base de datos
 
-Requiere MySQL local con un usuario con permisos de creación (por ejemplo `motorix_app`). Las credenciales y los secretos viven **solo** en `server/.env` (nunca se versionan); use `server/.env.example` como plantilla.
+Requiere MySQL local con un usuario dedicado con permisos de creación (por ejemplo `motorix_app`; nunca `root`). Las credenciales y los secretos viven **solo** en `server/.env` (nunca se versionan); use `server/.env.example` como plantilla.
+
+Antes de usar los scripts de la base, instale las dependencias de `server/` (`npm.cmd ci`), de donde las toman. En un clon limpio esto será suficiente al completar el tramo 1 del mini-sprint 009.
 
 ```powershell
 # Desde la raíz del proyecto
+npm.cmd ci --prefix server
 node .\database\scripts\apply-migrations.mjs
 node .\database\scripts\apply-seeds.mjs
 ```

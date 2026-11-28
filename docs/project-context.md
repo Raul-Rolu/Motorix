@@ -896,8 +896,9 @@ Relaciones esperadas:
 
 ### Base de datos
 
--   MySQL, ejecutado de forma **local** durante todo el MVP (ver
-    sección 14.1).
+-   MySQL en **local** para desarrollo y pruebas. Para el despliegue
+    puede usarse una base alojada en la nube, MySQL o compatible como
+    TiDB, con TLS (ver sección 14.1 y el mini-sprint 009).
 -   Modelo relacional con llaves foráneas.
 -   Scripts SQL versionados en la carpeta `database/`.
 -   Capa de acceso a datos desde Node.js (driver u ORM) pendiente de
@@ -1186,14 +1187,17 @@ El MVP se construirá mediante cuatro sprints.
 
 ## 14.1 Base de datos del MVP (Sprints 1 a 4)
 
-Durante los cuatro sprints del MVP la base de datos **se trabaja de
-manera local con MySQL**. No se contempla una base de datos en la nube
-ni hosting de base de datos dentro del alcance del MVP.
+En desarrollo y pruebas la base de datos **se trabaja de manera local
+con MySQL**. Para el despliegue (mini-sprint 009) puede usarse una base
+alojada en la nube, MySQL o compatible como TiDB.
 
 ### Reglas
 
 -   Cada integrante del equipo ejecuta su propia instancia local de
-    MySQL en su equipo de desarrollo.
+    MySQL en su equipo de desarrollo. En una base alojada solo se
+    permiten pruebas sobre una base cuyo nombre termine en `_test`;
+    sobre el sistema publicado, las pruebas y comprobaciones no
+    modifican datos.
 -   La base de datos se llama `motorix` (nombre sugerido; configurable
     por variable de entorno).
 -   Todo el esquema y los datos iniciales se definen mediante scripts
@@ -1204,7 +1208,16 @@ ni hosting de base de datos dentro del alcance del MVP.
     (por ejemplo, `database/data/` con Docker o un datadir propio),
     debe estar en `.gitignore`.
 -   Los cambios de esquema se agregan como nuevos scripts numerados; no
-    se editan scripts de sprints anteriores ya aplicados.
+    se editan scripts de sprints anteriores ya aplicados. Si una base
+    compatible no admite una migración, puede agregarse una variante SQL
+    con el mismo nombre en `database/migrations/tidb/`, que produzca el
+    mismo esquema y se registre una sola vez con el nombre original.
+-   Como excepción a los datos iniciales en SQL, la carga de
+    demostración del despliegue y la publicación de textos legales pueden
+    usar scripts en JavaScript (ES Modules) con textos como archivos
+    fuente. Deben poder repetirse sin duplicar, tener pruebas contra una
+    base `_test`, exigir confirmación de la base de destino y no contener
+    secretos. Los seeds de ejemplo locales no se ejecutan en producción.
 -   El script de seeds DEBE incluir datos de ejemplo suficientes para que 
     la aplicacion muestre informacion al arrancar: al menos un usuario 
     por rol (admin, recepcion, mecanico), clientes de prueba con sus 
@@ -1224,13 +1237,20 @@ DB_PORT=3306
 DB_USER=
 DB_PASSWORD=
 DB_NAME=motorix
+DB_SSL=
 ```
 
 -   `.env.example` debe incluir estas variables sin valores sensibles.
--   Se debe usar un usuario de MySQL dedicado al proyecto, no el
-    usuario `root`, en la configuración de la aplicación.
--   Usar el motor InnoDB, llaves foráneas, restricciones `NOT NULL` y
-    `UNIQUE` donde corresponda, y codificación `utf8mb4`.
+-   Hacia una base alojada se debe usar TLS con verificación del
+    certificado (`DB_SSL`).
+-   La aplicación, los scripts y las pruebas deben conectarse con un
+    usuario dedicado al proyecto, nunca con `root` ni con la cuenta
+    administradora, tampoco en una base alojada. Si el proveedor no
+    permite crear ese usuario, no se despliega.
+-   En MySQL usar el motor InnoDB. En toda base declarar llaves foráneas,
+    restricciones `NOT NULL` y `UNIQUE` donde corresponda, y codificación
+    `utf8mb4`. En una base compatible se comprueba qué restricciones hace
+    cumplir y se documentan las que no.
 -   El backend sigue siendo el único componente que accede a la base de
     datos; el frontend nunca se conecta directamente.
 
@@ -1399,6 +1419,29 @@ Orden terminada
 → generar ticket
 → consultar indicadores en dashboard
 ```
+
+------------------------------------------------------------------------
+
+## Mini-sprint 009 --- Despliegue y cumplimiento
+
+Estado: **en curso**. Revisión académica prevista para el 30 de noviembre
+de 2026. Especificación en `specs/009-despliegue-cumplimiento/`.
+
+### Objetivo
+
+Publicar Motorix en servicios gratuitos, con textos legales propios y
+datos ficticios, sin agregar funciones de negocio.
+
+### Alcance
+
+-   Base de datos en TiDB Cloud Starter, API y cliente web en Render.
+-   Conexión cifrada, hora de Ciudad de México, permiso de origen para el
+    cliente web, límite de intentos de acceso, salud y validación de
+    arranque.
+-   Términos y aviso de privacidad (versión 2) y página pública del aviso.
+-   Exportación de reportes e impresión de tickets en la versión web.
+-   Carga de demostración con datos ficticios.
+-   Los pagos digitales quedan en modo simulado, como demostración.
 
 ------------------------------------------------------------------------
 
@@ -1649,7 +1692,6 @@ Después continuar secuencialmente con Sprint 2, Sprint 3 y Sprint 4.
 
 Antes de asumirlas como definitivas, el equipo debe decidir:
 
--   Servicio de hosting.
 -   Proveedor/estrategia de almacenamiento para evidencias.
 -   Implementación concreta de PDF/tickets.
 -   Alcance exacto de Mercado Pago para la demostración.
@@ -1700,6 +1742,16 @@ Antes de asumirlas como definitivas, el equipo debe decidir:
 
 - **Login**: se acepta usuario o correo electrónico en el mismo campo para todos los roles.
 - **Estándar de usuarios del MVP**: se fijan cuentas iniciales `admin`, `recepcion` y `mecanico` con contraseñas `Admin2026!`, `Recepcion2026!` y `Mecanico2026!` respectivamente, solo para pruebas locales. Se agrega `username` único a la entidad `User`.
+
+### Decisiones resueltas en el mini-sprint 009
+
+-   **Hosting del despliegue**: TiDB Cloud Starter para la base de datos y
+    Render para la API y el sitio estático del cliente web, en planes
+    gratuitos.
+-   **Dependencias nuevas**: `express-rate-limit` en el servidor y `web`
+    en el cliente. El límite de intentos de acceso que se implementa en
+    este mini-sprint sustituirá la nota «No existe bloqueo por intentos
+    fallidos» cuando esté en funcionamiento.
 
 OpenCode puede proponer opciones para estas decisiones, pero no debe
 introducir dependencias grandes sin justificar su necesidad.

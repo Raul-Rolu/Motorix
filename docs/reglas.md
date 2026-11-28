@@ -22,6 +22,12 @@ Reporte de Impacto de la Sincronización
   formato de ramas a `NNN-<nombre-en-minusculas>`; y se depura "Decisiones Pendientes"
   moviendo las resueltas a una subsección. La versión se mantiene en 1.0.0 porque la
   constitución aún no ha sido ratificada.
+- Enmienda 2.0.0 (mini-sprint 009): cambio de versión 1.0.0 → 2.0.0. Se redefine el
+  Principio III (motor compatible, base alojada para el despliegue, datos iniciales con
+  scripts no SQL en casos acotados, variantes de migraciones, TLS y usuario dedicado).
+  Se actualizan «Tecnologías y Dependencias», «Flujo de Desarrollo» y «Decisiones
+  Pendientes». Documentos por alinear: `docs/project-context.md`, `docs/reglas.md`,
+  `README.md` y `database/README.md`.
 - Secciones eliminadas: ninguna
 - Pendientes: ratificación por el equipo; decisiones listadas en "Decisiones Pendientes"
 -->
@@ -66,33 +72,55 @@ desarrollarlo, tanto por el equipo como por el agente de IA.
 - Justificación: separar capas permite que cada módulo se pruebe, cambie y revise sin
   romper los demás.
 
-### III. Stack Tecnológico y Base de Datos Local del MVP
+### III. Stack Tecnológico y Base de Datos
 
-- Los seeds DEBEN incluir datos de ejemplo suficientes para que la aplicacion 
-  muestre informacion al arrancar. La base no puede quedar vacia tras la instalacion inicial.
+- Los seeds DEBEN incluir datos de ejemplo suficientes para que la aplicación
+  muestre información al arrancar. La base no puede quedar vacía tras la instalación
+  inicial. En el despliegue, esos datos los aporta la carga de demostración.
 - Frontend: Flutter con Dart, interfaz responsiva y consumo de API REST.
 - Backend: Node.js (versión LTS) con Express y JavaScript.
 - **Sistema de módulos del backend (NO NEGOCIABLE):** todo el código JavaScript del
   backend DEBE usar ES Modules (`import`/`export`). NO se usa CommonJS
   (`require`/`module.exports`). `package.json` del backend DEBE declarar
   `"type": "module"`.
-- Base de datos: MySQL, ejecutada de forma LOCAL durante los cuatro sprints del MVP.
+- Base de datos: MySQL o una base compatible con MySQL, como TiDB. En desarrollo y
+  pruebas se usa MySQL local; para el despliegue PUEDE usarse una base alojada en la
+  nube.
 - Autenticación: JWT con contraseñas cifradas mediante bcrypt.
-- Login: acepta usuario (`username`) o correo electrónico (`email`) en el mismo campo, para todos los roles.
+- Login: acepta usuario (`username`) o correo electrónico (`email`) en el mismo campo,
+  para todos los roles.
 - NO se introducen tecnologías o dependencias grandes sin justificar su necesidad.
-- Cada integrante DEBE usar su propia instancia local de MySQL; NO se usa base de datos en
-  la nube ni hosting de base de datos dentro del MVP.
-- El esquema y los datos iniciales DEBEN definirse con scripts SQL versionados en la carpeta
-  `database/` (`migrations/`, `seeds/`, `scripts/` y un `README.md`), de modo que la base
-  pueda recrearse desde cero. Los cambios de esquema se agregan como nuevos scripts
-  numerados; NO se editan scripts de sprints ya aplicados.
+- Cada integrante DEBE usar su propia instancia local de MySQL para desarrollar y
+  probar. En una base alojada solo se permiten pruebas sobre una base cuyo nombre
+  termine en `_test`. Sobre el sistema publicado, las pruebas y comprobaciones NO
+  DEBEN modificar datos; usarlo a mano para la demostración y su evidencia es uso
+  normal del sistema.
+- El esquema DEBE definirse con scripts SQL versionados en la carpeta `database/`
+  (`migrations/`, `seeds/`, `scripts/` y un `README.md`), de modo que la base pueda
+  recrearse desde cero. Los cambios de esquema se agregan como nuevos scripts
+  numerados; NO se editan scripts de sprints ya aplicados. Si una base compatible no
+  admite una migración, PUEDE agregarse una variante SQL con el mismo nombre en
+  `database/migrations/tidb/`, que produzca el mismo esquema y se registre una sola
+  vez con el nombre original.
+- Los datos iniciales DEBEN definirse con scripts versionados en `database/`, en SQL
+  dentro de `seeds/`. Como excepción, la carga de demostración del despliegue y la
+  publicación de textos legales PUEDEN usar scripts en JavaScript con ES Modules, con
+  sus textos como archivos fuente, porque reciben secretos por variables de entorno o
+  publican documentos. Esos scripts DEBEN poder repetirse sin duplicar, tener pruebas
+  contra una base `_test`, exigir confirmación de la base de destino y NO contener
+  secretos. Los seeds de ejemplo locales NO se ejecutan en producción.
 - Los archivos físicos de datos de MySQL NO se versionan; si se usa un directorio de datos
   dentro del proyecto (por ejemplo `database/data/`), DEBE estar en `.gitignore`.
 - La conexión DEBE configurarse solo con variables de entorno (`DB_HOST`, `DB_PORT`,
-  `DB_USER`, `DB_PASSWORD`, `DB_NAME`) y la aplicación DEBE usar un usuario de MySQL
-  dedicado al proyecto, NUNCA `root`. `.env.example` incluye las variables sin secretos.
-- Se DEBE usar InnoDB, llaves foráneas para mantener la integridad referencial y
-  codificación `utf8mb4`.
+  `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_SSL`). Hacia una base alojada DEBE usarse
+  TLS con verificación del certificado. `.env.example` incluye las variables sin
+  secretos.
+- La aplicación, los scripts y las pruebas DEBEN conectarse con un usuario dedicado al
+  proyecto, NUNCA con `root` ni con la cuenta administradora, tampoco en una base
+  alojada. Si el proveedor no permite crear ese usuario, NO se despliega.
+- En MySQL se DEBE usar InnoDB. En toda base se DEBEN declarar llaves foráneas para
+  mantener la integridad referencial y usar codificación `utf8mb4`. En una base
+  compatible DEBE comprobarse qué restricciones hace cumplir y documentarse las que no.
 - Solo el backend accede a la base de datos; el frontend NUNCA se conecta directamente.
 - Justificación: un conjunto de tecnologías acotado y conocido por el equipo reduce
   riesgos en un proyecto con tiempo limitado.
@@ -171,18 +199,26 @@ desarrollarlo, tanto por el equipo como por el agente de IA.
 
 ## Tecnologías y Dependencias
 
-- Núcleo permitido: Flutter/Dart, Node.js, Express, MySQL (local en el MVP), JWT, bcrypt, Jest.
+- Núcleo permitido: Flutter/Dart, Node.js, Express, MySQL o una base compatible como
+  TiDB, JWT, bcrypt, Jest.
 - Sistema de módulos del backend (NO NEGOCIABLE): ES Modules (`import`/`export`), nunca
   CommonJS. `package.json` del backend DEBE declarar `"type": "module"`.
 - Frontend: Material Design 3 con tema propio (`docs/design-system.md`) y Provider para
-  estado. Librerías de apoyo permitidas: `google_fonts`, `fl_chart`, `data_table_2` y un
-  único set de íconos.
+  estado. Librerías de apoyo permitidas: `google_fonts`, `fl_chart`, `data_table_2`,
+  `web` y un único set de íconos.
 - Sistema de diseño: ver `docs/design-system.md`. Es de cumplimiento obligatorio para
   cualquier pantalla del frontend.
 - Integración externa: Mercado Pago (modo sandbox/pruebas en etapas tempranas).
 - Priorizar alternativas gratuitas o de bajo costo cuando sean suficientes.
 - NO agregar librerías para lo que se pueda resolver con pocas líneas de código.
 - Toda dependencia nueva DEBE justificarse antes de agregarse.
+- Dependencias agregadas en el mini-sprint 009, ambas gratuitas:
+  - `express-rate-limit` (servidor): límite de intentos en el inicio de sesión y el
+    cambio de contraseña. Resuelve la ventana de tiempo, el conteo con peticiones
+    simultáneas, las direcciones IPv6 y los avisos de proxy mal configurado, que a
+    mano son fáciles de equivocar.
+  - `web` (cliente): paquete del equipo de Dart para las APIs del navegador; permite
+    descargar archivos e imprimir en la versión web en lugar de `dart:html`.
 
 ## Flujo de Desarrollo
 
@@ -206,15 +242,16 @@ desarrollarlo, tanto por el equipo como por el agente de IA.
 - La documentación, los comentarios y los mensajes de commit DEBEN escribirse en español,
   conservando en inglés solo términos técnicos e identificadores (entidades y campos
   como `ServiceOrder` o `currentMileage`).
-- Cada sprint DEBE terminar con seeds que permitan ver la funcionalidad del sprint 
-  con datos reales en la interfaz, sin capturarlos a mano.
+- Cada sprint DEBE terminar con seeds que permitan ver la funcionalidad del sprint
+  con datos reales en la interfaz, sin capturarlos a mano. En un sprint de despliegue,
+  la carga de demostración cumple esta función.
 
 ## Decisiones Pendientes
 
 Estas decisiones aún no están tomadas; el agente puede proponer opciones, pero NO
 asumirlas como definitivas:
 
-- Servicio de hosting y proveedor de almacenamiento.
+- Proveedor de almacenamiento de archivos.
 - Implementación concreta de PDF/tickets.
 - Alcance exacto de Mercado Pago para la demostración.
 - Librería complementaria de componentes de UI en Flutter (`shadcn_ui` u otra, o ninguna).
@@ -241,6 +278,11 @@ asumirlas como definitivas:
   `models`, `services`, `controllers`, `routes`, `middlewares`, `validators`, `utils`)
   viven directamente en `server/`.
 
+### Decisiones resueltas en el mini-sprint 009
+
+- **Hosting del despliegue**: TiDB Cloud Starter para la base de datos y Render para
+  la API y el sitio estático del cliente web, en planes gratuitos.
+
 ## Gobernanza
 
 - Esta constitución tiene prioridad sobre cualquier otra práctica o convención del repo.
@@ -252,4 +294,4 @@ asumirlas como definitivas:
 - El cumplimiento se revisa en cada contribución; cualquier desviación DEBE justificarse
   explícitamente o descartarse.
 
-**Versión**: 1.0.0 | **Redactada**: 2026-10-01 | **Ratificación**: pendiente del equipo | **Última enmienda**: 2026-10-10
+**Versión**: 2.0.0 | **Redactada**: 2026-10-01 | **Ratificación**: pendiente del equipo | **Última enmienda**: 2026-11-28

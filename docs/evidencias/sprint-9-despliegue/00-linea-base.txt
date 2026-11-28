@@ -1,0 +1,130 @@
+LÍNEA BASE ANTES DEL MINI-SPRINT 009 (T005)
+
+Commit base: fbda6a2 | Rama: 009-despliegue-cumplimiento
+Cambios en código respecto al commit base: 0
+Node v25.1.0 | Flutter 3.47.2
+Base de pruebas: motorix_test en MySQL local
+
+== Servidor: npm test (en server/), 2026-11-28 ==
+Test Suites: 109 passed, 109 total
+Tests:       1329 passed, 1329 total
+Snapshots:   0 total
+Time:        425.916 s
+
+Suites (resultado y archivo):
+PASS tests/contract/appointments.contract.test.js
+PASS tests/contract/audit-log-roles.test.js
+PASS tests/contract/auth.contract.test.js
+PASS tests/contract/dashboard.contract.test.js
+PASS tests/contract/maintenances.contract.test.js
+PASS tests/contract/no-exposure.test.js
+PASS tests/contract/notifications-roles.test.js
+PASS tests/contract/order-parts.contract.test.js
+PASS tests/contract/orders.contract.test.js
+PASS tests/contract/orders-assignment.contract.test.js
+PASS tests/contract/orders-detail.contract.test.js
+PASS tests/contract/orders-status.contract.test.js
+PASS tests/contract/orders-work.contract.test.js
+PASS tests/contract/parts.contract.test.js
+PASS tests/contract/parts-role-visibility.test.js
+PASS tests/contract/payments.contract.test.js
+PASS tests/contract/reports-roles.test.js
+PASS tests/contract/service-types-roles.test.js
+PASS tests/contract/settings-roles.test.js
+PASS tests/contract/terms-roles.test.js
+PASS tests/contract/tickets.contract.test.js
+PASS tests/contract/users.contract.test.js
+PASS tests/contract/vehicle-history.contract.test.js
+PASS tests/integration/appointments.test.js
+PASS tests/integration/audit-log.test.js
+PASS tests/integration/audit-login-servidor-real.test.js
+PASS tests/integration/auth.test.js
+PASS tests/integration/client-notices.test.js
+PASS tests/integration/clients.test.js
+PASS tests/integration/clients-update.test.js
+PASS tests/integration/dashboard.test.js
+PASS tests/integration/digital-payments.test.js
+PASS tests/integration/history.test.js
+PASS tests/integration/history-mileage.test.js
+PASS tests/integration/injection-search.test.js
+PASS tests/integration/inventory.test.js
+PASS tests/integration/maintenance-proposal.test.js
+PASS tests/integration/maintenances.test.js
+PASS tests/integration/maintenances-list.test.js
+PASS tests/integration/migration-018.test.js
+PASS tests/integration/migrations-019-021.test.js
+PASS tests/integration/migrations-022-023.test.js
+PASS tests/integration/notifications-calculo.test.js
+PASS tests/integration/notifications-lectura.test.js
+PASS tests/integration/notifications-margenes.test.js
+PASS tests/integration/notifications-performance.test.js
+PASS tests/integration/order-parts.test.js
+PASS tests/integration/order-parts-rejection.test.js
+PASS tests/integration/orders.test.js
+PASS tests/integration/orders-assignment.test.js
+PASS tests/integration/orders-detail.test.js
+PASS tests/integration/orders-entries.test.js
+PASS tests/integration/orders-status.test.js
+PASS tests/integration/order-status-changed.test.js
+PASS tests/integration/orders-work.test.js
+PASS tests/integration/order-totals-parts.test.js
+PASS tests/integration/part-price-adoption.test.js
+PASS tests/integration/parts.test.js
+PASS tests/integration/parts-low-stock.test.js
+PASS tests/integration/parts-pending-price.test.js
+PASS tests/integration/parts-price-limits.test.js
+PASS tests/integration/parts-purchase-price.test.js
+PASS tests/integration/parts-sale-price.test.js
+PASS tests/integration/parts-search.test.js
+PASS tests/integration/password-policy.test.js
+PASS tests/integration/payments.test.js
+PASS tests/integration/payments-compat.test.js
+PASS tests/integration/payments-parts-total.test.js
+PASS tests/integration/payments-stale.test.js
+PASS tests/integration/payments-validation.test.js
+PASS tests/integration/reports-export.test.js
+PASS tests/integration/reports-income.test.js
+PASS tests/integration/reports-parts-rotation.test.js
+PASS tests/integration/reports-performance.test.js
+PASS tests/integration/reports-services-productivity.test.js
+PASS tests/integration/seed-reports.test.js
+PASS tests/integration/seed-terms.test.js
+PASS tests/integration/service-types.test.js
+PASS tests/integration/session-renewal.test.js
+PASS tests/integration/settings.test.js
+PASS tests/integration/terms.test.js
+PASS tests/integration/terms-gate-queries.test.js
+PASS tests/integration/tickets.test.js
+PASS tests/integration/tickets-parts.test.js
+PASS tests/integration/tickets-proximo-servicio.test.js
+PASS tests/integration/tickets-taller-snapshot.test.js
+PASS tests/integration/users.test.js
+PASS tests/integration/vehicle-owner.test.js
+PASS tests/integration/vehicles.test.js
+PASS tests/unit/audit-detail.test.js
+PASS tests/unit/csv.test.js
+PASS tests/unit/maintenance-proximo.test.js
+PASS tests/unit/maintenance-proximo-margenes.test.js
+PASS tests/unit/maintenance-state.test.js
+PASS tests/unit/money-cents.test.js
+PASS tests/unit/next-service.test.js
+PASS tests/unit/notification-keys.test.js
+PASS tests/unit/order-totals-parts.test.js
+PASS tests/unit/part-model-purchase-price.test.js
+PASS tests/unit/payment-digital.test.js
+PASS tests/unit/report-range.test.js
+PASS tests/unit/services/order-state.test.js
+PASS tests/unit/settings-rules.test.js
+PASS tests/unit/ticket-folio.test.js
+PASS tests/unit/validators/appointment-validator.test.js
+PASS tests/unit/validators/auth-validator.test.js
+PASS tests/unit/validators/order-validator.test.js
+PASS tests/unit/validators/part-validator-part-price.test.js
+PASS tests/unit/validators/report-validator.test.js
+
+== Cliente: flutter test (en client/), 2026-11-27, mismo código ==
+00:59 +351: All tests passed!
+
+== Nota ==
+Una primera corrida del servidor el 2026-11-27 falló (20 de 109 suites; 330 de 1329 pruebas) porque el
+servicio local de MySQL estaba detenido (ECONNREFUSED). Se repitió con el servicio iniciado.
